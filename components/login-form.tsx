@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,11 +10,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { login } from "@/lib/auth";
+import React from "react";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [loginInfo, setLoginInfo] = React.useState({
+    email: "",
+    password: "",
+    error: "",
+  });
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -24,7 +32,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={(event) => login(event, loginInfo, setLoginInfo)}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -58,6 +66,10 @@ export function LoginForm({
                     id="email"
                     type="email"
                     placeholder="m@example.com"
+                    value={loginInfo.email}
+                    onChange={(e) =>
+                      setLoginInfo({ ...loginInfo, email: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -71,7 +83,15 @@ export function LoginForm({
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" type="password" required />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={loginInfo.password}
+                    onChange={(e) =>
+                      setLoginInfo({ ...loginInfo, password: e.target.value })
+                    }
+                    required
+                  />
                 </div>
                 <Button type="submit" className="w-full cursor-pointer">
                   Login
