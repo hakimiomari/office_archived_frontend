@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 const login = async (event: any, loginInfo: Object, setLoginInfo: Function) => {
   event.preventDefault();
   await axios
@@ -6,10 +7,12 @@ const login = async (event: any, loginInfo: Object, setLoginInfo: Function) => {
       withCredentials: true,
     })
     .then((response) => {
-      console.log(response.data);
+      const token = response.data.access_token;
+      localStorage.setItem("access_token", token);
+      window.location.href = "/dashboard";
     })
     .catch((error) => {
-      console.log(error);
+      toast.error("Invalid Credentials");
     });
 };
 
