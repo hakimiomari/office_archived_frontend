@@ -1,6 +1,6 @@
 import axios from "axios";
 import toast from "react-hot-toast";
-const login = async (event: any, loginInfo: Object, setLoginInfo: Function) => {
+const login = async (event: any, loginInfo: Object) => {
   event.preventDefault();
   await axios
     .post("http://localhost:8001/auth/login", loginInfo, {
