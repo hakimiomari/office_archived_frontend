@@ -1,11 +1,9 @@
-import axios from "axios";
+import api from "./axios";
 import toast from "react-hot-toast";
 const login = async (event: any, loginInfo: Object) => {
   event.preventDefault();
-  await axios
-    .post("http://localhost:8001/auth/login", loginInfo, {
-      withCredentials: true,
-    })
+  await api
+    .post("auth/login", loginInfo)
     .then((response) => {
       const token = response.data.access_token;
       localStorage.setItem("access_token", token);
@@ -16,4 +14,19 @@ const login = async (event: any, loginInfo: Object) => {
     });
 };
 
-export { login };
+const logout = async (event: any) => {
+  event.preventDefault();
+  await api
+    .get("auth/logout")
+    .then((response) => {
+      console.log(response);
+      localStorage.removeItem("access_token");
+      window.location.href = "/";
+    })
+    .catch((err) => {
+      console.log(err);
+      toast.error("Logout Failed");
+    });
+};
+
+export { login, logout };
