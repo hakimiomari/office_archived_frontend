@@ -1,30 +1,30 @@
 import api from "./axios";
 import toast from "react-hot-toast";
-const login = async (event: any, loginInfo: Object) => {
+
+const login = async (event: any, loginInfo: Object, router: any) => {
   event.preventDefault();
   await api
     .post("auth/login", loginInfo)
     .then((response) => {
-      const token = response.data.access_token;
-      localStorage.setItem("access_token", token);
-      window.location.href = "/dashboard";
+      if (response.status == 201) {
+        router.push("/dashboard");
+      }
     })
     .catch((error) => {
       toast.error("Invalid Credentials");
     });
 };
 
-const logout = async (event: any) => {
+const logout = async (event: any, router: any) => {
   event.preventDefault();
   await api
     .get("auth/logout")
     .then((response) => {
-      console.log(response);
-      localStorage.removeItem("access_token");
-      window.location.href = "/";
+      if (response.status == 200) {
+        router.push("/");
+      }
     })
     .catch((err) => {
-      console.log(err);
       toast.error("Logout Failed");
     });
 };

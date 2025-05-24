@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/lib/auth";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -21,6 +22,8 @@ export function LoginForm({
     email: "",
     password: "",
   });
+  const router = useRouter();
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -31,7 +34,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={(event) => login(event, loginInfo)}>
+          <form onSubmit={(event) => login(event, loginInfo, router)}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
