@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ActiveThemeProvider } from "@/components/active-theme";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
+import { UserProvider } from "@/contexts/UserContext";
 
 // const META_THEME_COLORS = {
 //   light: "#ffffff",
@@ -52,8 +53,10 @@ export default async function RootLayout({
           enableColorScheme
         >
           <ActiveThemeProvider initialTheme={activeThemeValue}>
-            <main>{children}</main>
-            <Toaster position="top-right" />
+            <UserProvider>
+              <main>{children}</main>
+              <Toaster position="top-right" />
+            </UserProvider>
           </ActiveThemeProvider>
         </ThemeProvider>
       </body>
