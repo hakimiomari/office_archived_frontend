@@ -11,6 +11,7 @@ const login = async (event: any, loginInfo: Object, router: any) => {
       }
     })
     .catch((error) => {
+      console.log(error);
       toast.error("Invalid Credentials");
     });
 };
@@ -25,6 +26,7 @@ const logout = async (event: any, router: any) => {
       }
     })
     .catch((err) => {
+      console.log(err);
       toast.error("Logout Failed");
     });
 };
