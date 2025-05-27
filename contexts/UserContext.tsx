@@ -1,22 +1,36 @@
 "use client";
 
+import api from "../lib/axios";
 import { createContext, useContext, useEffect, useState } from "react";
 
-const UserContext = createContext(null);
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+};
+
+type UserContextType = {
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<any>>;
+};
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Fetch profile from backend (send token if needed)
-    const token = localStorage.getItem("token");
-
+    const token = localStorage.getItem("access_token");
+    console.log("access_token", token);
     if (token) {
-      fetch("/api/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => setUser(data));
+      const fetchData = async () => {
+        await api
+          .get("user/profile")
+          .then((response) => setUser(response.data))
+          .catch((err) => console.log(err));
+      };
+      fetchData();
     }
   }, []);
 
@@ -27,4 +41,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = (): UserContextType => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
+};

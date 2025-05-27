@@ -11,7 +11,6 @@ api.interceptors.request.use(
       .split("; ")
       .find((row) => row.startsWith("access_token"))
       ?.split("=")[1];
-    console.log("cookie is ready =>", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

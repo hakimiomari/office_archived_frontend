@@ -45,20 +45,20 @@ export default async function RootLayout({
           isScaled ? "theme-scaled" : ""
         )}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          enableColorScheme
-        >
-          <ActiveThemeProvider initialTheme={activeThemeValue}>
-            <UserProvider>
+        <UserProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+            enableColorScheme
+          >
+            <ActiveThemeProvider initialTheme={activeThemeValue}>
               <main>{children}</main>
               <Toaster position="top-right" />
-            </UserProvider>
-          </ActiveThemeProvider>
-        </ThemeProvider>
+            </ActiveThemeProvider>
+          </ThemeProvider>
+        </UserProvider>
       </body>
     </html>
   );
