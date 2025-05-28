@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import React from "react";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -22,7 +23,7 @@ export function LoginForm({
     password: "",
   });
 
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -95,7 +96,12 @@ export function LoginForm({
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full cursor-pointer">
+                <Button
+                  disabled={isLoading}
+                  type="submit"
+                  className="w-full cursor-pointer"
+                >
+                  {isLoading && <Loader2 className="animate-spin" />}
                   Login
                 </Button>
               </div>

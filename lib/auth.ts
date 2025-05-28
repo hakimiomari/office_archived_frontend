@@ -1,27 +1,32 @@
+import { useState } from "react";
 import api from "./axios";
 import toast from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
 
 export const useAuth = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const { setUser } = useUser();
   const router = useRouter();
+
   // login
   const login = async (event: any, loginInfo: Object) => {
     event.preventDefault();
-    await api
-      .post("auth/login", loginInfo)
-      .then((response) => {
-        if (response.status == 201) {
-          localStorage.setItem("access_token", response.data.access_token);
-          setUser(response.data.user);
-          router.push("/dashboard");
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-        toast.error("Invalid Credentials");
-      });
+    setIsLoading(true);
+    try {
+      const response = await api.post("auth/login", loginInfo);
+      if (response.status == 201) {
+        localStorage.setItem("access_token", response.data.access_token);
+        setUser(response.data.user);
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.log(error);
+      toast.error("Invalid Credentials");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = async (event: any) => {
@@ -39,5 +44,5 @@ export const useAuth = () => {
         toast.error("Logout Failed");
       });
   };
-  return { login, logout };
+  return { login, logout, isLoading };
 };
