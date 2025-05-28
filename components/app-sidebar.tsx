@@ -17,6 +17,7 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconChartInfographic,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -45,6 +46,11 @@ const data = {
       title: "Dashboard",
       url: "#",
       icon: IconDashboard,
+    },
+    {
+      title: "Weekly Report",
+      url: "weekly-report",
+      icon: IconChartInfographic,
     },
     {
       title: "Lifecycle",
