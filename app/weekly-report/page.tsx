@@ -1,3 +1,9 @@
+import DashboardLayout from "../layouts/DashboardLayout";
+
 export default function WeeklyReport() {
-  return <div>Weekly Report</div>;
+  return (
+    <DashboardLayout>
+      <div>Weekly Report</div>
+    </DashboardLayout>
+  );
 }

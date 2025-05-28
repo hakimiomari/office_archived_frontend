@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { nextRoute } from "@/lib/route";
+import { usePathname } from "next/navigation";
 
 export function NavMain({
   items,
@@ -22,6 +23,7 @@ export function NavMain({
   }[];
 }) {
   const { changeRoute } = nextRoute();
+  const pathname = usePathname();
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -50,7 +52,15 @@ export function NavMain({
               onClick={() => changeRoute(item.url)}
               key={item.title}
             >
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                className={
+                  "min-w-8 duration-200 ease-linear " +
+                  (pathname === item?.url
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/90"
+                    : "hover:bg-muted hover:text-foreground")
+                }
+              >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>
