@@ -21,7 +21,6 @@ export const useAuth = () => {
       }
     } catch (error) {
       setIsLoading(false);
-      console.log(error);
       toast.error("Invalid Credentials");
     } finally {
       setIsLoading(false);

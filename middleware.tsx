@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
 export function middleware(request: any) {
-  const token = request.cookies.get("access_token")?.value;
-  console.log(token);
+  const token = request.cookies.get("refresh_token")?.value;
   const { pathname } = request.nextUrl;
   if (!token && pathname !== "/") {
     return NextResponse.redirect(new URL("/", request.url));
@@ -14,5 +13,12 @@ export function middleware(request: any) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard", "/shipments", "/users", "/vehicles"],
+  matcher: [
+    "/",
+    "/dashboard",
+    "/shipments",
+    "/users",
+    "/vehicles",
+    "/weekly-report",
+  ],
 };
