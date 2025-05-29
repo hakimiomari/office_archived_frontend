@@ -21,18 +21,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      const fetchData = async () => {
-        await api
-          .get("user/profile")
-          .then((response) => {
-            setUser(response.data.user);
-          })
-          .catch((err) => console.log(err));
-      };
-      fetchData();
-    }
+    const fetchData = async () => {
+      await api.get("user/profile").then((response) => {
+        setUser(response.data.user);
+      });
+    };
+    fetchData();
   }, []);
 
   return (

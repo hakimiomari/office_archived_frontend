@@ -16,7 +16,6 @@ export const useAuth = () => {
     try {
       const response = await api.post("auth/login", loginInfo);
       if (response.status == 201) {
-        localStorage.setItem("access_token", response.data.access_token);
         setUser(response.data.user);
         router.push("/dashboard");
       }
@@ -36,7 +35,6 @@ export const useAuth = () => {
       .then((response) => {
         if (response.status == 200) {
           router.push("/");
-          localStorage.removeItem("access_token");
         }
       })
       .catch((err) => {
