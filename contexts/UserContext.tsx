@@ -2,6 +2,7 @@
 
 import api from "../lib/axios";
 import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type User = {
   id: string;
@@ -19,6 +20,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,7 +28,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(response.data.user);
       });
     };
-    fetchData();
+    if (pathname !== "/") {
+      fetchData();
+    }
   }, []);
 
   return (
