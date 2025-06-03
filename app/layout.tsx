@@ -7,6 +7,7 @@ import { ActiveThemeProvider } from "@/components/active-theme";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 import { UserProvider } from "@/contexts/UserContext";
+import RouteProgress from "@/components/RouteProgress";
 
 // const META_THEME_COLORS = {
 //   light: "#ffffff",
@@ -54,6 +55,7 @@ export default async function RootLayout({
             enableColorScheme
           >
             <ActiveThemeProvider initialTheme={activeThemeValue}>
+              <RouteProgress />
               <main>{children}</main>
               <Toaster position="top-right" />
             </ActiveThemeProvider>
