@@ -23,6 +23,29 @@ async function getData() {
 export default async function WeeklyReport() {
   const data = await getData();
 
+  console.log(data);
+  const data2 = [
+    {
+      // id: "1",
+      label: "salary",
+      note: "monthly salary",
+      category: "income",
+      type: "income",
+      amount: 5000,
+      date: "2024-06-25",
+    },
+    {
+      // id: "2",
+      label: "groceries",
+      note: "weekly grocery shopping",
+      category: "food",
+      type: "expense",
+      amount: 150,
+      date: "2024-06-24",
+    },
+  ];
+  console.log(data2);
+
   return (
     <DashboardLayout>
       <div className="h-full flex-1 flex-col space-y-2 p-8 md:flex">
