@@ -12,6 +12,7 @@ import { CalendarDatePicker } from "@/components/calendar-date-picker";
 import { useState } from "react";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { TrashIcon } from "lucide-react";
+import DataTableAddButton from "./data-table-add-button";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -84,6 +85,7 @@ export function DataTableToolbar<TData>({
           </Button>
         ) : null}
         <DataTableViewOptions table={table} />
+        <DataTableAddButton />
       </div>
     </div>
   );
