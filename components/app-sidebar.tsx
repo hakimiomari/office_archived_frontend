@@ -48,8 +48,8 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Weekly Report",
-      url: "/weekly-report",
+      title: "Office Archive",
+      url: "/office-archive",
       icon: IconChartInfographic,
     },
     {

@@ -19,6 +19,6 @@ export const config = {
     "/shipments",
     "/users",
     "/vehicles",
-    "/weekly-report",
+    "/office-archive",
   ],
 };
