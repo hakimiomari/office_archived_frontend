@@ -14,13 +14,12 @@ export const useAuth = () => {
     event.preventDefault();
     setIsLoading(true);
     try {
-      const response = await api.post("auth/login", loginInfo);
+      const response = await api.post("auth/sign-in", loginInfo);
       if (response.status == 201) {
-        setUser(response.data.user);
         router.push("/dashboard");
+        setUser(response.data.user);
       }
     } catch (error) {
-      setIsLoading(false);
       toast.error("Invalid Credentials");
     } finally {
       setIsLoading(false);
