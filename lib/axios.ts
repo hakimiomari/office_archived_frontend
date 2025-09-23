@@ -62,7 +62,7 @@ api.interceptors.response.use(
       isRefreshing = true;
       try {
         const res = await axios.get(
-          "http://localhost:8001/api/auth/refresh_token",
+          "http://localhost:8001/api/auth/refresh-token",
           {
             withCredentials: true,
           }

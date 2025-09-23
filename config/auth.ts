@@ -29,9 +29,9 @@ export const useAuth = () => {
   const logout = async (event: any) => {
     event.preventDefault();
     await api
-      .get("auth/logout")
+      .post("auth/logout")
       .then((response) => {
-        if (response.status == 200) {
+        if (response.status == 201) {
           router.push("/");
         }
       })
