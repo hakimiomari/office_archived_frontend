@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-// import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -7,21 +6,7 @@ import { ActiveThemeProvider } from "@/components/active-theme";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 import { UserProvider } from "@/contexts/UserContext";
-
-// const META_THEME_COLORS = {
-//   light: "#ffffff",
-//   dark: "#09090b",
-// };
-
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
+import RouteProgress from "@/components/RouteProgress";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -45,6 +30,7 @@ export default async function RootLayout({
           isScaled ? "theme-scaled" : ""
         )}
       >
+        <RouteProgress />
         <UserProvider>
           <ThemeProvider
             attribute="class"

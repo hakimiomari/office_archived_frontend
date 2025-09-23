@@ -2,6 +2,7 @@
 
 import api from "../lib/axios";
 import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type User = {
   id: string;
@@ -19,18 +20,15 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      const fetchData = async () => {
-        await api
-          .get("user/profile")
-          .then((response) => {
-            setUser(response.data.user);
-          })
-          .catch((err) => console.log(err));
-      };
+    const fetchData = async () => {
+      await api.get("user/profile").then((response) => {
+        setUser(response.data.user);
+      });
+    };
+    if (pathname !== "/") {
       fetchData();
     }
   }, []);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "./axios";
+import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
@@ -14,15 +14,12 @@ export const useAuth = () => {
     event.preventDefault();
     setIsLoading(true);
     try {
-      const response = await api.post("auth/login", loginInfo);
+      const response = await api.post("auth/sign-in", loginInfo);
       if (response.status == 201) {
-        localStorage.setItem("access_token", response.data.access_token);
-        setUser(response.data.user);
         router.push("/dashboard");
+        setUser(response.data.user);
       }
     } catch (error) {
-      setIsLoading(false);
-      console.log(error);
       toast.error("Invalid Credentials");
     } finally {
       setIsLoading(false);
@@ -36,7 +33,6 @@ export const useAuth = () => {
       .then((response) => {
         if (response.status == 200) {
           router.push("/");
-          localStorage.removeItem("access_token");
         }
       })
       .catch((err) => {
