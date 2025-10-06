@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/config/auth";
 import { settings } from "@/config/settings";
+import { useRouter } from "next/navigation";
 
 export function NavUser({
   user,
@@ -40,6 +41,7 @@ export function NavUser({
 
   const { logout } = useAuth();
   const { getNameInitials } = settings();
+  const router = useRouter();
 
   return (
     <SidebarMenu>
@@ -89,9 +91,9 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={(event) => router.push("/profile")}>
                 <IconUserCircle />
-                Account
+                Profile
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconCreditCard />
