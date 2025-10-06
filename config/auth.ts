@@ -40,5 +40,28 @@ export const useAuth = () => {
         toast.error("Logout Failed");
       });
   };
-  return { login, logout, isLoading };
+
+  // google login
+  const googleAuth = async (response: any) => {
+    await api
+      .post(
+        "google-authentication/google-login",
+        {
+          token: response.credential,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        console.log(response);
+        router.push("/dashboard");
+        setUser(response.data.user);
+      })
+      .catch((error) => console.log(error));
+  };
+
+  return { login, logout, googleAuth, isLoading };
 };
