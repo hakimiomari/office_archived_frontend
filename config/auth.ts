@@ -56,7 +56,6 @@ export const useAuth = () => {
         }
       )
       .then((response) => {
-        console.log(response);
         router.push("/dashboard");
         setUser(response.data.user);
       })

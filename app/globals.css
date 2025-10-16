@@ -224,4 +224,11 @@ body {
   [data-slot="toggle-group-item"] {
     @apply !rounded-none !shadow-none;
   }
+
+  @layer components {
+    .profile {
+      background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/435311/photo__mountains.jpg");
+      @apply bg-cover bg-center bg-no-repeat;
+    }
+  }
 }
