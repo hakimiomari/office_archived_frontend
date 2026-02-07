@@ -1,31 +1,14 @@
-"use client";
-import { DataTable } from "@/app/office-archive/data-table-components/data-table";
-import { columns } from "@/app/office-archive/data-table-components/columns";
-import DashboardLayout from "@/app/layouts/DashboardLayout";
-import { Expense } from "@/app/office-archive/data-table-components/schema";
+import { DataTable } from "@/app/(dashboard)/office-archive/data-table-components/data-table";
+import { columns } from "@/app/(dashboard)/office-archive/data-table-components/columns";
+import DashboardLayout from "@/app/(dashboard)/DashboardLayout";
+import { Expense } from "@/app/(dashboard)/office-archive/data-table-components/schema";
+import { useArchives } from "./archive";
+import { useArchive } from "@/contexts/ArchiveContext";
 
 export default function OfficeArchive() {
-  const data: Expense[] = [
-    {
-      id: "1",
-      label: "salary",
-      note: "monthly salary",
-      category: "income",
-      type: "income",
-      amount: 5000,
-      date: "2024-06-25",
-    },
-    {
-      id: "2",
-      label: "groceries",
-      note: "weekly grocery shopping",
-      category: "food",
-      type: "expense",
-      amount: 150,
-      date: "2024-06-24",
-    },
-  ];
-
+  // const { getArchives } = useArchives();
+  const { archive } = useArchive();
+  const archives: Expense[] = archive;
   return (
     <DashboardLayout>
       <div
@@ -35,7 +18,7 @@ export default function OfficeArchive() {
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground">Office Archive</p>
         </div>
-        <DataTable data={data} columns={columns} />
+        <DataTable data={archives} columns={columns} />
       </div>
     </DashboardLayout>
   );

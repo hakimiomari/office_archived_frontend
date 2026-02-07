@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../lib/axios";
+import api from "../lib/api/axios";
 import toast from "react-hot-toast";
 import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ export const useAuth = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       )
       .then((response) => {
         router.push("/dashboard");

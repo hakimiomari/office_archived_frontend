@@ -1,6 +1,6 @@
 "use client";
 
-import api from "../lib/axios";
+import api from "../lib/api/axios";
 import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
