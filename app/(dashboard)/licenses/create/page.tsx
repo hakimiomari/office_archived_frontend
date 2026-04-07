@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLicenses } from "@/config/license/license";
 import { LicenseForm } from "@/components/license-form";
+import { RouteGuard } from "@/components/route-guard";
 import { nextRoute } from "@/lib/route";
 
 export default function CreateLicensePage() {
@@ -20,12 +21,14 @@ export default function CreateLicensePage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <LicenseForm
-        title="Create New License"
-        onSubmit={handleSubmit}
-        loading={loading}
-      />
-    </div>
+    <RouteGuard permission="license.create">
+      <div className="flex flex-col gap-4 p-4 md:p-6">
+        <LicenseForm
+          title="Create New License"
+          onSubmit={handleSubmit}
+          loading={loading}
+        />
+      </div>
+    </RouteGuard>
   );
 }

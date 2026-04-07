@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useLicenses } from "@/config/license/license";
 import { LicenseForm } from "@/components/license-form";
 import { LicenseType } from "@/contexts/LicenseContext";
+import { RouteGuard } from "@/components/route-guard";
 import { nextRoute } from "@/lib/route";
 
 export default function EditLicensePage() {
@@ -48,13 +49,15 @@ export default function EditLicensePage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <LicenseForm
-        title="Edit License"
-        initialData={license}
-        onSubmit={handleSubmit}
-        loading={loading}
-      />
-    </div>
+    <RouteGuard permission="license.update">
+      <div className="flex flex-col gap-4 p-4 md:p-6">
+        <LicenseForm
+          title="Edit License"
+          initialData={license}
+          onSubmit={handleSubmit}
+          loading={loading}
+        />
+      </div>
+    </RouteGuard>
   );
 }

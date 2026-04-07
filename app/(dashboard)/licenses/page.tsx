@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,11 +31,15 @@ import {
   IconChevronLeft,
   IconChevronRight,
 } from "@tabler/icons-react";
+import { PermissionGate } from "@/components/permission-gate";
+import { usePermission } from "@/hooks/use-permission";
+import { RouteGuard } from "@/components/route-guard";
 
 export default function LicensesPage() {
   const { getLicenses, deleteLicense } = useLicenses();
   const { licenses, meta, loading } = useLicense();
   const { changeRoute } = nextRoute();
+  const { can } = usePermission();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -68,13 +73,16 @@ export default function LicensesPage() {
   };
 
   return (
+    <RouteGuard permission="license.read">
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mining Licenses</h1>
-        <Button onClick={() => changeRoute("/licenses/create")}>
-          <IconPlus className="mr-2 h-4 w-4" />
-          New License
-        </Button>
+        <PermissionGate permission="license.create">
+          <Button onClick={() => changeRoute("/licenses/create")}>
+            <IconPlus className="mr-2 h-4 w-4" />
+            New License
+          </Button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-2">
@@ -107,11 +115,37 @@ export default function LicensesPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-6" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-36" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </TableCell>
+                </TableRow>
+              ))
             ) : licenses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center">
@@ -155,21 +189,25 @@ export default function LicensesPage() {
                           <IconEye className="mr-2 h-4 w-4" />
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            changeRoute(`/licenses/${lic.id}/edit`)
-                          }
-                        >
-                          <IconEdit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(lic.id)}
-                          className="text-red-600"
-                        >
-                          <IconTrash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        {can("license.update") && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              changeRoute(`/licenses/${lic.id}/edit`)
+                            }
+                          >
+                            <IconEdit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {can("license.delete") && (
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(lic.id)}
+                            className="text-red-600"
+                          >
+                            <IconTrash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -212,5 +250,6 @@ export default function LicensesPage() {
         </div>
       )}
     </div>
+    </RouteGuard>
   );
 }

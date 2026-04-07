@@ -6,6 +6,7 @@ import { nextRoute } from "@/lib/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
@@ -30,9 +31,13 @@ import {
   IconChevronRight,
 } from "@tabler/icons-react";
 import { settings } from "@/config/settings";
+import { PermissionGate } from "@/components/permission-gate";
+import { usePermission } from "@/hooks/use-permission";
+import { RouteGuard } from "@/components/route-guard";
 
 export default function UsersPage() {
   const { getUsers, deleteUser } = useUsers();
+  const { can } = usePermission();
   const { changeRoute } = nextRoute();
   const { getNameInitials } = settings();
   const [users, setUsers] = useState<UserType[]>([]);
@@ -66,13 +71,16 @@ export default function UsersPage() {
   };
 
   return (
+    <RouteGuard permission="user.read">
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">User Management</h1>
-        <Button onClick={() => changeRoute("/users/create")}>
-          <IconPlus className="mr-2 h-4 w-4" />
-          New User
-        </Button>
+        <PermissionGate permission="user.create">
+          <Button onClick={() => changeRoute("/users/create")}>
+            <IconPlus className="mr-2 h-4 w-4" />
+            New User
+          </Button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-2">
@@ -103,11 +111,34 @@ export default function UsersPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-6" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-40" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </TableCell>
+                </TableRow>
+              ))
             ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
@@ -165,21 +196,25 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            changeRoute(`/users/${user.id}/edit`)
-                          }
-                        >
-                          <IconEdit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-600"
-                        >
-                          <IconTrash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
+                        {can("user.update") && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              changeRoute(`/users/${user.id}/edit`)
+                            }
+                          >
+                            <IconEdit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {can("user.delete") && (
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(user.id)}
+                            className="text-red-600"
+                          >
+                            <IconTrash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -222,5 +257,6 @@ export default function UsersPage() {
         </div>
       )}
     </div>
+    </RouteGuard>
   );
 }

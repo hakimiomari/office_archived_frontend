@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUsers } from "@/config/users/users";
 import { useRoles, RoleType } from "@/config/users/roles";
+import { RouteGuard } from "@/components/route-guard";
 import { nextRoute } from "@/lib/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ export default function CreateUserPage() {
   };
 
   return (
+    <RouteGuard permission="user.create">
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <Card className="max-w-2xl">
         <CardHeader>
@@ -139,5 +141,6 @@ export default function CreateUserPage() {
         </CardContent>
       </Card>
     </div>
+    </RouteGuard>
   );
 }

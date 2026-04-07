@@ -28,6 +28,8 @@ import {
   IconTrash,
   IconFile,
 } from "@tabler/icons-react";
+import { PermissionGate } from "@/components/permission-gate";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LicenseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -79,7 +81,51 @@ export default function LicenseDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">Loading...</div>
+      <div className="flex flex-col gap-6 p-4 md:p-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10 rounded" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-9 w-20 rounded" />
+        </div>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-36" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-1">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-5 w-36" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-9 w-36 rounded" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 py-3">
+                <Skeleton className="h-4 w-6" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -115,13 +161,15 @@ export default function LicenseDetailPage() {
           <IconArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-2xl font-bold">License Details</h1>
-        <Button
-          variant="outline"
-          onClick={() => changeRoute(`/licenses/${id}/edit`)}
-        >
-          <IconEdit className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
+        <PermissionGate permission="license.update">
+          <Button
+            variant="outline"
+            onClick={() => changeRoute(`/licenses/${id}/edit`)}
+          >
+            <IconEdit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        </PermissionGate>
       </div>
 
       <Card>
@@ -174,22 +222,24 @@ export default function LicenseDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Contracts</CardTitle>
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleUpload}
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-              />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                <IconUpload className="mr-2 h-4 w-4" />
-                {uploading ? "Uploading..." : "Upload Contract"}
-              </Button>
-            </div>
+            <PermissionGate permission="contract.upload">
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={handleUpload}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <IconUpload className="mr-2 h-4 w-4" />
+                  {uploading ? "Uploading..." : "Upload Contract"}
+                </Button>
+              </div>
+            </PermissionGate>
           </div>
         </CardHeader>
         <CardContent>

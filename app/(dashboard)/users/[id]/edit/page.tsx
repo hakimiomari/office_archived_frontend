@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useUsers } from "@/config/users/users";
 import { useRoles, RoleType } from "@/config/users/roles";
+import { RouteGuard } from "@/components/route-guard";
 import { nextRoute } from "@/lib/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +77,7 @@ export default function EditUserPage() {
   }
 
   return (
+    <RouteGuard permission="user.update">
     <div className="flex flex-col gap-4 p-4 md:p-6">
       <Card className="max-w-2xl">
         <CardHeader>
@@ -146,5 +148,6 @@ export default function EditUserPage() {
         </CardContent>
       </Card>
     </div>
+    </RouteGuard>
   );
 }

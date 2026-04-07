@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   IconFileTypePdf,
   IconFileSpreadsheet,
@@ -44,6 +45,8 @@ import { LicenseStatusChart } from "@/components/reports/license-status-chart";
 import { LicenseTypeChart } from "@/components/reports/license-type-chart";
 import { ProvinceChart } from "@/components/reports/province-chart";
 import { MonthlyTrendChart } from "@/components/reports/monthly-trend-chart";
+import { PermissionGate } from "@/components/permission-gate";
+import { RouteGuard } from "@/components/route-guard";
 
 type ChartData = {
   byProvince: { province: string; count: number }[];
@@ -113,6 +116,7 @@ export default function ReportsPage() {
   };
 
   return (
+    <RouteGuard permission="report.view">
     <div className="flex flex-col gap-6 p-4 md:p-6">
       <h1 className="text-2xl font-bold">License Reports</h1>
 
@@ -272,35 +276,37 @@ export default function ReportsPage() {
       </Card>
 
       {/* Export Buttons */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-muted-foreground">
-          Export:
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => exportReport(filters, "pdf")}
-        >
-          <IconFileTypePdf className="mr-2 h-4 w-4 text-red-600" />
-          PDF
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => exportReport(filters, "excel")}
-        >
-          <IconFileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
-          Excel
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => exportReport(filters, "csv")}
-        >
-          <IconFileTypeCsv className="mr-2 h-4 w-4 text-blue-600" />
-          CSV
-        </Button>
-      </div>
+      <PermissionGate permission="report.export">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            Export:
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportReport(filters, "pdf")}
+          >
+            <IconFileTypePdf className="mr-2 h-4 w-4 text-red-600" />
+            PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportReport(filters, "excel")}
+          >
+            <IconFileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
+            Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportReport(filters, "csv")}
+          >
+            <IconFileTypeCsv className="mr-2 h-4 w-4 text-blue-600" />
+            CSV
+          </Button>
+        </div>
+      </PermissionGate>
 
       {/* Report Table */}
       <div className="overflow-x-auto rounded-md border">
@@ -320,11 +326,37 @@ export default function ReportsPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-6" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-36" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                </TableRow>
+              ))
             ) : licenses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center">
@@ -407,5 +439,6 @@ export default function ReportsPage() {
         </div>
       )}
     </div>
+    </RouteGuard>
   );
 }

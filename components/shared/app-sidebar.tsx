@@ -35,60 +35,50 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useUser } from "@/contexts/UserContext";
+import { usePermission } from "@/hooks/use-permission";
+
+// Each nav item can optionally require one or more permissions.
+// If `requiredPermissions` is not set, the item is always visible.
+// If set, user must have at least ONE of the listed permissions.
+const allNavItems = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: IconDashboard,
+    // Always visible — everyone can see the dashboard
+  },
+  {
+    title: "Office Archive",
+    url: "/office-archive",
+    icon: IconChartInfographic,
+  },
+  {
+    title: "Mining Licenses",
+    url: "/licenses",
+    icon: IconFileDescription,
+    requiredPermissions: ["license.read", "license.create"],
+  },
+  {
+    title: "Reports",
+    url: "/reports",
+    icon: IconReport,
+    requiredPermissions: ["report.view"],
+  },
+  {
+    title: "Users",
+    url: "/users",
+    icon: IconUsers,
+    requiredPermissions: ["user.read", "user.create"],
+  },
+  {
+    title: "Roles",
+    url: "/roles",
+    icon: IconShieldLock,
+    requiredPermissions: ["role.read", "role.create"],
+  },
+];
 
 const data = {
-  // user: {
-  //   name: "shadcn",
-  //   email: "m@example.com",
-  //   avatar: "/avatars/shadcn.jpg",
-  // },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Office Archive",
-      url: "/office-archive",
-      icon: IconChartInfographic,
-    },
-    {
-      title: "Mining Licenses",
-      url: "/licenses",
-      icon: IconFileDescription,
-    },
-    {
-      title: "Reports",
-      url: "/reports",
-      icon: IconReport,
-    },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Users",
-      url: "/users",
-      icon: IconUsers,
-    },
-    {
-      title: "Roles",
-      url: "/roles",
-      icon: IconShieldLock,
-    },
-  ],
   navClouds: [
     {
       title: "Capture",
@@ -96,14 +86,8 @@ const data = {
       isActive: true,
       url: "#",
       items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
+        { title: "Active Proposals", url: "#" },
+        { title: "Archived", url: "#" },
       ],
     },
     {
@@ -111,14 +95,8 @@ const data = {
       icon: IconFileDescription,
       url: "#",
       items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
+        { title: "Active Proposals", url: "#" },
+        { title: "Archived", url: "#" },
       ],
     },
     {
@@ -126,55 +104,33 @@ const data = {
       icon: IconFileAi,
       url: "#",
       items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
+        { title: "Active Proposals", url: "#" },
+        { title: "Archived", url: "#" },
       ],
     },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
+    { title: "Settings", url: "#", icon: IconSettings },
+    { title: "Get Help", url: "#", icon: IconHelp },
+    { title: "Search", url: "#", icon: IconSearch },
   ],
   documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
+    { name: "Data Library", url: "#", icon: IconDatabase },
+    { name: "Reports", url: "#", icon: IconReport },
+    { name: "Word Assistant", url: "#", icon: IconFileWord },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
+  const { canAny } = usePermission();
+
+  // Filter nav items based on user permissions
+  const visibleNavItems = allNavItems.filter((item) => {
+    if (!item.requiredPermissions) return true;
+    return canAny(...item.requiredPermissions);
+  });
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -193,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={visibleNavItems} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
