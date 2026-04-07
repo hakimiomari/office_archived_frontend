@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRoles, RoleType, PermissionType } from "@/config/users/roles";
 import { PermissionGate } from "@/components/permission-gate";
 import { RouteGuard } from "@/components/route-guard";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +62,10 @@ export default function RolesPage() {
     description: "",
     permissionIds: [] as number[],
   });
+
+  // Delete confirm state
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -135,11 +140,13 @@ export default function RolesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this role?")) {
-      const success = await deleteRole(id);
-      if (success) fetchData();
-    }
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    const success = await deleteRole(deleteId);
+    setDeleting(false);
+    setDeleteId(null);
+    if (success) fetchData();
   };
 
   // Helper: get permission ID by module.action name
@@ -271,7 +278,7 @@ export default function RolesPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-red-600"
-                              onClick={() => handleDelete(role.id)}
+                              onClick={() => setDeleteId(role.id)}
                             >
                               <IconTrash className="h-4 w-4" />
                             </Button>
@@ -539,6 +546,15 @@ export default function RolesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Role"
+        description="This will permanently delete this role. Users assigned to this role will lose its permissions. This action cannot be undone."
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </div>
     </RouteGuard>
   );

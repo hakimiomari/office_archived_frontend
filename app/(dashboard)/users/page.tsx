@@ -49,6 +49,7 @@ import { settings } from "@/config/settings";
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type UserFormData = {
   name: string;
@@ -82,6 +83,10 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [form, setForm] = useState<UserFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  // Delete confirm state
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchUsers = async (p = page, s = search) => {
     setLoading(true);
@@ -155,11 +160,13 @@ export default function UsersPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      const success = await deleteUser(id);
-      if (success) fetchUsers();
-    }
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    const success = await deleteUser(deleteId);
+    setDeleting(false);
+    setDeleteId(null);
+    if (success) fetchUsers();
   };
 
   return (
@@ -284,7 +291,7 @@ export default function UsersPage() {
                           )}
                           {can("user.delete") && (
                             <DropdownMenuItem
-                              onClick={() => handleDelete(user.id)}
+                              onClick={() => setDeleteId(user.id)}
                               className="text-red-600"
                             >
                               <IconTrash className="mr-2 h-4 w-4" />
@@ -449,6 +456,15 @@ export default function UsersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete User"
+        description="This will permanently delete this user account. This action cannot be undone."
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </RouteGuard>
   );
 }

@@ -48,6 +48,7 @@ import {
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type LicenseFormData = {
   licenseNumber: string;
@@ -85,6 +86,10 @@ export default function LicensesPage() {
   const [editingLicense, setEditingLicense] = useState<LicenseType | null>(null);
   const [form, setForm] = useState<LicenseFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  // Delete confirm state
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     getLicenses(page, 10, search);
@@ -135,11 +140,13 @@ export default function LicensesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this license?")) {
-      const success = await deleteLicense(id);
-      if (success) getLicenses(page, 10, search);
-    }
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    const success = await deleteLicense(deleteId);
+    setDeleting(false);
+    setDeleteId(null);
+    if (success) getLicenses(page, 10, search);
   };
 
   const handleChange = (field: keyof LicenseFormData, value: string) => {
@@ -266,7 +273,7 @@ export default function LicensesPage() {
                           )}
                           {can("license.delete") && (
                             <DropdownMenuItem
-                              onClick={() => handleDelete(lic.id)}
+                              onClick={() => setDeleteId(lic.id)}
                               className="text-red-600"
                             >
                               <IconTrash className="mr-2 h-4 w-4" />
@@ -443,6 +450,15 @@ export default function LicensesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete License"
+        description="This will permanently delete this license and all its associated contracts. This action cannot be undone."
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </RouteGuard>
   );
 }

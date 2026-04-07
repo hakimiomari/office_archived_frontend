@@ -30,6 +30,7 @@ import {
 } from "@tabler/icons-react";
 import { PermissionGate } from "@/components/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function LicenseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +42,10 @@ export default function LicenseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete confirm state
+  const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -70,12 +75,14 @@ export default function LicenseDetailPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDeleteContract = async (contractId: string) => {
-    if (confirm("Delete this contract?")) {
-      const success = await deleteContract(id, contractId);
-      if (success) {
-        setContracts((prev) => prev.filter((c) => c.id !== contractId));
-      }
+  const handleDeleteContract = async () => {
+    if (!deleteContractId) return;
+    setDeleting(true);
+    const success = await deleteContract(id, deleteContractId);
+    setDeleting(false);
+    setDeleteContractId(null);
+    if (success) {
+      setContracts((prev) => prev.filter((c) => c.id !== deleteContractId));
     }
   };
 
@@ -284,7 +291,7 @@ export default function LicenseDetailPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-600"
-                        onClick={() => handleDeleteContract(contract.id)}
+                        onClick={() => setDeleteContractId(contract.id)}
                       >
                         <IconTrash className="h-4 w-4" />
                       </Button>
@@ -296,6 +303,15 @@ export default function LicenseDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={!!deleteContractId}
+        onOpenChange={(open) => !open && setDeleteContractId(null)}
+        title="Delete Contract"
+        description="This will permanently delete this contract file. This action cannot be undone."
+        onConfirm={handleDeleteContract}
+        loading={deleting}
+      />
     </div>
   );
 }
