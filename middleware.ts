@@ -20,5 +20,11 @@ export const config = {
     "/users",
     "/vehicles",
     "/office-archive",
+    "/licenses",
+    "/licenses/:path*",
+    "/reports",
+    "/users/:path*",
+    "/roles",
+    "/profile",
   ],
 };

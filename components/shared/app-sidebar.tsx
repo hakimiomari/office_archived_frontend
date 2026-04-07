@@ -18,6 +18,7 @@ import {
   IconSettings,
   IconUsers,
   IconChartInfographic,
+  IconShieldLock,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -53,6 +54,16 @@ const data = {
       icon: IconChartInfographic,
     },
     {
+      title: "Mining Licenses",
+      url: "/licenses",
+      icon: IconFileDescription,
+    },
+    {
+      title: "Reports",
+      url: "/reports",
+      icon: IconReport,
+    },
+    {
       title: "Lifecycle",
       url: "#",
       icon: IconListDetails,
@@ -68,9 +79,14 @@ const data = {
       icon: IconFolder,
     },
     {
-      title: "Team",
-      url: "#",
+      title: "Users",
+      url: "/users",
       icon: IconUsers,
+    },
+    {
+      title: "Roles",
+      url: "/roles",
+      icon: IconShieldLock,
     },
   ],
   navClouds: [
