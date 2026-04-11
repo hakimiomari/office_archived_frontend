@@ -108,5 +108,20 @@ export const useUsers = () => {
     }
   };
 
-  return { getUsers, getUser, createUser, updateUser, deleteUser, updateProfile, changePassword };
+  const uploadProfilePicture = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await api.post("user/profile/upload-picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("Profile picture updated successfully");
+      return response.data;
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to upload profile picture");
+      return null;
+    }
+  };
+
+  return { getUsers, getUser, createUser, updateUser, deleteUser, updateProfile, changePassword, uploadProfilePicture };
 };
