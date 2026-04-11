@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from "react";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import React from "react";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/config/auth";
 import { Button } from "@/components/ui/button";
 
@@ -11,68 +11,22 @@ const GOOGLE_CLIENT_ID =
 
 function GoogleLoginButton() {
   const { googleAuth, isGoogleLoading } = useAuth();
-  const initialized = useRef(false);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      const google = (window as any).google;
-      if (google?.accounts?.id) {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: (response: any) => {
-            googleAuth({ credential: response.credential });
-          },
-          cancel_on_tap_outside: true,
-          use_fedcm_for_prompt: false,
-        });
-        initialized.current = true;
-      }
-    };
-    document.head.appendChild(script);
-    return () => {
-      try {
-        document.head.removeChild(script);
-      } catch {}
-    };
-  }, []);
-
-  const handleClick = useCallback(() => {
-    if (isGoogleLoading) return;
-    const google = (window as any).google;
-    if (google?.accounts?.id && initialized.current) {
-      google.accounts.id.prompt((notification: any) => {
-        // If One Tap is not available (dismissed, cooldown, etc), fall back to button flow
-        if (
-          notification.isNotDisplayed() ||
-          notification.isSkippedMoment() ||
-          notification.isDismissedMoment()
-        ) {
-          // Render a hidden Google sign-in button and click it
-          const btnDiv = document.createElement("div");
-          btnDiv.style.display = "none";
-          document.body.appendChild(btnDiv);
-          google.accounts.id.renderButton(btnDiv, {
-            type: "icon",
-            size: "large",
-          });
-          const btn = btnDiv.querySelector('[role="button"]') as HTMLElement;
-          if (btn) btn.click();
-          setTimeout(() => document.body.removeChild(btnDiv), 1000);
-        }
-      });
-    }
-  }, [isGoogleLoading]);
+  const login = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      googleAuth({ credential: tokenResponse.access_token });
+    },
+    onError: () => {
+      // handled via toast in auth hook
+    },
+  });
 
   return (
     <Button
       variant="outline"
       className="w-full flex justify-center cursor-pointer"
       type="button"
-      onClick={handleClick}
+      onClick={() => login()}
       disabled={isGoogleLoading}
     >
       {isGoogleLoading ? (
