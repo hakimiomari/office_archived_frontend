@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser } = useUser();
+  const { setUser, fetchProfile } = useUser();
   const router = useRouter();
 
   // login
@@ -16,8 +16,8 @@ export const useAuth = () => {
     try {
       const response = await api.post("auth/sign-in", loginInfo);
       if (response.status == 201) {
+        await fetchProfile();
         router.push("/dashboard");
-        setUser(response.data.user);
       }
     } catch (error) {
       toast.error("Invalid Credentials");
@@ -52,7 +52,7 @@ export const useAuth = () => {
         { token: response.credential },
         { headers: { "Content-Type": "application/json" } }
       );
-      setUser(res.data.user);
+      await fetchProfile();
       router.push("/dashboard");
     } catch (error: any) {
       toast.error(

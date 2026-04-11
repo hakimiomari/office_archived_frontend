@@ -19,6 +19,7 @@ type UserContextType = {
   permissions: string[];
   roles: string[];
   loading: boolean;
+  fetchProfile: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -30,34 +31,35 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get("user/profile");
-        const userData = response.data.user;
-        setUser(userData);
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get("user/profile");
+      const userData = response.data.user;
+      setUser(userData);
 
-        // Extract permissions from all roles
-        if (userData.roles) {
-          const allPerms = userData.roles.flatMap(
-            (r: any) => r.permissions?.map((p: any) => p.name) || []
-          );
-          setPermissions([...new Set(allPerms)] as string[]);
-          setRoles(userData.roles.map((r: any) => r.name));
-        }
-      } finally {
-        setLoading(false);
+      // Extract permissions from all roles
+      if (userData.roles) {
+        const allPerms = userData.roles.flatMap(
+          (r: any) => r.permissions?.map((p: any) => p.name) || []
+        );
+        setPermissions([...new Set(allPerms)] as string[]);
+        setRoles(userData.roles.map((r: any) => r.name));
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (pathname !== "/") {
-      fetchData();
+      fetchProfile();
     } else {
       setLoading(false);
     }
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, permissions, roles, loading }}>
+    <UserContext.Provider value={{ user, setUser, permissions, roles, loading, fetchProfile }}>
       {children}
     </UserContext.Provider>
   );
