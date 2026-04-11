@@ -49,6 +49,17 @@ import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
+import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 
 type LicenseFormData = {
   licenseNumber: string;
@@ -72,6 +83,19 @@ const emptyForm: LicenseFormData = {
   district: "",
 };
 
+const statusColor = (status: string) => {
+  switch (status) {
+    case "ACTIVE":
+      return "default";
+    case "EXPIRED":
+      return "destructive";
+    case "SUSPENDED":
+      return "secondary";
+    default:
+      return "outline";
+  }
+};
+
 export default function LicensesPage() {
   const { getLicenses, getLicense, createLicense, updateLicense, deleteLicense } =
     useLicenses();
@@ -81,6 +105,10 @@ export default function LicensesPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  // Table state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   // Modal state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -154,18 +182,125 @@ export default function LicensesPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const statusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "default";
-      case "EXPIRED":
-        return "destructive";
-      case "SUSPENDED":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
+  const columns: ColumnDef<LicenseType>[] = [
+    {
+      id: "index",
+      header: "#",
+      cell: ({ row }) =>
+        ((meta?.page || 1) - 1) * (meta?.limit || 10) + row.index + 1,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "licenseNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="License No." />
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.getValue("licenseNumber")}</span>
+      ),
+    },
+    {
+      accessorKey: "companyName",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Company" />
+      ),
+    },
+    {
+      accessorKey: "licenseType",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Type" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant="outline">{row.getValue("licenseType")}</Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant={statusColor(row.getValue("status"))}>
+          {row.getValue("status")}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "province",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Province" />
+      ),
+    },
+    {
+      accessorKey: "issueDate",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Issue Date" />
+      ),
+      cell: ({ row }) =>
+        new Date(row.getValue("issueDate")).toLocaleDateString(),
+    },
+    {
+      accessorKey: "expiryDate",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Expiry Date" />
+      ),
+      cell: ({ row }) =>
+        new Date(row.getValue("expiryDate")).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      enableHiding: false,
+      cell: ({ row }) => {
+        const lic = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <IconDotsVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => changeRoute(`/licenses/${lic.id}`)}
+              >
+                <IconEye className="mr-2 h-4 w-4" />
+                View
+              </DropdownMenuItem>
+              {can("license.update") && (
+                <DropdownMenuItem onClick={() => openEdit(lic.id)}>
+                  <IconEdit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {can("license.delete") && (
+                <DropdownMenuItem
+                  onClick={() => setDeleteId(lic.id)}
+                  className="text-red-600"
+                >
+                  <IconTrash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: licenses,
+    columns,
+    state: { sorting, columnVisibility },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+  });
 
   return (
     <RouteGuard permission="license.read">
@@ -180,110 +315,71 @@ export default function LicensesPage() {
           </PermissionGate>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search by license number, company, or province..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="max-w-md"
-          />
-          <Button variant="outline" onClick={handleSearch}>
-            Search
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Search by license number, company, or province..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="max-w-md"
+            />
+            <Button variant="outline" onClick={handleSearch}>
+              Search
+            </Button>
+          </div>
+          <DataTableViewOptions table={table} />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="px-4 py-2">#</TableHead>
-                <TableHead className="px-4 py-2">License No.</TableHead>
-                <TableHead className="px-4 py-2">Company</TableHead>
-                <TableHead className="px-4 py-2">Type</TableHead>
-                <TableHead className="px-4 py-2">Status</TableHead>
-                <TableHead className="px-4 py-2">Province</TableHead>
-                <TableHead className="px-4 py-2">Issue Date</TableHead>
-                <TableHead className="px-4 py-2">Expiry Date</TableHead>
-                <TableHead className="px-4 py-2">Actions</TableHead>
-              </TableRow>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="px-4 py-2">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-6" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-28" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-36" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                    {table.getVisibleFlatColumns().map((col) => (
+                      <TableCell key={col.id} className="px-4 py-3">
+                        <Skeleton className="h-4 w-full max-w-[120px]" />
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
-              ) : licenses.length === 0 ? (
+              ) : table.getRowModel().rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
+                  <TableCell
+                    colSpan={table.getVisibleFlatColumns().length}
+                    className="h-24 text-center"
+                  >
                     No licenses found.
                   </TableCell>
                 </TableRow>
               ) : (
-                licenses.map((lic: LicenseType, index: number) => (
-                  <TableRow key={lic.id}>
-                    <TableCell className="px-4 py-2">
-                      {((meta?.page || 1) - 1) * (meta?.limit || 10) + index + 1}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 font-medium">
-                      {lic.licenseNumber}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">{lic.companyName}</TableCell>
-                    <TableCell className="px-4 py-2">
-                      <Badge variant="outline">{lic.licenseType}</Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <Badge variant={statusColor(lic.status)}>{lic.status}</Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">{lic.province}</TableCell>
-                    <TableCell className="px-4 py-2">
-                      {new Date(lic.issueDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {new Date(lic.expiryDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <IconDotsVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => changeRoute(`/licenses/${lic.id}`)}
-                          >
-                            <IconEye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          {can("license.update") && (
-                            <DropdownMenuItem onClick={() => openEdit(lic.id)}>
-                              <IconEdit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                          )}
-                          {can("license.delete") && (
-                            <DropdownMenuItem
-                              onClick={() => setDeleteId(lic.id)}
-                              className="text-red-600"
-                            >
-                              <IconTrash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-2">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               )}
@@ -295,11 +391,14 @@ export default function LicensesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                Showing {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
+                Showing{" "}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
                 {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
               </p>
               <div className="flex items-center gap-1">
-                <span className="text-sm text-muted-foreground">| Rows per page:</span>
+                <span className="text-sm text-muted-foreground">
+                  | Rows per page:
+                </span>
                 <Select
                   value={`${limit}`}
                   onValueChange={(value) => {
@@ -386,7 +485,9 @@ export default function LicensesPage() {
                   value={form.licenseType}
                   onValueChange={(v) => handleChange("licenseType", v)}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="SMALL">Small Scale</SelectItem>
                     <SelectItem value="LARGE">Large Scale</SelectItem>
@@ -399,7 +500,9 @@ export default function LicensesPage() {
                   value={form.status}
                   onValueChange={(v) => handleChange("status", v)}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ACTIVE">Active</SelectItem>
                     <SelectItem value="EXPIRED">Expired</SelectItem>

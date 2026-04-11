@@ -50,6 +50,17 @@ import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
+import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 
 type UserFormData = {
   name: string;
@@ -78,6 +89,10 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  // Table state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   // Modal state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -170,6 +185,131 @@ export default function UsersPage() {
     if (success) fetchUsers();
   };
 
+  const columns: ColumnDef<UserType>[] = [
+    {
+      id: "index",
+      header: "#",
+      cell: ({ row }) =>
+        ((meta?.page || 1) - 1) * (meta?.limit || 10) + row.index + 1,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="User" />
+      ),
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={user.profile_picture || undefined}
+                alt={user.name}
+              />
+              <AvatarFallback>{getNameInitials(user.name)}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{user.name}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Email" />
+      ),
+    },
+    {
+      id: "roles",
+      header: "Roles",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {user.roles.map((role) => (
+              <Badge key={role.id} variant="secondary">
+                {role.name}
+              </Badge>
+            ))}
+            {user.roles.length === 0 && (
+              <span className="text-sm text-muted-foreground">No role</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "authMethod",
+      header: "Auth Method",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <Badge variant={user.googleId ? "outline" : "default"}>
+            {user.googleId ? "Google" : "Email"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Created" />
+      ),
+      cell: ({ row }) =>
+        new Date(row.getValue("created_at")).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      enableHiding: false,
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <IconDotsVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {can("user.update") && (
+                <DropdownMenuItem onClick={() => openEdit(user)}>
+                  <IconEdit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {can("user.delete") && (
+                <DropdownMenuItem
+                  onClick={() => setDeleteId(user.id)}
+                  className="text-red-600"
+                >
+                  <IconTrash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: users,
+    columns,
+    state: { sorting, columnVisibility },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+  });
+
   return (
     <RouteGuard permission="user.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
@@ -183,125 +323,71 @@ export default function UsersPage() {
           </PermissionGate>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="max-w-md"
-          />
-          <Button variant="outline" onClick={handleSearch}>
-            Search
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="max-w-md"
+            />
+            <Button variant="outline" onClick={handleSearch}>
+              Search
+            </Button>
+          </div>
+          <DataTableViewOptions table={table} />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="px-4 py-2">#</TableHead>
-                <TableHead className="px-4 py-2">User</TableHead>
-                <TableHead className="px-4 py-2">Email</TableHead>
-                <TableHead className="px-4 py-2">Roles</TableHead>
-                <TableHead className="px-4 py-2">Auth Method</TableHead>
-                <TableHead className="px-4 py-2">Created</TableHead>
-                <TableHead className="px-4 py-2">Actions</TableHead>
-              </TableRow>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="px-4 py-2">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-6" /></TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <Skeleton className="h-4 w-28" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-40" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="px-4 py-3"><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                    {table.getVisibleFlatColumns().map((col) => (
+                      <TableCell key={col.id} className="px-4 py-3">
+                        <Skeleton className="h-4 w-full max-w-[120px]" />
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
-              ) : users.length === 0 ? (
+              ) : table.getRowModel().rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell
+                    colSpan={table.getVisibleFlatColumns().length}
+                    className="h-24 text-center"
+                  >
                     No users found.
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user, index) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="px-4 py-2">
-                      {((meta?.page || 1) - 1) * (meta?.limit || 10) + index + 1}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage
-                            src={user.profile_picture || undefined}
-                            alt={user.name}
-                          />
-                          <AvatarFallback>
-                            {getNameInitials(user.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">{user.email}</TableCell>
-                    <TableCell className="px-4 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles.map((role) => (
-                          <Badge key={role.id} variant="secondary">
-                            {role.name}
-                          </Badge>
-                        ))}
-                        {user.roles.length === 0 && (
-                          <span className="text-sm text-muted-foreground">
-                            No role
-                          </span>
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-2">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <Badge variant={user.googleId ? "outline" : "default"}>
-                        {user.googleId ? "Google" : "Email"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <IconDotsVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {can("user.update") && (
-                            <DropdownMenuItem onClick={() => openEdit(user)}>
-                              <IconEdit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                          )}
-                          {can("user.delete") && (
-                            <DropdownMenuItem
-                              onClick={() => setDeleteId(user.id)}
-                              className="text-red-600"
-                            >
-                              <IconTrash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               )}
@@ -313,11 +399,14 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                Showing {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
+                Showing{" "}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
                 {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
               </p>
               <div className="flex items-center gap-1">
-                <span className="text-sm text-muted-foreground">| Rows per page:</span>
+                <span className="text-sm text-muted-foreground">
+                  | Rows per page:
+                </span>
                 <Select
                   value={`${limit}`}
                   onValueChange={(value) => {
