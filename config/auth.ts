@@ -42,25 +42,26 @@ export const useAuth = () => {
   };
 
   // google login
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
   const googleAuth = async (response: any) => {
-    await api
-      .post(
+    setIsGoogleLoading(true);
+    try {
+      const res = await api.post(
         "google-authentication/google-login",
-        {
-          token: response.credential,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      )
-      .then((response) => {
-        router.push("/dashboard");
-        setUser(response.data.user);
-      })
-      .catch((error) => console.log(error));
+        { token: response.credential },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      setUser(res.data.user);
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Google sign in failed. Please try again."
+      );
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
-  return { login, logout, googleAuth, isLoading };
+  return { login, logout, googleAuth, isLoading, isGoogleLoading };
 };
