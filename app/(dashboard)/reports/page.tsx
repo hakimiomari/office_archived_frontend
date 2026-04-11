@@ -90,7 +90,7 @@ export default function ReportsPage() {
   };
 
   const resetFilters = () => {
-    const reset: ReportFilters = { page: 1, limit: 10 };
+    const reset: ReportFilters = { page: 1, limit: filters.limit || 10 };
     setFilters(reset);
     getLicenseReport(reset);
     fetchChartData(reset);
@@ -397,12 +397,37 @@ export default function ReportsPage() {
       </div>
 
       {/* Pagination */}
-      {meta && meta.totalPages > 1 && (
+      {meta && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {(meta.page - 1) * meta.limit + 1} to{" "}
-            {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
+              {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+            </p>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-muted-foreground">| Rows per page:</span>
+              <Select
+                value={`${filters.limit || 10}`}
+                onValueChange={(value) => {
+                  const updated = { ...filters, limit: Number(value), page: 1 };
+                  setFilters(updated);
+                  getLicenseReport(updated);
+                  fetchChartData(updated);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 50, 100, 500, 1000].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

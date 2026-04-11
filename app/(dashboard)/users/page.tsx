@@ -77,6 +77,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Modal state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -88,9 +89,9 @@ export default function UsersPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchUsers = async (p = page, s = search) => {
+  const fetchUsers = async (p = page, l = limit, s = search) => {
     setLoading(true);
-    const result = await getUsers(p, 10, s);
+    const result = await getUsers(p, l, s);
     setUsers(result.data);
     setMeta(result.meta);
     setLoading(false);
@@ -99,11 +100,11 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers();
     getRoles().then(setAllRoles);
-  }, [page]);
+  }, [page, limit]);
 
   const handleSearch = () => {
     setPage(1);
-    fetchUsers(1, search);
+    fetchUsers(1, limit, search);
   };
 
   const openCreate = () => {
@@ -308,12 +309,35 @@ export default function UsersPage() {
           </Table>
         </div>
 
-        {meta && meta.totalPages > 1 && (
+        {meta && (
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {(meta.page - 1) * meta.limit + 1} to{" "}
-              {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+              </p>
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-muted-foreground">| Rows per page:</span>
+                <Select
+                  value={`${limit}`}
+                  onValueChange={(value) => {
+                    setLimit(Number(value));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 50, 100, 500, 1000].map((size) => (
+                      <SelectItem key={size} value={`${size}`}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"

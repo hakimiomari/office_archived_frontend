@@ -80,6 +80,7 @@ export default function LicensesPage() {
   const { can } = usePermission();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Modal state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -92,12 +93,12 @@ export default function LicensesPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getLicenses(page, 10, search);
-  }, [page]);
+    getLicenses(page, limit, search);
+  }, [page, limit]);
 
   const handleSearch = () => {
     setPage(1);
-    getLicenses(1, 10, search);
+    getLicenses(1, limit, search);
   };
 
   const openCreate = () => {
@@ -136,7 +137,7 @@ export default function LicensesPage() {
     setSaving(false);
     if (result) {
       setDialogOpen(false);
-      getLicenses(page, 10, search);
+      getLicenses(page, limit, search);
     }
   };
 
@@ -146,7 +147,7 @@ export default function LicensesPage() {
     const success = await deleteLicense(deleteId);
     setDeleting(false);
     setDeleteId(null);
-    if (success) getLicenses(page, 10, search);
+    if (success) getLicenses(page, limit, search);
   };
 
   const handleChange = (field: keyof LicenseFormData, value: string) => {
@@ -290,12 +291,35 @@ export default function LicensesPage() {
           </Table>
         </div>
 
-        {meta && meta.totalPages > 1 && (
+        {meta && (
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {(meta.page - 1) * meta.limit + 1} to{" "}
-              {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+              </p>
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-muted-foreground">| Rows per page:</span>
+                <Select
+                  value={`${limit}`}
+                  onValueChange={(value) => {
+                    setLimit(Number(value));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 50, 100, 500, 1000].map((size) => (
+                      <SelectItem key={size} value={`${size}`}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"

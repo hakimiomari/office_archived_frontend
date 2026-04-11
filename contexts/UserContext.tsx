@@ -18,6 +18,7 @@ type UserContextType = {
   setUser: React.Dispatch<React.SetStateAction<any>>;
   permissions: string[];
   roles: string[];
+  loading: boolean;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -26,11 +27,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
     const fetchData = async () => {
-      await api.get("user/profile").then((response) => {
+      try {
+        const response = await api.get("user/profile");
         const userData = response.data.user;
         setUser(userData);
 
@@ -42,15 +45,19 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           setPermissions([...new Set(allPerms)] as string[]);
           setRoles(userData.roles.map((r: any) => r.name));
         }
-      });
+      } finally {
+        setLoading(false);
+      }
     };
     if (pathname !== "/") {
       fetchData();
+    } else {
+      setLoading(false);
     }
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, permissions, roles }}>
+    <UserContext.Provider value={{ user, setUser, permissions, roles, loading }}>
       {children}
     </UserContext.Provider>
   );
