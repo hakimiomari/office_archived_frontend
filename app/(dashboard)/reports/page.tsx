@@ -58,6 +58,7 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+import { useTranslations } from "next-intl";
 
 type ChartData = {
   byProvince: { province: string; count: number }[];
@@ -88,6 +89,9 @@ export default function ReportsPage() {
   const { getLicenseReport, exportReport, getChartData } = useReports();
   const { licenses, meta, aggregations, loading } = useLicense();
   const [chartData, setChartData] = useState<ChartData>(null);
+  const t = useTranslations("reports");
+  const tLicenses = useTranslations("licenses");
+  const tCommon = useTranslations("common");
 
   const [filters, setFilters] = useState<ReportFilters>({
     page: 1,
@@ -147,7 +151,7 @@ export default function ReportsPage() {
     {
       accessorKey: "licenseNumber",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="License No." />
+        <DataTableColumnHeader column={column} title={tLicenses("licenseNumber")} />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("licenseNumber")}</span>
@@ -156,13 +160,13 @@ export default function ReportsPage() {
     {
       accessorKey: "companyName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Company" />
+        <DataTableColumnHeader column={column} title={tLicenses("company")} />
       ),
     },
     {
       accessorKey: "licenseType",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Type" />
+        <DataTableColumnHeader column={column} title={tLicenses("type")} />
       ),
       cell: ({ row }) => (
         <Badge variant="outline">{row.getValue("licenseType")}</Badge>
@@ -171,7 +175,7 @@ export default function ReportsPage() {
     {
       accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader column={column} title={tCommon("status")} />
       ),
       cell: ({ row }) => (
         <Badge variant={statusColor(row.getValue("status"))}>
@@ -182,19 +186,19 @@ export default function ReportsPage() {
     {
       accessorKey: "province",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Province" />
+        <DataTableColumnHeader column={column} title={tLicenses("province")} />
       ),
     },
     {
       accessorKey: "district",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="District" />
+        <DataTableColumnHeader column={column} title={tLicenses("district")} />
       ),
     },
     {
       accessorKey: "issueDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Issue Date" />
+        <DataTableColumnHeader column={column} title={tLicenses("issueDate")} />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("issueDate")).toLocaleDateString(),
@@ -202,7 +206,7 @@ export default function ReportsPage() {
     {
       accessorKey: "expiryDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Expiry Date" />
+        <DataTableColumnHeader column={column} title={tLicenses("expiryDate")} />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("expiryDate")).toLocaleDateString(),
@@ -223,7 +227,7 @@ export default function ReportsPage() {
   return (
     <RouteGuard permission="report.view">
       <div className="flex flex-col gap-6 p-4 md:p-6">
-        <h1 className="text-2xl font-bold">License Reports</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -233,7 +237,7 @@ export default function ReportsPage() {
                 <IconLicense className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Licenses</p>
+                <p className="text-sm text-muted-foreground">{t("totalLicenses")}</p>
                 <p className="text-2xl font-bold">
                   {aggregations?.totalLicenses || 0}
                 </p>
@@ -246,7 +250,7 @@ export default function ReportsPage() {
                 <IconCheck className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-sm text-muted-foreground">{t("activeLicenses")}</p>
                 <p className="text-2xl font-bold">
                   {getStatusCount("ACTIVE")}
                 </p>
@@ -259,7 +263,7 @@ export default function ReportsPage() {
                 <IconAlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Expired</p>
+                <p className="text-sm text-muted-foreground">{t("expiredLicenses")}</p>
                 <p className="text-2xl font-bold">
                   {getStatusCount("EXPIRED")}
                 </p>
@@ -272,7 +276,7 @@ export default function ReportsPage() {
                 <IconBan className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Suspended</p>
+                <p className="text-sm text-muted-foreground">{t("suspendedLicenses")}</p>
                 <p className="text-2xl font-bold">
                   {getStatusCount("SUSPENDED")}
                 </p>
@@ -300,13 +304,13 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <IconFilter className="h-5 w-5" />
-              Filters
+              {t("filters")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <div className="space-y-2">
-                <Label>From Date</Label>
+                <Label>{t("fromDate")}</Label>
                 <Input
                   type="date"
                   value={filters.from || ""}
@@ -314,7 +318,7 @@ export default function ReportsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>To Date</Label>
+                <Label>{t("toDate")}</Label>
                 <Input
                   type="date"
                   value={filters.to || ""}
@@ -322,42 +326,42 @@ export default function ReportsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>License Type</Label>
+                <Label>{t("licenseType")}</Label>
                 <Select
                   value={filters.licenseType || "ALL"}
                   onValueChange={(v) => handleFilterChange("licenseType", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All Types" />
+                    <SelectValue placeholder={t("allTypes")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All Types</SelectItem>
-                    <SelectItem value="SMALL">Small Scale</SelectItem>
-                    <SelectItem value="LARGE">Large Scale</SelectItem>
+                    <SelectItem value="ALL">{t("allTypes")}</SelectItem>
+                    <SelectItem value="SMALL">{tLicenses("smallScale")}</SelectItem>
+                    <SelectItem value="LARGE">{tLicenses("largeScale")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t("status")}</Label>
                 <Select
                   value={filters.status || "ALL"}
                   onValueChange={(v) => handleFilterChange("status", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
+                    <SelectValue placeholder={t("allStatuses")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All Statuses</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="EXPIRED">Expired</SelectItem>
-                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                    <SelectItem value="ALL">{t("allStatuses")}</SelectItem>
+                    <SelectItem value="ACTIVE">{tLicenses("active")}</SelectItem>
+                    <SelectItem value="EXPIRED">{tLicenses("expired")}</SelectItem>
+                    <SelectItem value="SUSPENDED">{tLicenses("suspended")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Company Name</Label>
+                <Label>{t("companyName")}</Label>
                 <Input
-                  placeholder="Search company..."
+                  placeholder={t("searchCompany")}
                   value={filters.companyName || ""}
                   onChange={(e) =>
                     handleFilterChange("companyName", e.target.value)
@@ -365,9 +369,9 @@ export default function ReportsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Province</Label>
+                <Label>{t("province")}</Label>
                 <Input
-                  placeholder="Search province..."
+                  placeholder={t("searchProvince")}
                   value={filters.province || ""}
                   onChange={(e) =>
                     handleFilterChange("province", e.target.value)
@@ -376,9 +380,9 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <Button onClick={applyFilters}>Apply Filters</Button>
+              <Button onClick={applyFilters}>{t("applyFilters")}</Button>
               <Button variant="outline" onClick={resetFilters}>
-                Reset
+                {tCommon("reset")}
               </Button>
             </div>
           </CardContent>
@@ -389,7 +393,7 @@ export default function ReportsPage() {
           <PermissionGate permission="report.export">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-muted-foreground">
-                Export:
+                {t("export")}:
               </span>
               <Button
                 variant="outline"
@@ -456,7 +460,7 @@ export default function ReportsPage() {
                     colSpan={table.getVisibleFlatColumns().length}
                     className="h-24 text-center"
                   >
-                    No results found.
+                    {t("noReportResults")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -482,13 +486,13 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                Showing{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+                {tCommon("showing")}{" "}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")} {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">
-                  | Rows per page:
+                  | {tCommon("rowsPerPage")}:
                 </span>
                 <Select
                   value={`${filters.limit || 10}`}
@@ -529,10 +533,10 @@ export default function ReportsPage() {
                 }
               >
                 <IconChevronLeft className="h-4 w-4" />
-                Previous
+                {tCommon("previous")}
               </Button>
               <span className="text-sm">
-                Page {meta.page} of {meta.totalPages}
+                {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
               </span>
               <Button
                 variant="outline"
@@ -545,7 +549,7 @@ export default function ReportsPage() {
                   }))
                 }
               >
-                Next
+                {tCommon("next")}
                 <IconChevronRight className="h-4 w-4" />
               </Button>
             </div>

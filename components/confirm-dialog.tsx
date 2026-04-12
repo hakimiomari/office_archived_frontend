@@ -3,6 +3,9 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { IconAlertTriangle, IconX } from "@tabler/icons-react";
+import { useLocale } from "@/contexts/LocaleContext";
+import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -19,15 +22,22 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   open,
   onOpenChange,
-  title = "Are you sure?",
-  description = "This action cannot be undone.",
-  confirmLabel = "Delete",
-  cancelLabel = "Cancel",
+  title,
+  description,
+  confirmLabel,
+  cancelLabel,
   variant = "destructive",
   onConfirm,
   loading = false,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const { dir } = useLocale();
+  const tCommon = useTranslations("common");
+
+  const finalTitle = title ?? tCommon("confirm");
+  const finalDescription = description ?? "";
+  const finalConfirmLabel = confirmLabel ?? tCommon("delete");
+  const finalCancelLabel = cancelLabel ?? tCommon("cancel");
 
   // Close on Escape key
   useEffect(() => {
@@ -54,12 +64,16 @@ export function ConfirmDialog({
         ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
+        dir={dir}
         className="relative z-[101] w-full max-w-md rounded-lg border bg-background p-6 shadow-lg animate-in fade-in-0 zoom-in-95"
       >
         {/* Close button */}
         <button
           onClick={() => !loading && onOpenChange(false)}
-          className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100"
+          className={cn(
+            "absolute top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100",
+            dir === "rtl" ? "left-4" : "right-4"
+          )}
         >
           <IconX className="h-4 w-4" />
         </button>
@@ -72,8 +86,8 @@ export function ConfirmDialog({
             </div>
           )}
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold leading-none">{title}</h2>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <h2 className="text-lg font-semibold leading-none">{finalTitle}</h2>
+            <p className="text-sm text-muted-foreground">{finalDescription}</p>
           </div>
         </div>
 
@@ -84,14 +98,14 @@ export function ConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            {cancelLabel}
+            {finalCancelLabel}
           </Button>
           <Button
             variant={variant === "destructive" ? "destructive" : "default"}
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Deleting..." : confirmLabel}
+            {loading ? tCommon("deleting") : finalConfirmLabel}
           </Button>
         </div>
       </div>

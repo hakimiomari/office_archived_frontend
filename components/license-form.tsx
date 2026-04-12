@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LicenseType } from "@/contexts/LicenseContext";
+import { useTranslations } from "next-intl";
 
 type LicenseFormData = {
   licenseNumber: string;
@@ -43,6 +44,8 @@ export function LicenseForm({
   loading,
   title,
 }: LicenseFormProps) {
+  const t = useTranslations("licenses");
+  const tCommon = useTranslations("common");
   const [form, setForm] = useState<LicenseFormData>({
     licenseNumber: initialData?.licenseNumber || "",
     companyName: initialData?.companyName || "",
@@ -76,22 +79,22 @@ export function LicenseForm({
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="licenseNumber">License Number</Label>
+              <Label htmlFor="licenseNumber">{t("licenseNumber")}</Label>
               <Input
                 id="licenseNumber"
                 value={form.licenseNumber}
                 onChange={(e) => handleChange("licenseNumber", e.target.value)}
-                placeholder="LIC-2024-001"
+                placeholder={t("licenseNumberPlaceholder")}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
+              <Label htmlFor="companyName">{t("company")}</Label>
               <Input
                 id="companyName"
                 value={form.companyName}
                 onChange={(e) => handleChange("companyName", e.target.value)}
-                placeholder="Mining Corp"
+                placeholder={t("companyNamePlaceholder")}
                 required
               />
             </div>
@@ -99,7 +102,7 @@ export function LicenseForm({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>License Type</Label>
+              <Label>{t("licenseType")}</Label>
               <Select
                 value={form.licenseType}
                 onValueChange={(v) =>
@@ -110,13 +113,13 @@ export function LicenseForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SMALL">Small Scale</SelectItem>
-                  <SelectItem value="LARGE">Large Scale</SelectItem>
+                  <SelectItem value="SMALL">{t("smallScale")}</SelectItem>
+                  <SelectItem value="LARGE">{t("largeScale")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{tCommon("status")}</Label>
               <Select
                 value={form.status}
                 onValueChange={(v) => handleChange("status", v)}
@@ -125,9 +128,9 @@ export function LicenseForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="EXPIRED">Expired</SelectItem>
-                  <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                  <SelectItem value="ACTIVE">{t("active")}</SelectItem>
+                  <SelectItem value="EXPIRED">{t("expired")}</SelectItem>
+                  <SelectItem value="SUSPENDED">{t("suspended")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -135,7 +138,7 @@ export function LicenseForm({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="issueDate">Issue Date</Label>
+              <Label htmlFor="issueDate">{t("issueDate")}</Label>
               <Input
                 id="issueDate"
                 type="date"
@@ -145,7 +148,7 @@ export function LicenseForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Label htmlFor="expiryDate">{t("expiryDate")}</Label>
               <Input
                 id="expiryDate"
                 type="date"
@@ -158,22 +161,22 @@ export function LicenseForm({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="province">Province</Label>
+              <Label htmlFor="province">{t("province")}</Label>
               <Input
                 id="province"
                 value={form.province}
                 onChange={(e) => handleChange("province", e.target.value)}
-                placeholder="Kabul"
+                placeholder={t("provincePlaceholder")}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="district">District</Label>
+              <Label htmlFor="district">{t("district")}</Label>
               <Input
                 id="district"
                 value={form.district}
                 onChange={(e) => handleChange("district", e.target.value)}
-                placeholder="District 1"
+                placeholder={t("districtPlaceholder")}
                 required
               />
             </div>
@@ -182,10 +185,10 @@ export function LicenseForm({
           <div className="flex justify-end gap-2 pt-4">
             <Button type="submit" disabled={loading}>
               {loading
-                ? "Saving..."
+                ? tCommon("saving")
                 : initialData
-                  ? "Update License"
-                  : "Create License"}
+                  ? t("updateLicense")
+                  : t("createLicense")}
             </Button>
           </div>
         </form>

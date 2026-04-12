@@ -31,12 +31,15 @@ import {
 import { PermissionGate } from "@/components/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useTranslations } from "next-intl";
 
 export default function LicenseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { getLicense, uploadContract, getContracts, deleteContract } =
     useLicenses();
   const { changeRoute } = nextRoute();
+  const t = useTranslations("licenses");
+  const tCommon = useTranslations("common");
   const [license, setLicense] = useState<LicenseType | null>(null);
   const [contracts, setContracts] = useState<ContractType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +142,7 @@ export default function LicenseDetailPage() {
   if (!license) {
     return (
       <div className="flex items-center justify-center p-12">
-        License not found
+        {t("licenseNotFound")}
       </div>
     );
   }
@@ -167,14 +170,14 @@ export default function LicenseDetailPage() {
         >
           <IconArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold">License Details</h1>
+        <h1 className="text-2xl font-bold">{t("licenseDetails")}</h1>
         <PermissionGate permission="license.update">
           <Button
             variant="outline"
             onClick={() => changeRoute(`/licenses/${id}/edit`)}
           >
-            <IconEdit className="mr-2 h-4 w-4" />
-            Edit
+            <IconEdit className="me-2 h-4 w-4" />
+            {tCommon("edit")}
           </Button>
         </PermissionGate>
       </div>
@@ -192,31 +195,31 @@ export default function LicenseDetailPage() {
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div>
-              <p className="text-sm text-muted-foreground">Company Name</p>
+              <p className="text-sm text-muted-foreground">{t("company")}</p>
               <p className="font-medium">{license.companyName}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Province</p>
+              <p className="text-sm text-muted-foreground">{t("province")}</p>
               <p className="font-medium">{license.province}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">District</p>
+              <p className="text-sm text-muted-foreground">{t("district")}</p>
               <p className="font-medium">{license.district}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Issue Date</p>
+              <p className="text-sm text-muted-foreground">{t("issueDate")}</p>
               <p className="font-medium">
                 {new Date(license.issueDate).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Expiry Date</p>
+              <p className="text-sm text-muted-foreground">{t("expiryDate")}</p>
               <p className="font-medium">
                 {new Date(license.expiryDate).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Created At</p>
+              <p className="text-sm text-muted-foreground">{t("createdAtLabel")}</p>
               <p className="font-medium">
                 {new Date(license.createdAt).toLocaleDateString()}
               </p>
@@ -228,7 +231,7 @@ export default function LicenseDetailPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Contracts</CardTitle>
+            <CardTitle>{t("contracts")}</CardTitle>
             <PermissionGate permission="contract.upload">
               <div>
                 <input
@@ -242,8 +245,8 @@ export default function LicenseDetailPage() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
                 >
-                  <IconUpload className="mr-2 h-4 w-4" />
-                  {uploading ? "Uploading..." : "Upload Contract"}
+                  <IconUpload className="me-2 h-4 w-4" />
+                  {uploading ? t("uploadingContract") : t("uploadContract")}
                 </Button>
               </div>
             </PermissionGate>
@@ -252,17 +255,17 @@ export default function LicenseDetailPage() {
         <CardContent>
           {contracts.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">
-              No contracts uploaded yet.
+              {t("noContracts")}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="px-4 py-2">#</TableHead>
-                  <TableHead className="px-4 py-2">File Name</TableHead>
-                  <TableHead className="px-4 py-2">Type</TableHead>
-                  <TableHead className="px-4 py-2">Uploaded</TableHead>
-                  <TableHead className="px-4 py-2">Actions</TableHead>
+                  <TableHead className="px-4 py-2">{t("fileName")}</TableHead>
+                  <TableHead className="px-4 py-2">{t("fileType")}</TableHead>
+                  <TableHead className="px-4 py-2">{t("uploadedAt")}</TableHead>
+                  <TableHead className="px-4 py-2">{tCommon("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -307,8 +310,8 @@ export default function LicenseDetailPage() {
       <ConfirmDialog
         open={!!deleteContractId}
         onOpenChange={(open) => !open && setDeleteContractId(null)}
-        title="Delete Contract"
-        description="This will permanently delete this contract file. This action cannot be undone."
+        title={t("deleteContract")}
+        description={t("deleteContractConfirm")}
         onConfirm={handleDeleteContract}
         loading={deleting}
       />

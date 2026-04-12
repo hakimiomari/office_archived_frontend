@@ -16,6 +16,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
+import { useTranslations } from "next-intl";
 
 interface TypeChartProps {
   data: { type: string; count: number }[];
@@ -26,12 +27,14 @@ const TYPE_COLORS: Record<string, string> = {
   LARGE: "hsl(262, 83%, 58%)",
 };
 
-const chartConfig: ChartConfig = {
-  SMALL: { label: "Small Scale", color: TYPE_COLORS.SMALL },
-  LARGE: { label: "Large Scale", color: TYPE_COLORS.LARGE },
-};
-
 export function LicenseTypeChart({ data }: TypeChartProps) {
+  const t = useTranslations("reports");
+
+  const chartConfig: ChartConfig = {
+    SMALL: { label: t("smallScaleLabel"), color: TYPE_COLORS.SMALL },
+    LARGE: { label: t("largeScaleLabel"), color: TYPE_COLORS.LARGE },
+  };
+
   const chartData = data.map((d) => ({
     name: d.type,
     value: d.count,
@@ -43,8 +46,10 @@ export function LicenseTypeChart({ data }: TypeChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>License Type Breakdown</CardTitle>
-        <CardDescription>{total} total licenses</CardDescription>
+        <CardTitle>{t("typeChartTitle")}</CardTitle>
+        <CardDescription>
+          {t("typeChartDescription", { count: total })}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[280px]">

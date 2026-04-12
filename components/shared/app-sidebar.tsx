@@ -36,94 +36,67 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/contexts/UserContext";
 import { usePermission } from "@/hooks/use-permission";
+import { useTranslations } from "next-intl";
 
 // Each nav item can optionally require one or more permissions.
 // If `requiredPermissions` is not set, the item is always visible.
 // If set, user must have at least ONE of the listed permissions.
-const allNavItems = [
+const getAllNavItems = (t: (key: string) => string) => [
   {
-    title: "Dashboard",
+    title: t("dashboard"),
     url: "/dashboard",
     icon: IconDashboard,
-    // Always visible — everyone can see the dashboard
   },
   {
-    title: "Office Archive",
+    title: t("officeArchive"),
     url: "/office-archive",
     icon: IconChartInfographic,
   },
   {
-    title: "Mining Licenses",
+    title: t("miningLicenses"),
     url: "/licenses",
     icon: IconFileDescription,
     requiredPermissions: ["license.read", "license.create"],
   },
   {
-    title: "Reports",
+    title: t("reports"),
     url: "/reports",
     icon: IconReport,
     requiredPermissions: ["report.view"],
   },
   {
-    title: "Users",
+    title: t("users"),
     url: "/users",
     icon: IconUsers,
     requiredPermissions: ["user.read", "user.create"],
   },
   {
-    title: "Roles",
+    title: t("roles"),
     url: "/roles",
     icon: IconShieldLock,
     requiredPermissions: ["role.read", "role.create"],
   },
 ];
 
-const data = {
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        { title: "Active Proposals", url: "#" },
-        { title: "Archived", url: "#" },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        { title: "Active Proposals", url: "#" },
-        { title: "Archived", url: "#" },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        { title: "Active Proposals", url: "#" },
-        { title: "Archived", url: "#" },
-      ],
-    },
-  ],
-  navSecondary: [
-    { title: "Settings", url: "#", icon: IconSettings },
-    { title: "Get Help", url: "#", icon: IconHelp },
-    { title: "Search", url: "#", icon: IconSearch },
-  ],
-  documents: [
-    { name: "Data Library", url: "#", icon: IconDatabase },
-    { name: "Reports", url: "#", icon: IconReport },
-    { name: "Word Assistant", url: "#", icon: IconFileWord },
-  ],
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
   const { canAny } = usePermission();
+  const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
+
+  const allNavItems = getAllNavItems(tNav);
+
+  const navSecondary = [
+    { title: tNav("settings"), url: "#", icon: IconSettings },
+    { title: tNav("getHelp"), url: "#", icon: IconHelp },
+    { title: tNav("search"), url: "#", icon: IconSearch },
+  ];
+
+  const documents = [
+    { name: "Data Library", url: "#", icon: IconDatabase },
+    { name: tNav("reports"), url: "#", icon: IconReport },
+    { name: "Word Assistant", url: "#", icon: IconFileWord },
+  ];
 
   // Filter nav items based on user permissions
   const visibleNavItems = allNavItems.filter((item) => {
@@ -142,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">{tCommon("appName")}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -150,8 +123,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={visibleNavItems} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavDocuments items={documents} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
     </Sidebar>

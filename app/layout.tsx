@@ -6,6 +6,7 @@ import { ActiveThemeProvider } from "@/components/active-theme";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 import { UserProvider } from "@/contexts/UserContext";
+import { LocaleProvider } from "@/contexts/LocaleContext";
 import RouteProgress from "@/components/RouteProgress";
 
 export const metadata: Metadata = {
@@ -26,6 +27,22 @@ export default async function RootLayout({
   const isScaled = activeThemeValue?.endsWith("-scaled");
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var locale = localStorage.getItem('app_locale') || 'en';
+                  var rtl = locale === 'ps' || locale === 'fa';
+                  document.documentElement.lang = locale;
+                  document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={cn(
           "bg-background overscroll-none font-sans antialiased",
@@ -34,20 +51,22 @@ export default async function RootLayout({
         )}
       >
         <RouteProgress />
-        <UserProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-            enableColorScheme
-          >
-            <ActiveThemeProvider initialTheme={activeThemeValue}>
-              <main>{children}</main>
-              <Toaster position="top-right" />
-            </ActiveThemeProvider>
-          </ThemeProvider>
-        </UserProvider>
+        <LocaleProvider>
+          <UserProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+              enableColorScheme
+            >
+              <ActiveThemeProvider initialTheme={activeThemeValue}>
+                <main>{children}</main>
+                <Toaster position="top-right" />
+              </ActiveThemeProvider>
+            </ThemeProvider>
+          </UserProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

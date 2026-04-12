@@ -16,6 +16,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
+import { useTranslations } from "next-intl";
 
 interface StatusChartProps {
   data: { status: string; count: number }[];
@@ -27,13 +28,15 @@ const STATUS_COLORS: Record<string, string> = {
   SUSPENDED: "hsl(45, 93%, 47%)",
 };
 
-const chartConfig: ChartConfig = {
-  ACTIVE: { label: "Active", color: STATUS_COLORS.ACTIVE },
-  EXPIRED: { label: "Expired", color: STATUS_COLORS.EXPIRED },
-  SUSPENDED: { label: "Suspended", color: STATUS_COLORS.SUSPENDED },
-};
-
 export function LicenseStatusChart({ data }: StatusChartProps) {
+  const t = useTranslations("reports");
+
+  const chartConfig: ChartConfig = {
+    ACTIVE: { label: t("activeLabel"), color: STATUS_COLORS.ACTIVE },
+    EXPIRED: { label: t("expiredLabel"), color: STATUS_COLORS.EXPIRED },
+    SUSPENDED: { label: t("suspendedLabel"), color: STATUS_COLORS.SUSPENDED },
+  };
+
   const chartData = data.map((d) => ({
     name: d.status,
     value: d.count,
@@ -45,8 +48,10 @@ export function LicenseStatusChart({ data }: StatusChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>License Status Distribution</CardTitle>
-        <CardDescription>{total} total licenses</CardDescription>
+        <CardTitle>{t("statusChartTitle")}</CardTitle>
+        <CardDescription>
+          {t("statusChartDescription", { count: total })}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[280px]">

@@ -12,51 +12,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const DEFAULT_THEMES = [
-  {
-    name: "Default",
-    value: "default",
-  },
-  {
-    name: "Blue",
-    value: "blue",
-  },
-  {
-    name: "Green",
-    value: "green",
-  },
-  {
-    name: "Amber",
-    value: "amber",
-  },
-];
-
-const SCALED_THEMES = [
-  {
-    name: "Default",
-    value: "default-scaled",
-  },
-  {
-    name: "Blue",
-    value: "blue-scaled",
-  },
-];
-
-const MONO_THEMES = [
-  {
-    name: "Mono",
-    value: "mono-scaled",
-  },
-];
+import { useTranslations } from "next-intl";
 
 export function ThemeSelector() {
   const { activeTheme, setActiveTheme } = useThemeConfig();
+  const t = useTranslations("theme");
+
+  const DEFAULT_THEMES = [
+    { name: t("themeDefault"), value: "default" },
+    { name: t("themeBlue"), value: "blue" },
+    { name: t("themeGreen"), value: "green" },
+    { name: t("themeAmber"), value: "amber" },
+  ];
+
+  const SCALED_THEMES = [
+    { name: t("themeDefault"), value: "default-scaled" },
+    { name: t("themeBlue"), value: "blue-scaled" },
+  ];
+
+  const MONO_THEMES = [{ name: t("themeMono"), value: "mono-scaled" }];
 
   return (
     <div className="flex items-center gap-2">
       <Label htmlFor="theme-selector" className="sr-only">
-        Theme
+        {t("label")}
       </Label>
       <Select value={activeTheme} onValueChange={setActiveTheme}>
         <SelectTrigger
@@ -65,33 +44,35 @@ export function ThemeSelector() {
           className="justify-start *:data-[slot=select-value]:w-12"
         >
           <span className="text-muted-foreground hidden sm:block">
-            Select a theme:
+            {t("selectTheme")}
           </span>
-          <span className="text-muted-foreground block sm:hidden">Theme</span>
-          <SelectValue placeholder="Select a theme" />
+          <span className="text-muted-foreground block sm:hidden">
+            {t("label")}
+          </span>
+          <SelectValue placeholder={t("selectThemePlaceholder")} />
         </SelectTrigger>
         <SelectContent align="end">
           <SelectGroup>
-            <SelectLabel>Default</SelectLabel>
+            <SelectLabel>{t("default")}</SelectLabel>
             {DEFAULT_THEMES.map((theme) => (
-              <SelectItem key={theme.name} value={theme.value}>
+              <SelectItem key={theme.value} value={theme.value}>
                 {theme.name}
               </SelectItem>
             ))}
           </SelectGroup>
           <SelectSeparator />
           <SelectGroup>
-            <SelectLabel>Scaled</SelectLabel>
+            <SelectLabel>{t("scaled")}</SelectLabel>
             {SCALED_THEMES.map((theme) => (
-              <SelectItem key={theme.name} value={theme.value}>
+              <SelectItem key={theme.value} value={theme.value}>
                 {theme.name}
               </SelectItem>
             ))}
           </SelectGroup>
           <SelectGroup>
-            <SelectLabel>Monospaced</SelectLabel>
+            <SelectLabel>{t("monospaced")}</SelectLabel>
             {MONO_THEMES.map((theme) => (
-              <SelectItem key={theme.name} value={theme.value}>
+              <SelectItem key={theme.value} value={theme.value}>
                 {theme.name}
               </SelectItem>
             ))}

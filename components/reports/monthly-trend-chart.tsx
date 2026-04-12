@@ -16,28 +16,31 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
+import { useTranslations } from "next-intl";
 
 interface MonthlyTrendChartProps {
   data: { month: string; small: number; large: number; total: number }[];
 }
 
-const chartConfig: ChartConfig = {
-  small: {
-    label: "Small Scale",
-    color: "hsl(221, 83%, 53%)",
-  },
-  large: {
-    label: "Large Scale",
-    color: "hsl(262, 83%, 58%)",
-  },
-};
-
 export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
+  const t = useTranslations("reports");
+
+  const chartConfig: ChartConfig = {
+    small: {
+      label: t("smallScaleLabel"),
+      color: "hsl(221, 83%, 53%)",
+    },
+    large: {
+      label: t("largeScaleLabel"),
+      color: "hsl(262, 83%, 58%)",
+    },
+  };
+
   return (
     <Card className="col-span-full">
       <CardHeader className="pb-2">
-        <CardTitle>Monthly License Issuance Trend</CardTitle>
-        <CardDescription>Licenses issued per month by type</CardDescription>
+        <CardTitle>{t("monthlyChartTitle")}</CardTitle>
+        <CardDescription>{t("monthlyChartDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">

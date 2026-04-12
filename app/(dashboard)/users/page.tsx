@@ -61,6 +61,7 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+import { useTranslations } from "next-intl";
 
 type UserFormData = {
   name: string;
@@ -81,6 +82,8 @@ export default function UsersPage() {
   const { getRoles } = useRoles();
   const { can } = usePermission();
   const { getNameInitials } = settings();
+  const t = useTranslations("users");
+  const tCommon = useTranslations("common");
 
   const [users, setUsers] = useState<UserType[]>([]);
   const [meta, setMeta] = useState<UserMeta | null>(null);
@@ -197,7 +200,7 @@ export default function UsersPage() {
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="User" />
+        <DataTableColumnHeader column={column} title={t("user")} />
       ),
       cell: ({ row }) => {
         const user = row.original;
@@ -218,12 +221,12 @@ export default function UsersPage() {
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Email" />
+        <DataTableColumnHeader column={column} title={tCommon("email")} />
       ),
     },
     {
       id: "roles",
-      header: "Roles",
+      header: t("roles"),
       enableSorting: false,
       cell: ({ row }) => {
         const user = row.original;
@@ -235,7 +238,7 @@ export default function UsersPage() {
               </Badge>
             ))}
             {user.roles.length === 0 && (
-              <span className="text-sm text-muted-foreground">No role</span>
+              <span className="text-sm text-muted-foreground">{t("noRole")}</span>
             )}
           </div>
         );
@@ -243,13 +246,13 @@ export default function UsersPage() {
     },
     {
       id: "authMethod",
-      header: "Auth Method",
+      header: t("authMethod"),
       enableSorting: false,
       cell: ({ row }) => {
         const user = row.original;
         return (
           <Badge variant={user.googleId ? "outline" : "default"}>
-            {user.googleId ? "Google" : "Email"}
+            {user.googleId ? t("googleAuth") : t("emailAuth")}
           </Badge>
         );
       },
@@ -257,14 +260,14 @@ export default function UsersPage() {
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t("createdAt")} />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("created_at")).toLocaleDateString(),
     },
     {
       id: "actions",
-      header: "Actions",
+      header: tCommon("actions"),
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {
@@ -280,7 +283,7 @@ export default function UsersPage() {
               {can("user.update") && (
                 <DropdownMenuItem onClick={() => openEdit(user)}>
                   <IconEdit className="mr-2 h-4 w-4" />
-                  Edit
+                  {tCommon("edit")}
                 </DropdownMenuItem>
               )}
               {can("user.delete") && (
@@ -289,7 +292,7 @@ export default function UsersPage() {
                   className="text-red-600"
                 >
                   <IconTrash className="mr-2 h-4 w-4" />
-                  Delete
+                  {tCommon("delete")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -314,11 +317,11 @@ export default function UsersPage() {
     <RouteGuard permission="user.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">User Management</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <PermissionGate permission="user.create">
             <Button onClick={openCreate}>
               <IconPlus className="mr-2 h-4 w-4" />
-              New User
+              {t("newUser")}
             </Button>
           </PermissionGate>
         </div>
@@ -326,14 +329,14 @@ export default function UsersPage() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Search by name or email..."
+              placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="max-w-md"
             />
             <Button variant="outline" onClick={handleSearch}>
-              Search
+              {tCommon("search")}
             </Button>
           </div>
           <DataTableViewOptions table={table} />
@@ -374,7 +377,7 @@ export default function UsersPage() {
                     colSpan={table.getVisibleFlatColumns().length}
                     className="h-24 text-center"
                   >
-                    No users found.
+                    {t("noUsers")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -399,13 +402,13 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                Showing{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+                {tCommon("showing")}{" "}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")} {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">
-                  | Rows per page:
+                  | {tCommon("rowsPerPage")}:
                 </span>
                 <Select
                   value={`${limit}`}
@@ -435,10 +438,10 @@ export default function UsersPage() {
                 onClick={() => setPage((p) => p - 1)}
               >
                 <IconChevronLeft className="h-4 w-4" />
-                Previous
+                {tCommon("previous")}
               </Button>
               <span className="text-sm">
-                Page {meta.page} of {meta.totalPages}
+                {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
               </span>
               <Button
                 variant="outline"
@@ -446,7 +449,7 @@ export default function UsersPage() {
                 disabled={page >= meta.totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next
+                {tCommon("next")}
                 <IconChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -459,25 +462,25 @@ export default function UsersPage() {
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingUser ? "Edit User" : "Create New User"}
+              {editingUser ? t("editUser") : t("createUser")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="userName">Full Name</Label>
+                <Label htmlFor="userName">{tCommon("name")}</Label>
                 <Input
                   id="userName"
                   value={form.name}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, name: e.target.value }))
                   }
-                  placeholder="John Doe"
+                  placeholder={t("fullNamePlaceholder")}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="userEmail">Email</Label>
+                <Label htmlFor="userEmail">{tCommon("email")}</Label>
                 <Input
                   id="userEmail"
                   type="email"
@@ -485,7 +488,7 @@ export default function UsersPage() {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, email: e.target.value }))
                   }
-                  placeholder="john@example.com"
+                  placeholder={t("emailPlaceholder")}
                   required
                 />
               </div>
@@ -493,7 +496,7 @@ export default function UsersPage() {
 
             {!editingUser && (
               <div className="space-y-2">
-                <Label htmlFor="userPassword">Password</Label>
+                <Label htmlFor="userPassword">{tCommon("password")}</Label>
                 <Input
                   id="userPassword"
                   type="password"
@@ -501,7 +504,7 @@ export default function UsersPage() {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, password: e.target.value }))
                   }
-                  placeholder="Min 6 characters"
+                  placeholder={t("min6Characters")}
                   minLength={6}
                   required
                 />
@@ -509,7 +512,7 @@ export default function UsersPage() {
             )}
 
             <div className="space-y-2">
-              <Label>{editingUser ? "Roles" : "Role"}</Label>
+              <Label>{editingUser ? t("roles") : t("role")}</Label>
               {editingUser ? (
                 <div className="grid grid-cols-2 gap-3 rounded-md border p-4 md:grid-cols-3">
                   {allRoles.map((role) => (
@@ -537,7 +540,7 @@ export default function UsersPage() {
                   required
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
+                    <SelectValue placeholder={t("selectRole")} />
                   </SelectTrigger>
                   <SelectContent>
                     {allRoles.map((role) => (
@@ -556,14 +559,14 @@ export default function UsersPage() {
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving
-                  ? "Saving..."
+                  ? tCommon("saving")
                   : editingUser
-                    ? "Update User"
-                    : "Create User"}
+                    ? t("updateUser")
+                    : t("createUser")}
               </Button>
             </div>
           </form>
@@ -573,8 +576,8 @@ export default function UsersPage() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete User"
-        description="This will permanently delete this user account. This action cannot be undone."
+        title={t("deleteUser")}
+        description={t("deleteConfirm")}
         onConfirm={handleDelete}
         loading={deleting}
       />

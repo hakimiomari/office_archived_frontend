@@ -14,6 +14,8 @@ import { useAuth } from "@/config/auth";
 import React from "react";
 import { Loader2 } from "lucide-react";
 import GoogleAuth from "./google-auth";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function LoginForm({
   className,
@@ -25,15 +27,18 @@ export function LoginForm({
   });
 
   const { login, isLoading } = useAuth();
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <div className="flex justify-end">
+        <LanguageSwitcher />
+      </div>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>
-            Login with your Apple or Google account
-          </CardDescription>
+          <CardTitle className="text-xl">{t("welcomeBack")}</CardTitle>
+          <CardDescription>{t("loginSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={(event) => login(event, loginInfo)}>
@@ -51,21 +56,21 @@ export function LoginForm({
                       fill="#A2AAAD"
                     />
                   </svg>
-                  Login with Apple
+                  {t("loginWithApple")}
                 </Button>
               </div>
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
-                  Or continue with
+                  {t("orContinueWith")}
                 </span>
               </div>
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{tCommon("email")}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder={t("emailPlaceholder")}
                     value={loginInfo.email}
                     onChange={(e) =>
                       setLoginInfo({ ...loginInfo, email: e.target.value })
@@ -75,12 +80,12 @@ export function LoginForm({
                 </div>
                 <div className="grid gap-3">
                   <div className="flex items-center">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{tCommon("password")}</Label>
                     <a
                       href="#"
-                      className="ml-auto text-sm underline-offset-4 hover:underline"
+                      className="ms-auto text-sm underline-offset-4 hover:underline"
                     >
-                      Forgot your password?
+                      {t("forgotPassword")}
                     </a>
                   </div>
                   <Input
@@ -99,13 +104,13 @@ export function LoginForm({
                   className="w-full cursor-pointer"
                 >
                   {isLoading && <Loader2 className="animate-spin" />}
-                  Login
+                  {t("login")}
                 </Button>
               </div>
               <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
+                {t("noAccount")}{" "}
                 <a href="#" className="underline underline-offset-4">
-                  Sign up
+                  {t("signUp")}
                 </a>
               </div>
             </div>
@@ -113,8 +118,8 @@ export function LoginForm({
         </CardContent>
       </Card>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        {t("termsAgreement")} <a href="#">{t("termsOfService")}</a>{" "}
+        {t("and")} <a href="#">{t("privacyPolicy")}</a>.
       </div>
     </div>
   );

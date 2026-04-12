@@ -14,24 +14,27 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useTranslations } from "next-intl";
 
 interface ProvinceChartProps {
   data: { province: string; count: number }[];
 }
 
-const chartConfig: ChartConfig = {
-  count: {
-    label: "Licenses",
-    color: "var(--primary)",
-  },
-};
-
 export function ProvinceChart({ data }: ProvinceChartProps) {
+  const t = useTranslations("reports");
+
+  const chartConfig: ChartConfig = {
+    count: {
+      label: t("licensesLabel"),
+      color: "var(--primary)",
+    },
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>Licenses by Province</CardTitle>
-        <CardDescription>Distribution across provinces</CardDescription>
+        <CardTitle>{t("provinceChartTitle")}</CardTitle>
+        <CardDescription>{t("provinceChartDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">

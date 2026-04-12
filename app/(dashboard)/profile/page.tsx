@@ -32,12 +32,15 @@ import {
   IconShieldLock,
   IconCalendar,
 } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 export default function ProfilePage() {
   const { user, setUser } = useUser();
   const { updateProfile, changePassword, uploadProfilePicture } = useUsers();
   const { getNameInitials } = settings();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
 
   const [profileForm, setProfileForm] = useState({
     name: "",
@@ -75,7 +78,7 @@ export default function ProfilePage() {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      return alert("Passwords do not match");
+      return alert(t("passwordsDoNotMatch"));
     }
     setPasswordLoading(true);
     const success = await changePassword({
@@ -185,7 +188,7 @@ export default function ProfilePage() {
               {(user as any).created_at && (
                 <Badge variant="outline" className="gap-1 text-muted-foreground">
                   <IconCalendar className="h-3 w-3" />
-                  Joined{" "}
+                  {t("joined")}{" "}
                   {new Date((user as any).created_at).toLocaleDateString(
                     "en-US",
                     { month: "short", year: "numeric" }
@@ -203,12 +206,12 @@ export default function ProfilePage() {
               {uploadLoading ? (
                 <>
                   <div className="mr-2 h-3.5 w-3.5 animate-spin rounded-full border-2 border-transparent border-t-current" />
-                  Uploading...
+                  {t("uploading")}
                 </>
               ) : (
                 <>
                   <IconUpload className="mr-2 h-3.5 w-3.5" />
-                  Change Photo
+                  {t("changePhoto")}
                 </>
               )}
             </Button>
@@ -221,11 +224,11 @@ export default function ProfilePage() {
         <TabsList>
           <TabsTrigger value="profile" className="gap-1.5">
             <IconUser className="h-4 w-4" />
-            Profile
+            {t("profileTab")}
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-1.5">
             <IconLock className="h-4 w-4" />
-            Security
+            {t("securityTab")}
           </TabsTrigger>
         </TabsList>
 
@@ -233,19 +236,16 @@ export default function ProfilePage() {
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Update your personal details. These will be visible to other
-                users.
-              </CardDescription>
+              <CardTitle>{t("profileInformation")}</CardTitle>
+              <CardDescription>{t("profileInfoDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleProfileSubmit} className="grid gap-5">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="profileName">Full Name</Label>
+                    <Label htmlFor="profileName">{t("fullName")}</Label>
                     <div className="relative">
-                      <IconUser className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <IconUser className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="profileName"
                         value={profileForm.name}
@@ -255,16 +255,15 @@ export default function ProfilePage() {
                             name: e.target.value,
                           }))
                         }
-                        className="pl-9"
-                        placeholder="Your full name"
+                        className="ps-9"
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="profileEmail">Email Address</Label>
+                    <Label htmlFor="profileEmail">{t("emailAddress")}</Label>
                     <div className="relative">
-                      <IconMail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <IconMail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="profileEmail"
                         type="email"
@@ -275,8 +274,7 @@ export default function ProfilePage() {
                             email: e.target.value,
                           }))
                         }
-                        className="pl-9"
-                        placeholder="your@email.com"
+                        className="ps-9"
                         required
                       />
                     </div>
@@ -288,10 +286,10 @@ export default function ProfilePage() {
                     {profileLoading ? (
                       <>
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-transparent border-t-current" />
-                        Saving...
+                        {tCommon("saving")}
                       </>
                     ) : (
-                      "Save Changes"
+                      t("saveChanges")
                     )}
                   </Button>
                 </div>
@@ -304,18 +302,15 @@ export default function ProfilePage() {
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>
-                Choose a strong password with at least 6 characters to keep your
-                account secure.
-              </CardDescription>
+              <CardTitle>{t("changePassword")}</CardTitle>
+              <CardDescription>{t("changePasswordDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordSubmit} className="grid gap-5">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Label htmlFor="currentPassword">{t("currentPassword")}</Label>
                   <div className="relative">
-                    <IconLock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconLock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="currentPassword"
                       type="password"
@@ -326,8 +321,7 @@ export default function ProfilePage() {
                           currentPassword: e.target.value,
                         }))
                       }
-                      className="pl-9"
-                      placeholder="Enter current password"
+                      className="ps-9"
                       required
                     />
                   </div>
@@ -335,9 +329,9 @@ export default function ProfilePage() {
                 <Separator />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
+                    <Label htmlFor="newPassword">{t("newPassword")}</Label>
                     <div className="relative">
-                      <IconLock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <IconLock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="newPassword"
                         type="password"
@@ -348,17 +342,16 @@ export default function ProfilePage() {
                             newPassword: e.target.value,
                           }))
                         }
-                        className="pl-9"
-                        placeholder="Min 6 characters"
+                        className="ps-9"
                         minLength={6}
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
                     <div className="relative">
-                      <IconLock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <IconLock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -369,8 +362,7 @@ export default function ProfilePage() {
                             confirmPassword: e.target.value,
                           }))
                         }
-                        className="pl-9"
-                        placeholder="Repeat new password"
+                        className="ps-9"
                         minLength={6}
                         required
                       />
@@ -383,10 +375,10 @@ export default function ProfilePage() {
                     {passwordLoading ? (
                       <>
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-transparent border-t-current" />
-                        Changing...
+                        {t("changing")}
                       </>
                     ) : (
-                      "Update Password"
+                      t("updatePassword")
                     )}
                   </Button>
                 </div>

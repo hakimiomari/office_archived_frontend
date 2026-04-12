@@ -50,6 +50,8 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+import { useTranslations } from "next-intl";
+import { useLocale } from "@/contexts/LocaleContext";
 
 // Define the permission matrix structure: module → actions
 const PERMISSION_MATRIX: Record<string, string[]> = {
@@ -63,6 +65,9 @@ const PERMISSION_MATRIX: Record<string, string[]> = {
 export default function RolesPage() {
   const { getRoles, createRole, updateRole, deleteRole, getPermissions } =
     useRoles();
+  const t = useTranslations("roles");
+  const tCommon = useTranslations("common");
+  const { dir } = useLocale();
   const [roles, setRoles] = useState<RoleType[]>([]);
   const [permissions, setPermissions] = useState<PermissionType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +184,7 @@ export default function RolesPage() {
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Role" />
+        <DataTableColumnHeader column={column} title={t("role")} />
       ),
       cell: ({ row }) => {
         const role = row.original;
@@ -197,7 +202,7 @@ export default function RolesPage() {
     },
     {
       id: "permissions",
-      header: "Permissions",
+      header: t("permissions"),
       enableSorting: false,
       cell: ({ row }) => {
         const role = row.original;
@@ -210,7 +215,7 @@ export default function RolesPage() {
             ))}
             {role.permissions.length > 5 && (
               <Badge variant="secondary" className="text-xs">
-                +{role.permissions.length - 5} more
+                +{role.permissions.length - 5} {t("more")}
               </Badge>
             )}
           </div>
@@ -220,21 +225,21 @@ export default function RolesPage() {
     {
       id: "users",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Users" />
+        <DataTableColumnHeader column={column} title={t("usersCount")} />
       ),
       accessorFn: (row) => row._count?.users || 0,
       cell: ({ row }) => {
         const role = row.original;
         return (
           <Badge variant="secondary">
-            {role._count?.users || 0} users
+            {role._count?.users || 0} {t("usersCount")}
           </Badge>
         );
       },
     },
     {
       id: "actions",
-      header: "Actions",
+      header: tCommon("actions"),
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {
@@ -281,19 +286,19 @@ export default function RolesPage() {
     <RouteGuard permission="role.read">
       <div className="flex flex-col gap-6 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Role & Permission Management</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <PermissionGate permission="role.create">
             <Button onClick={openCreate}>
               <IconPlus className="mr-2 h-4 w-4" />
-              New Role
+              {t("newRole")}
             </Button>
           </PermissionGate>
         </div>
 
         <Tabs defaultValue="roles">
           <TabsList>
-            <TabsTrigger value="roles">Roles</TabsTrigger>
-            <TabsTrigger value="matrix">Permission Matrix</TabsTrigger>
+            <TabsTrigger value="roles">{t("rolesTab")}</TabsTrigger>
+            <TabsTrigger value="matrix">{t("permissionMatrix")}</TabsTrigger>
           </TabsList>
 
           {/* ─── ROLES TAB ─── */}
@@ -336,7 +341,7 @@ export default function RolesPage() {
                         colSpan={table.getVisibleFlatColumns().length}
                         className="h-24 text-center"
                       >
-                        No roles found.
+                        {t("noRoles")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -362,10 +367,9 @@ export default function RolesPage() {
           <TabsContent value="matrix">
             <Card>
               <CardHeader>
-                <CardTitle>Permission Matrix</CardTitle>
+                <CardTitle>{t("permissionMatrix")}</CardTitle>
                 <CardDescription>
-                  Overview of which roles have which permissions across all
-                  modules.
+                  {t("permissionMatrixDescription")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -373,8 +377,15 @@ export default function RolesPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky left-0 bg-background px-4 py-2 font-bold">
-                          Module / Action
+                        <TableHead
+                          className="sticky bg-background px-4 py-2 font-bold"
+                          style={
+                            dir === "rtl"
+                              ? { right: 0, left: "auto" }
+                              : { left: 0, right: "auto" }
+                          }
+                        >
+                          {t("moduleAction")}
                         </TableHead>
                         {roles.map((role) => (
                           <TableHead
@@ -404,7 +415,14 @@ export default function RolesPage() {
                               const permName = `${module}.${action}`;
                               return (
                                 <TableRow key={permName}>
-                                  <TableCell className="sticky left-0 bg-background px-4 py-2 pl-8 text-sm">
+                                  <TableCell
+                                    className="sticky bg-background px-4 py-2 ps-8 text-sm"
+                                    style={
+                                      dir === "rtl"
+                                        ? { right: 0, left: "auto" }
+                                        : { left: 0, right: "auto" }
+                                    }
+                                  >
                                     {action}
                                   </TableCell>
                                   {roles.map((role) => {
@@ -443,47 +461,51 @@ export default function RolesPage() {
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingRole ? "Edit Role" : "Create New Role"}
+                {editingRole ? t("editRole") : t("createRole")}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="grid gap-4">
               <div className="space-y-2">
-                <Label htmlFor="roleName">Role Name</Label>
+                <Label htmlFor="roleName">{t("roleName")}</Label>
                 <Input
                   id="roleName"
                   value={form.name}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, name: e.target.value }))
                   }
-                  placeholder="e.g. manager"
+                  placeholder={t("roleNamePlaceholder")}
                   required
                 />
               </div>
 
               {/* Permission Matrix in Dialog */}
               <div className="space-y-2">
-                <Label>Permissions</Label>
+                <Label>{t("permissions")}</Label>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="px-4 py-2 font-bold">
-                          Module
+                          {t("module")}
                         </TableHead>
                         <TableHead className="px-4 py-2 text-center">
-                          All
+                          {t("allPermissions")}
                         </TableHead>
                         {/* Dynamic action columns */}
-                        {["Create", "Read", "Update", "Delete", "Other"].map(
-                          (a) => (
-                            <TableHead
-                              key={a}
-                              className="px-3 py-2 text-center text-xs"
-                            >
-                              {a}
-                            </TableHead>
-                          )
-                        )}
+                        {[
+                          t("createPerm"),
+                          t("readPerm"),
+                          t("updatePerm"),
+                          t("deletePerm"),
+                          t("otherPermissions"),
+                        ].map((a) => (
+                          <TableHead
+                            key={a}
+                            className="px-3 py-2 text-center text-xs"
+                          >
+                            {a}
+                          </TableHead>
+                        ))}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -602,10 +624,10 @@ export default function RolesPage() {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit">
-                  {editingRole ? "Update Role" : "Create Role"}
+                  {editingRole ? t("updateRole") : t("createRole")}
                 </Button>
               </div>
             </form>
@@ -615,8 +637,8 @@ export default function RolesPage() {
         <ConfirmDialog
           open={!!deleteId}
           onOpenChange={(open) => !open && setDeleteId(null)}
-          title="Delete Role"
-          description="This will permanently delete this role. Users assigned to this role will lose its permissions. This action cannot be undone."
+          title={t("deleteRole")}
+          description={t("deleteConfirm")}
           onConfirm={handleDelete}
           loading={deleting}
         />

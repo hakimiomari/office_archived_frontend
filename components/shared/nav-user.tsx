@@ -27,6 +27,7 @@ import {
 import { useAuth } from "@/config/auth";
 import { settings } from "@/config/settings";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export function NavUser({
   user,
@@ -42,6 +43,8 @@ export function NavUser({
   const { logout } = useAuth();
   const { getNameInitials } = settings();
   const router = useRouter();
+  const t = useTranslations("nav");
+  const tAuth = useTranslations("auth");
 
   return (
     <SidebarMenu>
@@ -93,21 +96,21 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={(event) => router.push("/profile")}>
                 <IconUserCircle />
-                Profile
+                {t("profile")}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconCreditCard />
-                Billing
+                {t("billing")}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconNotification />
-                Notifications
+                {t("notifications")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={(event) => logout(event)}>
               <IconLogout />
-              Log out
+              {tAuth("logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

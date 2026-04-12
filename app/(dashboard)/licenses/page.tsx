@@ -60,6 +60,7 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+import { useTranslations } from "next-intl";
 
 type LicenseFormData = {
   licenseNumber: string;
@@ -102,6 +103,8 @@ export default function LicensesPage() {
   const { licenses, meta, loading } = useLicense();
   const { changeRoute } = nextRoute();
   const { can } = usePermission();
+  const t = useTranslations("licenses");
+  const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -194,7 +197,7 @@ export default function LicensesPage() {
     {
       accessorKey: "licenseNumber",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="License No." />
+        <DataTableColumnHeader column={column} title={t("licenseNumber")} />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("licenseNumber")}</span>
@@ -203,13 +206,13 @@ export default function LicensesPage() {
     {
       accessorKey: "companyName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Company" />
+        <DataTableColumnHeader column={column} title={t("company")} />
       ),
     },
     {
       accessorKey: "licenseType",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Type" />
+        <DataTableColumnHeader column={column} title={t("type")} />
       ),
       cell: ({ row }) => (
         <Badge variant="outline">{row.getValue("licenseType")}</Badge>
@@ -218,7 +221,7 @@ export default function LicensesPage() {
     {
       accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader column={column} title={tCommon("status")} />
       ),
       cell: ({ row }) => (
         <Badge variant={statusColor(row.getValue("status"))}>
@@ -229,13 +232,13 @@ export default function LicensesPage() {
     {
       accessorKey: "province",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Province" />
+        <DataTableColumnHeader column={column} title={t("province")} />
       ),
     },
     {
       accessorKey: "issueDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Issue Date" />
+        <DataTableColumnHeader column={column} title={t("issueDate")} />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("issueDate")).toLocaleDateString(),
@@ -243,14 +246,14 @@ export default function LicensesPage() {
     {
       accessorKey: "expiryDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Expiry Date" />
+        <DataTableColumnHeader column={column} title={t("expiryDate")} />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("expiryDate")).toLocaleDateString(),
     },
     {
       id: "actions",
-      header: "Actions",
+      header: tCommon("actions"),
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {
@@ -267,12 +270,12 @@ export default function LicensesPage() {
                 onClick={() => changeRoute(`/licenses/${lic.id}`)}
               >
                 <IconEye className="mr-2 h-4 w-4" />
-                View
+                {tCommon("view")}
               </DropdownMenuItem>
               {can("license.update") && (
                 <DropdownMenuItem onClick={() => openEdit(lic.id)}>
                   <IconEdit className="mr-2 h-4 w-4" />
-                  Edit
+                  {tCommon("edit")}
                 </DropdownMenuItem>
               )}
               {can("license.delete") && (
@@ -281,7 +284,7 @@ export default function LicensesPage() {
                   className="text-red-600"
                 >
                   <IconTrash className="mr-2 h-4 w-4" />
-                  Delete
+                  {tCommon("delete")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -306,11 +309,11 @@ export default function LicensesPage() {
     <RouteGuard permission="license.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Mining Licenses</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <PermissionGate permission="license.create">
             <Button onClick={openCreate}>
               <IconPlus className="mr-2 h-4 w-4" />
-              New License
+              {t("newLicense")}
             </Button>
           </PermissionGate>
         </div>
@@ -318,14 +321,14 @@ export default function LicensesPage() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Search by license number, company, or province..."
+              placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="max-w-md"
             />
             <Button variant="outline" onClick={handleSearch}>
-              Search
+              {tCommon("search")}
             </Button>
           </div>
           <DataTableViewOptions table={table} />
@@ -366,7 +369,7 @@ export default function LicensesPage() {
                     colSpan={table.getVisibleFlatColumns().length}
                     className="h-24 text-center"
                   >
-                    No licenses found.
+                    {t("noLicenses")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -391,13 +394,13 @@ export default function LicensesPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                Showing{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+                {tCommon("showing")}{" "}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")} {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">
-                  | Rows per page:
+                  | {tCommon("rowsPerPage")}:
                 </span>
                 <Select
                   value={`${limit}`}
@@ -427,10 +430,10 @@ export default function LicensesPage() {
                 onClick={() => setPage((p) => p - 1)}
               >
                 <IconChevronLeft className="h-4 w-4" />
-                Previous
+                {tCommon("previous")}
               </Button>
               <span className="text-sm">
-                Page {meta.page} of {meta.totalPages}
+                {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
               </span>
               <Button
                 variant="outline"
@@ -438,7 +441,7 @@ export default function LicensesPage() {
                 disabled={page >= meta.totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next
+                {tCommon("next")}
                 <IconChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -451,28 +454,28 @@ export default function LicensesPage() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingLicense ? "Edit License" : "Create New License"}
+              {editingLicense ? t("editLicense") : t("createLicense")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">License Number</Label>
+                <Label htmlFor="licenseNumber">{t("licenseNumber")}</Label>
                 <Input
                   id="licenseNumber"
                   value={form.licenseNumber}
                   onChange={(e) => handleChange("licenseNumber", e.target.value)}
-                  placeholder="LIC-2024-001"
+                  placeholder={t("licenseNumberPlaceholder")}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
+                <Label htmlFor="companyName">{t("company")}</Label>
                 <Input
                   id="companyName"
                   value={form.companyName}
                   onChange={(e) => handleChange("companyName", e.target.value)}
-                  placeholder="Mining Corp"
+                  placeholder={t("companyNamePlaceholder")}
                   required
                 />
               </div>
@@ -480,7 +483,7 @@ export default function LicensesPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>License Type</Label>
+                <Label>{t("licenseType")}</Label>
                 <Select
                   value={form.licenseType}
                   onValueChange={(v) => handleChange("licenseType", v)}
@@ -489,13 +492,13 @@ export default function LicensesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SMALL">Small Scale</SelectItem>
-                    <SelectItem value="LARGE">Large Scale</SelectItem>
+                    <SelectItem value="SMALL">{t("smallScale")}</SelectItem>
+                    <SelectItem value="LARGE">{t("largeScale")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{tCommon("status")}</Label>
                 <Select
                   value={form.status}
                   onValueChange={(v) => handleChange("status", v)}
@@ -504,9 +507,9 @@ export default function LicensesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="EXPIRED">Expired</SelectItem>
-                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                    <SelectItem value="ACTIVE">{t("active")}</SelectItem>
+                    <SelectItem value="EXPIRED">{t("expired")}</SelectItem>
+                    <SelectItem value="SUSPENDED">{t("suspended")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -514,7 +517,7 @@ export default function LicensesPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="issueDate">Issue Date</Label>
+                <Label htmlFor="issueDate">{t("issueDate")}</Label>
                 <Input
                   id="issueDate"
                   type="date"
@@ -524,7 +527,7 @@ export default function LicensesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Label htmlFor="expiryDate">{t("expiryDate")}</Label>
                 <Input
                   id="expiryDate"
                   type="date"
@@ -537,22 +540,22 @@ export default function LicensesPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="province">Province</Label>
+                <Label htmlFor="province">{t("province")}</Label>
                 <Input
                   id="province"
                   value={form.province}
                   onChange={(e) => handleChange("province", e.target.value)}
-                  placeholder="Kabul"
+                  placeholder={t("provincePlaceholder")}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="district">District</Label>
+                <Label htmlFor="district">{t("district")}</Label>
                 <Input
                   id="district"
                   value={form.district}
                   onChange={(e) => handleChange("district", e.target.value)}
-                  placeholder="District 1"
+                  placeholder={t("districtPlaceholder")}
                   required
                 />
               </div>
@@ -564,14 +567,14 @@ export default function LicensesPage() {
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving
-                  ? "Saving..."
+                  ? tCommon("saving")
                   : editingLicense
-                    ? "Update License"
-                    : "Create License"}
+                    ? t("updateLicense")
+                    : t("createLicense")}
               </Button>
             </div>
           </form>
@@ -581,8 +584,8 @@ export default function LicensesPage() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete License"
-        description="This will permanently delete this license and all its associated contracts. This action cannot be undone."
+        title={t("deleteLicense")}
+        description={t("deleteConfirm")}
         onConfirm={handleDelete}
         loading={deleting}
       />

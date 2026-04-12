@@ -6,6 +6,8 @@ import { SidebarInset } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { LicenseProvider } from "@/contexts/LicenseContext";
 import { useUser } from "@/contexts/UserContext";
+import { useLocale } from "@/contexts/LocaleContext";
+import { useTranslations } from "next-intl";
 
 interface Props {
   children: React.ReactNode;
@@ -13,6 +15,8 @@ interface Props {
 
 export default function DashboardGroupLayout({ children }: Props) {
   const { loading } = useUser();
+  const { dir, locale } = useLocale();
+  const t = useTranslations("common");
 
   if (loading) {
     return (
@@ -26,7 +30,7 @@ export default function DashboardGroupLayout({ children }: Props) {
         </div>
         <div className="flex flex-col items-center gap-1">
           <p className="text-xs text-muted-foreground">
-            Please wait while we set things up...
+            {t("loadingMessage")}
           </p>
         </div>
       </div>
@@ -36,6 +40,7 @@ export default function DashboardGroupLayout({ children }: Props) {
   return (
     <LicenseProvider>
       <SidebarProvider
+        key={locale}
         style={
           {
             "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -43,7 +48,7 @@ export default function DashboardGroupLayout({ children }: Props) {
           } as React.CSSProperties
         }
       >
-        <AppSidebar variant="inset" />
+        <AppSidebar variant="inset" side={dir === "rtl" ? "right" : "left"} />
         <SidebarInset>
           <SiteHeader />
           <div className="flex flex-1 flex-col">
