@@ -61,6 +61,8 @@ import {
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 import { useTranslations } from "next-intl";
+import { ProvinceSelect } from "@/components/province-select";
+import { provinceKey } from "@/lib/constants/provinces";
 
 type LicenseFormData = {
   licenseNumber: string;
@@ -105,6 +107,7 @@ export default function LicensesPage() {
   const { can } = usePermission();
   const t = useTranslations("licenses");
   const tCommon = useTranslations("common");
+  const tProvinces = useTranslations("provinces");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -234,6 +237,14 @@ export default function LicensesPage() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("province")} />
       ),
+      cell: ({ row }) => {
+        const provinceValue = row.getValue("province") as string;
+        try {
+          return tProvinces(provinceKey(provinceValue) as any);
+        } catch {
+          return provinceValue;
+        }
+      },
     },
     {
       accessorKey: "issueDate",
@@ -541,11 +552,10 @@ export default function LicensesPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="province">{t("province")}</Label>
-                <Input
+                <ProvinceSelect
                   id="province"
                   value={form.province}
-                  onChange={(e) => handleChange("province", e.target.value)}
-                  placeholder={t("provincePlaceholder")}
+                  onValueChange={(v) => handleChange("province", v)}
                   required
                 />
               </div>

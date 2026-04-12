@@ -237,6 +237,16 @@ html[dir="rtl"] .sm\:text-right { text-align: left !important; }
 .sm\:text-start { text-align: start; }
 .sm\:text-end { text-align: end; }
 
+/* cmdk Command list scroll fix */
+[cmdk-list] {
+  max-height: 260px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+[cmdk-list-sizer] {
+  display: block;
+}
+
 /* Logical positioning utilities */
 .start-0 { inset-inline-start: 0; }
 .start-1 { inset-inline-start: 0.25rem; }

@@ -32,6 +32,7 @@ import { PermissionGate } from "@/components/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useTranslations } from "next-intl";
+import { provinceKey } from "@/lib/constants/provinces";
 
 export default function LicenseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +41,15 @@ export default function LicenseDetailPage() {
   const { changeRoute } = nextRoute();
   const t = useTranslations("licenses");
   const tCommon = useTranslations("common");
+  const tProvinces = useTranslations("provinces");
+
+  const translateProvince = (p: string) => {
+    try {
+      return tProvinces(provinceKey(p) as any);
+    } catch {
+      return p;
+    }
+  };
   const [license, setLicense] = useState<LicenseType | null>(null);
   const [contracts, setContracts] = useState<ContractType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,7 +210,7 @@ export default function LicenseDetailPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t("province")}</p>
-              <p className="font-medium">{license.province}</p>
+              <p className="font-medium">{translateProvince(license.province)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t("district")}</p>

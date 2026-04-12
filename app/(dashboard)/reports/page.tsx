@@ -59,6 +59,8 @@ import {
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 import { useTranslations } from "next-intl";
+import { ProvinceSelect } from "@/components/province-select";
+import { provinceKey } from "@/lib/constants/provinces";
 
 type ChartData = {
   byProvince: { province: string; count: number }[];
@@ -92,6 +94,7 @@ export default function ReportsPage() {
   const t = useTranslations("reports");
   const tLicenses = useTranslations("licenses");
   const tCommon = useTranslations("common");
+  const tProvinces = useTranslations("provinces");
 
   const [filters, setFilters] = useState<ReportFilters>({
     page: 1,
@@ -188,6 +191,14 @@ export default function ReportsPage() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={tLicenses("province")} />
       ),
+      cell: ({ row }) => {
+        const provinceValue = row.getValue("province") as string;
+        try {
+          return tProvinces(provinceKey(provinceValue) as any);
+        } catch {
+          return provinceValue;
+        }
+      },
     },
     {
       accessorKey: "district",
@@ -370,12 +381,11 @@ export default function ReportsPage() {
               </div>
               <div className="space-y-2">
                 <Label>{t("province")}</Label>
-                <Input
-                  placeholder={t("searchProvince")}
+                <ProvinceSelect
                   value={filters.province || ""}
-                  onChange={(e) =>
-                    handleFilterChange("province", e.target.value)
-                  }
+                  onValueChange={(v) => handleFilterChange("province", v)}
+                  includeAll
+                  allLabel={tCommon("all")}
                 />
               </div>
             </div>

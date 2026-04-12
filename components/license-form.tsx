@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { LicenseType } from "@/contexts/LicenseContext";
 import { useTranslations } from "next-intl";
+import { ProvinceSelect } from "@/components/province-select";
 
 type LicenseFormData = {
   licenseNumber: string;
@@ -162,11 +163,10 @@ export function LicenseForm({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="province">{t("province")}</Label>
-              <Input
+              <ProvinceSelect
                 id="province"
                 value={form.province}
-                onChange={(e) => handleChange("province", e.target.value)}
-                placeholder={t("provincePlaceholder")}
+                onValueChange={(v) => handleChange("province", v)}
                 required
               />
             </div>
