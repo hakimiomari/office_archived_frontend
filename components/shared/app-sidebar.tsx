@@ -20,6 +20,11 @@ import {
   IconChartInfographic,
   IconShieldLock,
   IconGavel,
+  IconPackage,
+  IconBuildingWarehouse,
+  IconTruck,
+  IconArrowsExchange,
+  IconShoppingCart,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -57,7 +62,19 @@ const getAllNavItems = (t: (key: string) => string) => [
     title: t("miningLicenses"),
     url: "/licenses",
     icon: IconFileDescription,
-    requiredPermissions: ["license.read", "license.create"],
+    requiredPermissions: ["license.read", "license.create", "report.view"],
+    items: [
+      {
+        title: t("allLicenses"),
+        url: "/licenses",
+        icon: IconFileDescription,
+      },
+      {
+        title: t("miningLicensesReport"),
+        url: "/reports",
+        icon: IconReport,
+      },
+    ],
   },
   {
     title: t("tenders"),
@@ -72,10 +89,42 @@ const getAllNavItems = (t: (key: string) => string) => [
     requiredPermissions: ["tender.read"],
   },
   {
-    title: t("miningLicensesReport"),
-    url: "/reports",
-    icon: IconReport,
-    requiredPermissions: ["report.view"],
+    title: t("inventory"),
+    url: "/inventory",
+    icon: IconPackage,
+    requiredPermissions: ["inventory.read"],
+    items: [
+      {
+        title: t("inventoryDashboard"),
+        url: "/inventory",
+        icon: IconDashboard,
+      },
+      {
+        title: t("inventoryItems"),
+        url: "/inventory/items",
+        icon: IconPackage,
+      },
+      {
+        title: t("inventoryWarehouses"),
+        url: "/inventory/warehouses",
+        icon: IconBuildingWarehouse,
+      },
+      {
+        title: t("inventorySuppliers"),
+        url: "/inventory/suppliers",
+        icon: IconTruck,
+      },
+      {
+        title: t("inventoryMovements"),
+        url: "/inventory/movements",
+        icon: IconArrowsExchange,
+      },
+      {
+        title: t("inventoryPurchases"),
+        url: "/inventory/purchases",
+        icon: IconShoppingCart,
+      },
+    ],
   },
   {
     title: t("users"),
