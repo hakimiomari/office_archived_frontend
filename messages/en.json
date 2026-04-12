@@ -77,6 +77,7 @@
     "miningLicenses": "Mining Licenses",
     "tenders": "Tenders",
     "tenderReports": "Tender Reports",
+    "miningLicensesReport": "Mining Licenses Report",
     "reports": "Reports",
     "users": "Users",
     "roles": "Roles",
@@ -289,6 +290,7 @@
     "typeConsulting": "Consulting",
     "typeAuction": "Auction",
     "typeNotice": "Notice",
+    "typeAnnouncement": "Announcement",
     "typeOther": "Other",
     "sectorMining": "Mining",
     "sectorOil": "Oil",
@@ -331,7 +333,12 @@
     "export": "Export",
     "exportPdf": "PDF",
     "exportExcel": "Excel",
-    "exportCsv": "CSV"
+    "exportCsv": "CSV",
+    "language": "Language",
+    "allLanguages": "All Languages",
+    "langEn": "English",
+    "langPs": "Pashto",
+    "langFa": "Dari"
   },
   "language": {
     "label": "Language",

@@ -77,6 +77,7 @@
     "miningLicenses": "جوازات معدن",
     "tenders": "داوطلبی‌ها",
     "tenderReports": "گزارشات داوطلبی‌ها",
+    "miningLicensesReport": "گزارش جوازات معدن",
     "reports": "گزارشات",
     "users": "کاربران",
     "roles": "نقش‌ها",
@@ -288,7 +289,8 @@
     "typeTender": "داوطلبی",
     "typeConsulting": "مشورتی",
     "typeAuction": "لیلام",
-    "typeNotice": "اعلان",
+    "typeNotice": "اطلاعیه",
+    "typeAnnouncement": "اعلان",
     "typeOther": "سایر",
     "sectorMining": "معدن",
     "sectorOil": "نفت",
@@ -331,7 +333,12 @@
     "export": "خروجی",
     "exportPdf": "PDF",
     "exportExcel": "اکسل",
-    "exportCsv": "CSV"
+    "exportCsv": "CSV",
+    "language": "زبان",
+    "allLanguages": "همه زبان‌ها",
+    "langEn": "انگلیسی",
+    "langPs": "پشتو",
+    "langFa": "دری"
   },
   "language": {
     "label": "زبان",

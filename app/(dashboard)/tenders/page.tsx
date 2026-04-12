@@ -9,6 +9,7 @@ import {
   TenderType,
   TenderSector,
   TenderStatus,
+  TenderLanguage,
 } from "@/config/tender/tender";
 import { nextRoute } from "@/lib/route";
 import { Button } from "@/components/ui/button";
@@ -170,7 +171,14 @@ export default function TendersPage() {
 
   useEffect(() => {
     fetchTenders();
-  }, [filters.page, filters.limit, filters.status, filters.sector, filters.type]);
+  }, [
+    filters.page,
+    filters.limit,
+    filters.status,
+    filters.sector,
+    filters.type,
+    filters.language,
+  ]);
 
   const handleSearch = () => {
     const updated = { ...filters, search, page: 1 };
@@ -287,11 +295,12 @@ export default function TendersPage() {
       ),
       cell: ({ row }) => {
         const type = row.getValue("type") as TenderType;
-        const labelMap = {
+        const labelMap: Record<TenderType, string> = {
           TENDER: t("typeTender"),
           CONSULTING: t("typeConsulting"),
           AUCTION: t("typeAuction"),
           NOTICE: t("typeNotice"),
+          ANNOUNCEMENT: t("typeAnnouncement"),
           OTHER: t("typeOther"),
         };
         return <Badge variant="outline">{labelMap[type]}</Badge>;
@@ -326,6 +335,21 @@ export default function TendersPage() {
             {status === "OPEN" ? t("open") : t("closed")}
           </Badge>
         );
+      },
+    },
+    {
+      accessorKey: "language",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t("language")} />
+      ),
+      cell: ({ row }) => {
+        const lang = row.getValue("language") as TenderLanguage;
+        const labelMap: Record<TenderLanguage, string> = {
+          EN: t("langEn"),
+          PS: t("langPs"),
+          FA: t("langFa"),
+        };
+        return <Badge variant="outline">{labelMap[lang]}</Badge>;
       },
     },
     {
@@ -534,7 +558,25 @@ export default function TendersPage() {
                 </SelectItem>
                 <SelectItem value="AUCTION">{t("typeAuction")}</SelectItem>
                 <SelectItem value="NOTICE">{t("typeNotice")}</SelectItem>
+                <SelectItem value="ANNOUNCEMENT">
+                  {t("typeAnnouncement")}
+                </SelectItem>
                 <SelectItem value="OTHER">{t("typeOther")}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.language || "ALL"}
+              onValueChange={(v) => handleFilterChange("language", v)}
+            >
+              <SelectTrigger className="h-9 w-[140px]">
+                <SelectValue placeholder={t("allLanguages")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">{t("allLanguages")}</SelectItem>
+                <SelectItem value="EN">{t("langEn")}</SelectItem>
+                <SelectItem value="PS">{t("langPs")}</SelectItem>
+                <SelectItem value="FA">{t("langFa")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -722,6 +764,9 @@ export default function TendersPage() {
                     </SelectItem>
                     <SelectItem value="AUCTION">{t("typeAuction")}</SelectItem>
                     <SelectItem value="NOTICE">{t("typeNotice")}</SelectItem>
+                    <SelectItem value="ANNOUNCEMENT">
+                      {t("typeAnnouncement")}
+                    </SelectItem>
                     <SelectItem value="OTHER">{t("typeOther")}</SelectItem>
                   </SelectContent>
                 </Select>

@@ -104,6 +104,7 @@ export default function TenderDetailPage() {
     CONSULTING: t("typeConsulting"),
     AUCTION: t("typeAuction"),
     NOTICE: t("typeNotice"),
+    ANNOUNCEMENT: t("typeAnnouncement"),
     OTHER: t("typeOther"),
   };
 

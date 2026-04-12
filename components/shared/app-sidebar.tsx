@@ -72,7 +72,7 @@ const getAllNavItems = (t: (key: string) => string) => [
     requiredPermissions: ["tender.read"],
   },
   {
-    title: t("reports"),
+    title: t("miningLicensesReport"),
     url: "/reports",
     icon: IconReport,
     requiredPermissions: ["report.view"],

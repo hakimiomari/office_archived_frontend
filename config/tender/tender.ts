@@ -6,6 +6,7 @@ export type TenderType =
   | "CONSULTING"
   | "AUCTION"
   | "NOTICE"
+  | "ANNOUNCEMENT"
   | "OTHER";
 
 export type TenderSector =
@@ -16,6 +17,8 @@ export type TenderSector =
   | "OTHER";
 
 export type TenderStatus = "OPEN" | "CLOSED";
+
+export type TenderLanguage = "EN" | "PS" | "FA";
 
 export type TenderTag = {
   id: number;
@@ -43,6 +46,7 @@ export type Tender = {
   sector: TenderSector;
   type: TenderType;
   status: TenderStatus;
+  language: TenderLanguage;
   projectName: string | null;
   location: string | null;
   attachments: any[] | null;
@@ -69,6 +73,7 @@ export type TenderFilters = {
   status?: TenderStatus;
   sector?: TenderSector;
   type?: TenderType;
+  language?: TenderLanguage;
   closingFrom?: string;
   closingTo?: string;
   closingWithinDays?: number;
@@ -88,6 +93,7 @@ export const useTenders = () => {
     if (filters.status) params.append("status", filters.status);
     if (filters.sector) params.append("sector", filters.sector);
     if (filters.type) params.append("type", filters.type);
+    if (filters.language) params.append("language", filters.language);
     if (filters.closingFrom) params.append("closingFrom", filters.closingFrom);
     if (filters.closingTo) params.append("closingTo", filters.closingTo);
     if (filters.closingWithinDays !== undefined)
