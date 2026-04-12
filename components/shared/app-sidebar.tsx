@@ -19,6 +19,7 @@ import {
   IconUsers,
   IconChartInfographic,
   IconShieldLock,
+  IconGavel,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -57,6 +58,18 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/licenses",
     icon: IconFileDescription,
     requiredPermissions: ["license.read", "license.create"],
+  },
+  {
+    title: t("tenders"),
+    url: "/tenders",
+    icon: IconGavel,
+    requiredPermissions: ["tender.read", "tender.create"],
+  },
+  {
+    title: t("tenderReports"),
+    url: "/tender-reports",
+    icon: IconChartBar,
+    requiredPermissions: ["tender.read"],
   },
   {
     title: t("reports"),
