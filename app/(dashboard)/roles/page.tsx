@@ -43,11 +43,21 @@ import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   flexRender,
   type ColumnDef,
   type SortingState,
   type VisibilityState,
+  type PaginationState,
 } from "@tanstack/react-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 import { useTranslations } from "next-intl";
@@ -86,6 +96,10 @@ export default function RolesPage() {
   // Table state
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -275,18 +289,25 @@ export default function RolesPage() {
   const table = useReactTable({
     data: roles,
     columns,
-    state: { sorting, columnVisibility },
+    state: { sorting, columnVisibility, pagination },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
     <RouteGuard permission="role.read">
       <div className="flex flex-col gap-6 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
+            <Badge variant="default" className="text-sm">
+              {roles.length}
+            </Badge>
+          </div>
           <PermissionGate permission="role.create">
             <Button onClick={openCreate}>
               <IconPlus className="mr-2 h-4 w-4" />
@@ -306,7 +327,7 @@ export default function RolesPage() {
             <div className="mb-3 flex justify-end">
               <DataTableViewOptions table={table} />
             </div>
-            <div className="overflow-x-auto rounded-md border">
+            <div className="mb-3 overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -361,6 +382,69 @@ export default function RolesPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {roles.length > 0 && (
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>{tCommon("rowsPerPage")}:</span>
+                  <Select
+                    value={String(pagination.pageSize)}
+                    onValueChange={(v) =>
+                      setPagination({ pageIndex: 0, pageSize: Number(v) })
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[80px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[10, 20, 50, 100].map((s) => (
+                        <SelectItem key={s} value={String(s)}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span>
+                    {tCommon("showing")}{" "}
+                    {roles.length > 0
+                      ? pagination.pageIndex * pagination.pageSize + 1
+                      : 0}{" "}
+                    {tCommon("to")}{" "}
+                    {Math.min(
+                      (pagination.pageIndex + 1) * pagination.pageSize,
+                      roles.length,
+                    )}{" "}
+                    {tCommon("of")} {roles.length}
+                  </span>
+                </div>
+                {table.getPageCount() > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!table.getCanPreviousPage()}
+                      onClick={() => table.previousPage()}
+                    >
+                      <IconChevronLeft className="h-4 w-4" />
+                      {tCommon("previous")}
+                    </Button>
+                    <span className="text-sm">
+                      {tCommon("page")} {pagination.pageIndex + 1}{" "}
+                      {tCommon("of")} {table.getPageCount()}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!table.getCanNextPage()}
+                      onClick={() => table.nextPage()}
+                    >
+                      {tCommon("next")}
+                      <IconChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </TabsContent>
 
           {/* ─── PERMISSION MATRIX TAB ─── */}

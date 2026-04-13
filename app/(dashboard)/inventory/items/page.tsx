@@ -180,7 +180,14 @@ export default function InventoryItemsPage() {
     <RouteGuard permission="inventory.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold">{t("items")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("items")}</h1>
+            {meta && (
+              <Badge variant="default" className="text-sm">
+                {meta.total}
+              </Badge>
+            )}
+          </div>
           <PermissionGate permission="inventory.create">
             <Button onClick={openCreate}>
               <IconPlus className="me-2 h-4 w-4" />

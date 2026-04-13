@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useInventory, Supplier } from "@/config/inventory/inventory";
+import { useInventory, Supplier, Meta } from "@/config/inventory/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -31,6 +39,8 @@ import {
   IconDotsVertical,
   IconEdit,
   IconTrash,
+  IconChevronLeft,
+  IconChevronRight,
 } from "@tabler/icons-react";
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
@@ -50,8 +60,11 @@ export default function SuppliersPage() {
   const tCommon = useTranslations("common");
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
@@ -69,14 +82,19 @@ export default function SuppliersPage() {
 
   const fetch = async () => {
     setLoading(true);
-    const result = await getSuppliers({ limit: 100, search: search || undefined });
+    const result = await getSuppliers({
+      page,
+      limit,
+      search: search || undefined,
+    });
     setSuppliers(result.data);
+    setMeta(result.meta);
     setLoading(false);
   };
 
   useEffect(() => {
     fetch();
-  }, []);
+  }, [page, limit]);
 
   const openCreate = () => {
     setEditing(null);
@@ -129,7 +147,14 @@ export default function SuppliersPage() {
     <RouteGuard permission="inventory.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold">{t("suppliers")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("suppliers")}</h1>
+            {meta && (
+              <Badge variant="default" className="text-sm">
+                {meta.total}
+              </Badge>
+            )}
+          </div>
           <PermissionGate permission="inventory.create">
             <Button onClick={openCreate}>
               <IconPlus className="me-2 h-4 w-4" />
@@ -183,7 +208,9 @@ export default function SuppliersPage() {
               ) : (
                 suppliers.map((s, idx) => (
                   <TableRow key={s.id}>
-                    <TableCell className="px-4 py-2">{idx + 1}</TableCell>
+                    <TableCell className="px-4 py-2">
+                      {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
+                    </TableCell>
                     <TableCell className="px-4 py-2 font-medium">{s.name}</TableCell>
                     <TableCell className="px-4 py-2">{s.contact || "—"}</TableCell>
                     <TableCell className="px-4 py-2">{s.email || "—"}</TableCell>
@@ -220,6 +247,64 @@ export default function SuppliersPage() {
             </TableBody>
           </Table>
         </div>
+
+        {meta && meta.total > 0 && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{tCommon("rowsPerPage")}:</span>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => {
+                  setLimit(Number(v));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 50, 100].map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>
+                {tCommon("showing")}{" "}
+                {suppliers.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
+                {meta.total}
+              </span>
+            </div>
+            {meta.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <IconChevronLeft className="h-4 w-4" />
+                  {tCommon("previous")}
+                </Button>
+                <span className="text-sm">
+                  {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= meta.totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  {tCommon("next")}
+                  <IconChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

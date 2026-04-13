@@ -456,7 +456,14 @@ export default function TendersPage() {
     <RouteGuard permission="tender.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
+            {meta && (
+              <Badge variant="default" className="text-sm">
+                {meta.total}
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground">
               {t("export")}:

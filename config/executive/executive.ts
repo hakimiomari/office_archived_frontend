@@ -102,15 +102,25 @@ export const useExecutive = () => {
   };
 
   // --- KPIs ---
-  const getKpis = async (filters: { year?: number; category?: KpiCategory } = {}): Promise<Kpi[]> => {
+  const getKpis = async (
+    filters: {
+      page?: number;
+      limit?: number;
+      year?: number;
+      category?: KpiCategory;
+    } = {},
+  ): Promise<{ data: Kpi[]; meta: Meta }> => {
     try {
       const params = new URLSearchParams();
-      if (filters.year) params.append("year", String(filters.year));
-      if (filters.category) params.append("category", filters.category);
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && String(v) !== "") {
+          params.append(k, String(v));
+        }
+      });
       const response = await api.get(`executive/kpis?${params.toString()}`);
       return response.data;
     } catch {
-      return [];
+      return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
     }
   };
 
@@ -137,12 +147,22 @@ export const useExecutive = () => {
   };
 
   // --- Contracts Summary ---
-  const getContractsSummaries = async (): Promise<ContractsSummary[]> => {
+  const getContractsSummaries = async (
+    filters: { page?: number; limit?: number; year?: number } = {},
+  ): Promise<{ data: ContractsSummary[]; meta: Meta }> => {
     try {
-      const response = await api.get("executive/contracts-summary");
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && String(v) !== "") {
+          params.append(k, String(v));
+        }
+      });
+      const response = await api.get(
+        `executive/contracts-summary?${params.toString()}`,
+      );
       return response.data;
     } catch {
-      return [];
+      return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
     }
   };
 

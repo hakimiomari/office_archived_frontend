@@ -238,7 +238,14 @@ export default function ReportsPage() {
   return (
     <RouteGuard permission="report.view">
       <div className="flex flex-col gap-6 p-4 md:p-6">
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          {meta && (
+            <Badge variant="default" className="text-sm">
+              {meta.total}
+            </Badge>
+          )}
+        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

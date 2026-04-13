@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useExecutive, Kpi, KpiCategory } from "@/config/executive/executive";
+import { useExecutive, Kpi, KpiCategory, Meta } from "@/config/executive/executive";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,8 @@ import {
   IconDotsVertical,
   IconEdit,
   IconTrash,
+  IconChevronLeft,
+  IconChevronRight,
 } from "@tabler/icons-react";
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
@@ -74,8 +76,11 @@ export default function KpisPage() {
   const tCommon = useTranslations("common");
 
   const [kpis, setKpis] = useState<Kpi[]>([]);
+  const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
   const [yearFilter, setYearFilter] = useState<number>(CURRENT_YEAR);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Kpi | null>(null);
@@ -87,14 +92,15 @@ export default function KpisPage() {
 
   const fetch = async () => {
     setLoading(true);
-    const result = await getKpis({ year: yearFilter });
-    setKpis(result);
+    const result = await getKpis({ year: yearFilter, page, limit });
+    setKpis(result.data);
+    setMeta(result.meta);
     setLoading(false);
   };
 
   useEffect(() => {
     fetch();
-  }, [yearFilter]);
+  }, [yearFilter, page, limit]);
 
   const openCreate = () => {
     setEditing(null);
@@ -154,7 +160,14 @@ export default function KpisPage() {
     <RouteGuard permission="executive.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold">{t("kpis")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("kpis")}</h1>
+            {meta && (
+              <Badge variant="default" className="text-sm">
+                {meta.total}
+              </Badge>
+            )}
+          </div>
           <PermissionGate permission="executive.create">
             <Button onClick={openCreate}>
               <IconPlus className="me-2 h-4 w-4" />
@@ -167,7 +180,10 @@ export default function KpisPage() {
           <span className="text-sm text-muted-foreground">{t("year")}:</span>
           <Select
             value={String(yearFilter)}
-            onValueChange={(v) => setYearFilter(Number(v))}
+            onValueChange={(v) => {
+              setYearFilter(Number(v));
+              setPage(1);
+            }}
           >
             <SelectTrigger className="h-9 w-[120px]">
               <SelectValue />
@@ -214,7 +230,9 @@ export default function KpisPage() {
               ) : (
                 kpis.map((kpi, idx) => (
                   <TableRow key={kpi.id}>
-                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>
+                      {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
+                    </TableCell>
                     <TableCell className="font-mono text-sm">{kpi.key}</TableCell>
                     <TableCell>{kpi.label || "—"}</TableCell>
                     <TableCell>
@@ -257,6 +275,64 @@ export default function KpisPage() {
             </TableBody>
           </Table>
         </div>
+
+        {meta && meta.total > 0 && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{tCommon("rowsPerPage")}:</span>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => {
+                  setLimit(Number(v));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 50, 100].map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>
+                {tCommon("showing")}{" "}
+                {kpis.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
+                {meta.total}
+              </span>
+            </div>
+            {meta.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <IconChevronLeft className="h-4 w-4" />
+                  {tCommon("previous")}
+                </Button>
+                <span className="text-sm">
+                  {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= meta.totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  {tCommon("next")}
+                  <IconChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -48,6 +48,8 @@ import {
   IconTrash,
   IconCheck,
   IconX,
+  IconChevronLeft,
+  IconChevronRight,
 } from "@tabler/icons-react";
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
@@ -80,6 +82,8 @@ export default function PurchasesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PurchaseStatus | "ALL">("ALL");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const [items, setItems] = useState<Item[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -104,7 +108,8 @@ export default function PurchasesPage() {
   const fetch = async () => {
     setLoading(true);
     const result = await getPurchases({
-      limit: 50,
+      page,
+      limit,
       search: search || undefined,
       status: statusFilter !== "ALL" ? statusFilter : undefined,
     });
@@ -115,7 +120,7 @@ export default function PurchasesPage() {
 
   useEffect(() => {
     fetch();
-  }, [statusFilter]);
+  }, [statusFilter, page, limit]);
 
   useEffect(() => {
     (async () => {
@@ -231,7 +236,14 @@ export default function PurchasesPage() {
     <RouteGuard permission="inventory.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold">{t("purchases")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("purchases")}</h1>
+            {meta && (
+              <Badge variant="default" className="text-sm">
+                {meta.total}
+              </Badge>
+            )}
+          </div>
           <PermissionGate permission="inventory.create">
             <Button onClick={openCreate}>
               <IconPlus className="me-2 h-4 w-4" />
@@ -251,7 +263,13 @@ export default function PurchasesPage() {
           <Button variant="outline" onClick={fetch}>
             {tCommon("search")}
           </Button>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v as any);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="h-9 w-[180px]">
               <SelectValue />
             </SelectTrigger>
@@ -297,7 +315,9 @@ export default function PurchasesPage() {
               ) : (
                 purchases.map((p, idx) => (
                   <TableRow key={p.id}>
-                    <TableCell className="px-4 py-2">{idx + 1}</TableCell>
+                    <TableCell className="px-4 py-2">
+                      {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
+                    </TableCell>
                     <TableCell className="px-4 py-2 font-medium">
                       {p.referenceNo || `#${p.id}`}
                     </TableCell>
@@ -352,6 +372,64 @@ export default function PurchasesPage() {
             </TableBody>
           </Table>
         </div>
+
+        {meta && meta.total > 0 && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{tCommon("rowsPerPage")}:</span>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => {
+                  setLimit(Number(v));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 50, 100].map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>
+                {tCommon("showing")}{" "}
+                {purchases.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
+                {meta.total}
+              </span>
+            </div>
+            {meta.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <IconChevronLeft className="h-4 w-4" />
+                  {tCommon("previous")}
+                </Button>
+                <span className="text-sm">
+                  {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= meta.totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  {tCommon("next")}
+                  <IconChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Create purchase dialog */}

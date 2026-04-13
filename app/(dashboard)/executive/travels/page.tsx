@@ -81,8 +81,14 @@ export default function TravelsPage() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TravelType | "ALL">("ALL");
+  const [yearFilter, setYearFilter] = useState<string>("ALL");
+
+  // Build list of years: current year + 9 previous years
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MinisterTravel | null>(null);
@@ -96,9 +102,10 @@ export default function TravelsPage() {
     setLoading(true);
     const result = await getTravels({
       page,
-      limit: 20,
+      limit,
       search: search || undefined,
       type: typeFilter !== "ALL" ? typeFilter : undefined,
+      year: yearFilter !== "ALL" ? Number(yearFilter) : undefined,
     });
     setTravels(result.data);
     setMeta(result.meta);
@@ -107,7 +114,7 @@ export default function TravelsPage() {
 
   useEffect(() => {
     fetch();
-  }, [page, typeFilter]);
+  }, [page, limit, typeFilter, yearFilter]);
 
   const openCreate = () => {
     setEditing(null);
@@ -167,7 +174,14 @@ export default function TravelsPage() {
     <RouteGuard permission="executive.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold">{t("ministerTravels")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{t("ministerTravels")}</h1>
+            {meta && (
+              <Badge variant="default" className="text-sm">
+                {meta.total}
+              </Badge>
+            )}
+          </div>
           <PermissionGate permission="executive.create">
             <Button onClick={openCreate}>
               <IconPlus className="me-2 h-4 w-4" />
@@ -203,6 +217,25 @@ export default function TravelsPage() {
               <SelectItem value="INTERNATIONAL">
                 {t("internationalTravels")}
               </SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={yearFilter}
+            onValueChange={(v) => {
+              setYearFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[150px]">
+              <SelectValue placeholder={t("allYears")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">{t("allYears")}</SelectItem>
+              {yearOptions.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -242,7 +275,7 @@ export default function TravelsPage() {
                 travels.map((travel, idx) => (
                   <TableRow key={travel.id}>
                     <TableCell>
-                      {((meta?.page || 1) - 1) * (meta?.limit || 20) + idx + 1}
+                      {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -305,29 +338,61 @@ export default function TravelsPage() {
           </Table>
         </div>
 
-        {meta && meta.totalPages > 1 && (
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-            >
-              <IconChevronLeft className="h-4 w-4" />
-              {tCommon("previous")}
-            </Button>
-            <span className="text-sm">
-              {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= meta.totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              {tCommon("next")}
-              <IconChevronRight className="h-4 w-4" />
-            </Button>
+        {meta && meta.total > 0 && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{tCommon("rowsPerPage")}:</span>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => {
+                  setLimit(Number(v));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 50, 100].map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>
+                {tCommon("showing")}{" "}
+                {travels.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {tCommon("to")}{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
+                {meta.total}
+              </span>
+            </div>
+            {meta.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <IconChevronLeft className="h-4 w-4" />
+                  {tCommon("previous")}
+                </Button>
+                <span className="text-sm">
+                  {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= meta.totalPages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  {tCommon("next")}
+                  <IconChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
