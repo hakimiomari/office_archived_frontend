@@ -25,6 +25,10 @@ import {
   IconTruck,
   IconArrowsExchange,
   IconShoppingCart,
+  IconPresentation,
+  IconTrendingUp,
+  IconFileText,
+  IconPlane,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -123,6 +127,34 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("inventoryPurchases"),
         url: "/inventory/purchases",
         icon: IconShoppingCart,
+      },
+    ],
+  },
+  {
+    title: t("executive"),
+    url: "/executive",
+    icon: IconPresentation,
+    requiredPermissions: ["executive.read"],
+    items: [
+      {
+        title: t("executiveDashboard"),
+        url: "/executive",
+        icon: IconTrendingUp,
+      },
+      {
+        title: t("executiveKpis"),
+        url: "/executive/kpis",
+        icon: IconChartBar,
+      },
+      {
+        title: t("executiveContracts"),
+        url: "/executive/contracts",
+        icon: IconFileText,
+      },
+      {
+        title: t("executiveTravels"),
+        url: "/executive/travels",
+        icon: IconPlane,
       },
     ],
   },
