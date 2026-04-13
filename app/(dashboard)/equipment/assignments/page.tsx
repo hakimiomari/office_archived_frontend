@@ -8,6 +8,7 @@ import {
   Equipment,
   Meta,
 } from "@/config/equipment/equipment";
+import { useEmployees, Employee } from "@/config/employees/employees";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,7 +58,6 @@ import { useTranslations } from "next-intl";
 type FormData = {
   equipmentId: string;
   employeeId: string;
-  employeeName: string;
   assignedDate: string;
   remarks: string;
 };
@@ -65,7 +65,6 @@ type FormData = {
 const emptyForm: FormData = {
   equipmentId: "",
   employeeId: "",
-  employeeName: "",
   assignedDate: new Date().toISOString().slice(0, 10),
   remarks: "",
 };
@@ -78,6 +77,7 @@ export default function EquipmentAssignmentsPage() {
     returnAssignment,
     deleteAssignment,
   } = useEquipment();
+  const { getEmployees } = useEmployees();
   const { can } = usePermission();
   const t = useTranslations("equipment");
   const tCommon = useTranslations("common");
@@ -85,6 +85,7 @@ export default function EquipmentAssignmentsPage() {
   const [assignments, setAssignments] = useState<EquipmentAssignment[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [availableEquipment, setAvailableEquipment] = useState<Equipment[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -119,27 +120,35 @@ export default function EquipmentAssignmentsPage() {
     setAvailableEquipment(result.data);
   };
 
+  const fetchEmployees = async () => {
+    const result = await getEmployees({ status: "ACTIVE", limit: 500 });
+    setEmployees(result.data);
+  };
+
   useEffect(() => {
     fetch();
   }, [page, limit, statusFilter]);
 
   useEffect(() => {
     fetchAvailable();
+    fetchEmployees();
   }, []);
 
   const openCreate = () => {
     setForm(emptyForm);
     fetchAvailable();
+    fetchEmployees();
     setDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    const emp = employees.find((e) => String(e.id) === form.employeeId);
     const result = await createAssignment({
       equipmentId: Number(form.equipmentId),
       employeeId: Number(form.employeeId),
-      employeeName: form.employeeName || undefined,
+      employeeName: emp ? `${emp.firstName} ${emp.lastName}` : undefined,
       assignedDate: form.assignedDate,
       remarks: form.remarks || undefined,
     } as any);
@@ -404,29 +413,30 @@ export default function EquipmentAssignmentsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="empId">{t("employeeId")}</Label>
-                <Input
-                  id="empId"
-                  type="number"
-                  value={form.employeeId}
-                  onChange={(e) =>
-                    setForm({ ...form, employeeId: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="empName">{t("employeeName")}</Label>
-                <Input
-                  id="empName"
-                  value={form.employeeName}
-                  onChange={(e) =>
-                    setForm({ ...form, employeeName: e.target.value })
-                  }
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>{t("employee")}</Label>
+              <Select
+                value={form.employeeId}
+                onValueChange={(v) => setForm({ ...form, employeeId: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("selectEmployee")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.length === 0 ? (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      {t("noEmployees")}
+                    </div>
+                  ) : (
+                    employees.map((e) => (
+                      <SelectItem key={e.id} value={String(e.id)}>
+                        {e.firstName} {e.lastName}
+                        {e.department?.name ? ` — ${e.department.name}` : ""}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="adate">{t("assignedDate")}</Label>

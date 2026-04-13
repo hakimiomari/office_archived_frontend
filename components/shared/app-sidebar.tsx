@@ -32,6 +32,8 @@ import {
   IconDeviceLaptop,
   IconTool,
   IconUserCheck,
+  IconBuilding,
+  IconUsersGroup,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -181,6 +183,24 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("equipmentMaintenance"),
         url: "/equipment/maintenance",
         icon: IconTool,
+      },
+    ],
+  },
+  {
+    title: t("employees"),
+    url: "/employees",
+    icon: IconUsersGroup,
+    requiredPermissions: ["employee.read"],
+    items: [
+      {
+        title: t("employeesList"),
+        url: "/employees",
+        icon: IconUsersGroup,
+      },
+      {
+        title: t("departments"),
+        url: "/employees/departments",
+        icon: IconBuilding,
       },
     ],
   },

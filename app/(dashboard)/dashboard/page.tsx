@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useExecutive, DashboardData } from "@/config/executive/executive";
 import { useTenders } from "@/config/tender/tender";
 import { useInventory } from "@/config/inventory/inventory";
+import { useEmployees, EmployeeSummary } from "@/config/employees/employees";
+import { useEquipment, EquipmentSummary } from "@/config/equipment/equipment";
 import api from "@/lib/api/axios";
 import {
   Card,
@@ -33,6 +35,8 @@ import {
   IconAlertTriangle,
   IconBuildingWarehouse,
   IconChartBar,
+  IconUsers,
+  IconDeviceLaptop,
 } from "@tabler/icons-react";
 import {
   Area,
@@ -98,6 +102,8 @@ export default function DashboardPage() {
   const { getDashboard, getRevenueTrend } = useExecutive();
   const { getReportSummary: getTenderSummary } = useTenders();
   const { getReportSummary: getInventorySummary } = useInventory();
+  const { getSummary: getEmployeeSummary } = useEmployees();
+  const { getSummary: getEquipmentSummary } = useEquipment();
   const { user } = useUser();
   const { changeRoute } = nextRoute();
 
@@ -107,6 +113,8 @@ export default function DashboardPage() {
   const tLic = useTranslations("licenses");
   const tTenders = useTranslations("tenders");
   const tInv = useTranslations("inventory");
+  const tEmp = useTranslations("employees");
+  const tEquip = useTranslations("equipment");
 
   const [loading, setLoading] = useState(true);
   const [exec, setExec] = useState<DashboardData | null>(null);
@@ -116,6 +124,10 @@ export default function DashboardPage() {
   const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(null);
   const [invSummary, setInvSummary] = useState<InventorySummary | null>(null);
   const [licenseStats, setLicenseStats] = useState<LicenseStats | null>(null);
+  const [empSummary, setEmpSummary] = useState<EmployeeSummary | null>(null);
+  const [equipSummary, setEquipSummary] = useState<EquipmentSummary | null>(
+    null,
+  );
 
   const fetchLicenseStats = async (): Promise<LicenseStats | null> => {
     try {
@@ -136,18 +148,22 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [execData, rt, ts, is, ls] = await Promise.all([
+      const [execData, rt, ts, is, ls, emp, equip] = await Promise.all([
         getDashboard(),
         getRevenueTrend(),
         getTenderSummary(),
         getInventorySummary(),
         fetchLicenseStats(),
+        getEmployeeSummary(),
+        getEquipmentSummary(),
       ]);
       setExec(execData);
       setRevenueTrend(rt);
       setTenderSummary(ts);
       setInvSummary(is);
       setLicenseStats(ls);
+      setEmpSummary(emp);
+      setEquipSummary(equip);
       setLoading(false);
     })();
   }, []);
@@ -401,6 +417,114 @@ export default function DashboardPage() {
               {exec && exec.travel.totalCost > 0 && (
                 <p className="text-xs text-muted-foreground">
                   {fmt(exec.travel.totalCost)}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* HR + Equipment cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition"
+          onClick={() => changeRoute("/employees")}
+        >
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
+              <IconUsers className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {tEmp("total")}
+              </p>
+              <p className="text-xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  empSummary?.totalEmployees ?? 0
+                )}
+              </p>
+              {empSummary && empSummary.activeEmployees > 0 && (
+                <p className="text-xs text-green-600">
+                  {empSummary.activeEmployees} {tEmp("active").toLowerCase()}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition"
+          onClick={() => changeRoute("/employees/departments")}
+        >
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10">
+              <IconBuildingWarehouse className="h-5 w-5 text-pink-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {tEmp("departments")}
+              </p>
+              <p className="text-xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  empSummary?.totalDepartments ?? 0
+                )}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition"
+          onClick={() => changeRoute("/equipment")}
+        >
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
+              <IconDeviceLaptop className="h-5 w-5 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {tEquip("total")}
+              </p>
+              <p className="text-xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  equipSummary?.totalEquipment ?? 0
+                )}
+              </p>
+              {equipSummary && equipSummary.assigned > 0 && (
+                <p className="text-xs text-blue-600">
+                  {equipSummary.assigned} {tEquip("assigned").toLowerCase()}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className="cursor-pointer hover:bg-accent/50 transition"
+          onClick={() => changeRoute("/equipment/maintenance")}
+        >
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
+              <IconAlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {tEquip("inMaintenance")}
+              </p>
+              <p className="text-xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  equipSummary?.maintenance ?? 0
+                )}
+              </p>
+              {equipSummary && equipSummary.warrantyExpiringSoon > 0 && (
+                <p className="text-xs text-orange-600">
+                  {equipSummary.warrantyExpiringSoon}{" "}
+                  {tEquip("warrantyExpiringSoon").toLowerCase()}
                 </p>
               )}
             </div>
