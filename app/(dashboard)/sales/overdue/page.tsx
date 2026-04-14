@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSales, Sale, PaymentMethod } from "@/config/sales/sales";
+import { useSales, Sale, Customer, PaymentMethod } from "@/config/sales/sales";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,13 +39,19 @@ import { RouteGuard } from "@/components/route-guard";
 import { useTranslations } from "next-intl";
 
 export default function OverdueInvoicesPage() {
-  const { getOverdueSales, createPayment, downloadInvoicePdf } = useSales();
+  const { getOverdueSales, getCustomers, createPayment, downloadInvoicePdf } =
+    useSales();
   const { can } = usePermission();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
 
   const [overdue, setOverdue] = useState<Sale[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [customerFilter, setCustomerFilter] = useState<string>("ALL");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -54,13 +60,26 @@ export default function OverdueInvoicesPage() {
 
   const fetch = async () => {
     setLoading(true);
-    const result = await getOverdueSales();
+    const result = await getOverdueSales({
+      customerId: customerFilter !== "ALL" ? Number(customerFilter) : undefined,
+      from: fromDate || undefined,
+      to: toDate || undefined,
+    });
     setOverdue(result);
     setLoading(false);
   };
 
+  const fetchCustomers = async () => {
+    const result = await getCustomers({ limit: 500 });
+    setCustomers(result.data);
+  };
+
   useEffect(() => {
     fetch();
+  }, [customerFilter, fromDate, toDate]);
+
+  useEffect(() => {
+    fetchCustomers();
   }, []);
 
   const openPayment = (sale: Sale) => {
@@ -113,6 +132,59 @@ export default function OverdueInvoicesPage() {
               {overdue.length}
             </Badge>
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select
+            value={customerFilter}
+            onValueChange={(v) => setCustomerFilter(v)}
+          >
+            <SelectTrigger className="h-9 w-[220px]">
+              <SelectValue placeholder={t("customer")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">{t("allCustomers")}</SelectItem>
+              {customers.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">
+              {t("from")}
+            </Label>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">{t("to")}</Label>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          {(customerFilter !== "ALL" || fromDate || toDate) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setCustomerFilter("ALL");
+                setFromDate("");
+                setToDate("");
+              }}
+            >
+              {tCommon("reset")}
+            </Button>
+          )}
         </div>
 
         {/* Summary banner */}

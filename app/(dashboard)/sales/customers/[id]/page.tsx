@@ -3,6 +3,8 @@
 import { use, useEffect, useState } from "react";
 import { useSales, CustomerDetail } from "@/config/sales/sales";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -41,13 +43,16 @@ export default function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { getCustomerById, downloadInvoicePdf } = useSales();
+  const { getCustomerById, downloadInvoicePdf, downloadCustomerReportPdf } =
+    useSales();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
   const { changeRoute } = nextRoute();
 
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -59,6 +64,32 @@ export default function CustomerDetailPage({
   }, [id]);
 
   const fmt = (v: number) => v.toLocaleString();
+
+  // Client-side filter for sale + payment history based on selected date range
+  const filteredSales = customer?.sales.filter((s) => {
+    const d = new Date(s.saleDate).getTime();
+    if (fromDate && d < new Date(fromDate).getTime()) return false;
+    if (toDate && d > new Date(toDate).getTime() + 86400000) return false;
+    return true;
+  }) ?? [];
+
+  const filteredPayments = customer?.recentPayments.filter((p) => {
+    const d = new Date(p.paymentDate).getTime();
+    if (fromDate && d < new Date(fromDate).getTime()) return false;
+    if (toDate && d > new Date(toDate).getTime() + 86400000) return false;
+    return true;
+  }) ?? [];
+
+  const filteredTotals = filteredSales.reduce(
+    (acc, s) => ({
+      spent: acc.spent + s.totalAmount,
+      paid: acc.paid + s.paidAmount,
+      remaining: acc.remaining + s.remainingAmount,
+    }),
+    { spent: 0, paid: 0, remaining: 0 },
+  );
+
+  const hasDateFilter = !!(fromDate || toDate);
 
   const statusVariant = (status: string) => {
     switch (status) {
@@ -119,6 +150,19 @@ export default function CustomerDetailPage({
               </Badge>
             )}
           </div>
+          <Button
+            onClick={() =>
+              downloadCustomerReportPdf(
+                customer.id,
+                customer.name,
+                fromDate || undefined,
+                toDate || undefined,
+              )
+            }
+          >
+            <IconFileDownload className="me-2 h-4 w-4" />
+            {t("downloadReport")}
+          </Button>
         </div>
 
         {/* Profile card */}
@@ -151,6 +195,42 @@ export default function CustomerDetailPage({
           </CardContent>
         </Card>
 
+        {/* Date range filter */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">
+              {t("from")}
+            </Label>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">{t("to")}</Label>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          {hasDateFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+              }}
+            >
+              {tCommon("reset")}
+            </Button>
+          )}
+        </div>
+
         {/* Financial summary cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="border-l-4 border-l-blue-500">
@@ -163,7 +243,9 @@ export default function CustomerDetailPage({
                   {t("salesCount")}
                 </p>
                 <p className="text-2xl font-bold">
-                  {customer.stats.salesCount}
+                  {hasDateFilter
+                    ? filteredSales.length
+                    : customer.stats.salesCount}
                 </p>
               </div>
             </CardContent>
@@ -178,7 +260,11 @@ export default function CustomerDetailPage({
                   {t("totalSpent")}
                 </p>
                 <p className="text-2xl font-bold">
-                  {fmt(customer.stats.totalSpent)}
+                  {fmt(
+                    hasDateFilter
+                      ? filteredTotals.spent
+                      : customer.stats.totalSpent,
+                  )}
                 </p>
               </div>
             </CardContent>
@@ -193,7 +279,11 @@ export default function CustomerDetailPage({
                   {t("totalPaid")}
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {fmt(customer.stats.totalPaid)}
+                  {fmt(
+                    hasDateFilter
+                      ? filteredTotals.paid
+                      : customer.stats.totalPaid,
+                  )}
                 </p>
               </div>
             </CardContent>
@@ -208,7 +298,11 @@ export default function CustomerDetailPage({
                   {t("remainingBalance")}
                 </p>
                 <p className="text-2xl font-bold text-red-600">
-                  {fmt(customer.stats.totalRemaining)}
+                  {fmt(
+                    hasDateFilter
+                      ? filteredTotals.remaining
+                      : customer.stats.totalRemaining,
+                  )}
                 </p>
               </div>
             </CardContent>
@@ -220,11 +314,11 @@ export default function CustomerDetailPage({
           <CardHeader className="pb-2">
             <CardTitle>{t("salesHistory")}</CardTitle>
             <CardDescription>
-              {customer.sales.length} {t("salesCount").toLowerCase()}
+              {filteredSales.length} {t("salesCount").toLowerCase()}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {customer.sales.length === 0 ? (
+            {filteredSales.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-4">
                 {t("noSales")}
               </p>
@@ -243,7 +337,7 @@ export default function CustomerDetailPage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {customer.sales.map((s) => (
+                    {filteredSales.map((s) => (
                       <TableRow key={s.id}>
                         <TableCell className="font-mono text-xs">
                           {s.invoiceNo}
@@ -297,7 +391,7 @@ export default function CustomerDetailPage({
             <CardTitle>{t("paymentHistory")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {customer.recentPayments.length === 0 ? (
+            {filteredPayments.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-4">
                 {t("noPayments")}
               </p>
@@ -313,7 +407,7 @@ export default function CustomerDetailPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customer.recentPayments.map((p) => (
+                  {filteredPayments.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         {new Date(p.paymentDate).toLocaleDateString()}

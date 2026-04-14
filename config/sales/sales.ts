@@ -185,9 +185,17 @@ export const useSales = () => {
     }
   };
 
-  const getOverdueSales = async (): Promise<Sale[]> => {
+  const getOverdueSales = async (
+    filters: { customerId?: number; from?: string; to?: string } = {},
+  ): Promise<Sale[]> => {
     try {
-      const response = await api.get("sales/overdue");
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && String(v) !== "") {
+          params.append(k, String(v));
+        }
+      });
+      const response = await api.get(`sales/overdue?${params.toString()}`);
       return response.data;
     } catch {
       return [];
@@ -343,6 +351,8 @@ export const useSales = () => {
       limit?: number;
       saleId?: number;
       method?: PaymentMethod;
+      from?: string;
+      to?: string;
     } = {},
   ): Promise<ListResponse<Payment>> => {
     try {
@@ -378,6 +388,38 @@ export const useSales = () => {
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to record payment");
       return null;
+    }
+  };
+
+  const downloadCustomerReportPdf = async (
+    customerId: number,
+    customerName: string,
+    from?: string,
+    to?: string,
+  ): Promise<boolean> => {
+    try {
+      const params = new URLSearchParams();
+      if (from) params.append("from", from);
+      if (to) params.append("to", to);
+      const response = await api.get(
+        `sales/customers/${customerId}/report-pdf?${params.toString()}`,
+        { responseType: "blob" },
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const safeName = customerName.replace(/[^a-z0-9]+/gi, "_");
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `customer_${customerId}_${safeName}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return true;
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to download customer report",
+      );
+      return false;
     }
   };
 
@@ -433,5 +475,6 @@ export const useSales = () => {
     createPayment,
     deletePayment,
     downloadInvoicePdf,
+    downloadCustomerReportPdf,
   };
 };

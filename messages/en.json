@@ -745,7 +745,11 @@
     "paymentHistory": "Payment History",
     "totalSpent": "Total Spent",
     "totalPaid": "Total Paid",
-    "remainingBalance": "Remaining Balance"
+    "remainingBalance": "Remaining Balance",
+    "from": "From",
+    "to": "To",
+    "allCustomers": "All Customers",
+    "downloadReport": "Download Report"
   },
   "provinces": {
     "selectProvince": "Select a province",

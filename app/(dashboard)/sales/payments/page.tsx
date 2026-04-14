@@ -8,6 +8,8 @@ import {
   Meta,
 } from "@/config/sales/sales";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -56,6 +58,8 @@ export default function PaymentsPage() {
   const [methodFilter, setMethodFilter] = useState<PaymentMethod | "ALL">(
     "ALL",
   );
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -66,6 +70,8 @@ export default function PaymentsPage() {
       page,
       limit,
       method: methodFilter !== "ALL" ? methodFilter : undefined,
+      from: fromDate || undefined,
+      to: toDate || undefined,
     });
     setPayments(result.data);
     setMeta(result.meta);
@@ -74,7 +80,7 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     fetch();
-  }, [page, limit, methodFilter]);
+  }, [page, limit, methodFilter, fromDate, toDate]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -100,6 +106,45 @@ export default function PaymentsPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">
+              {t("from")}
+            </Label>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">{t("to")}</Label>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          {(fromDate || toDate) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+                setPage(1);
+              }}
+            >
+              {tCommon("reset")}
+            </Button>
+          )}
           <Select
             value={methodFilter}
             onValueChange={(v) => {

@@ -745,7 +745,11 @@
     "paymentHistory": "د پرداخت تاریخچه",
     "totalSpent": "ټول لګښت",
     "totalPaid": "ټول پرداخت شوی",
-    "remainingBalance": "پاتې بیلانس"
+    "remainingBalance": "پاتې بیلانس",
+    "from": "له",
+    "to": "تر",
+    "allCustomers": "ټول پېرودونکي",
+    "downloadReport": "راپور ډاونلوډ"
   },
   "provinces": {
     "selectProvince": "ولایت غوره کړئ",

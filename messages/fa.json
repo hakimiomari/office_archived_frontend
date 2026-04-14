@@ -745,7 +745,11 @@
     "paymentHistory": "تاریخچه پرداخت",
     "totalSpent": "مجموع خرج",
     "totalPaid": "مجموع پرداخت شده",
-    "remainingBalance": "مانده بدهی"
+    "remainingBalance": "مانده بدهی",
+    "from": "از",
+    "to": "تا",
+    "allCustomers": "همه مشتریان",
+    "downloadReport": "دانلود گزارش"
   },
   "provinces": {
     "selectProvince": "یک ولایت انتخاب کنید",

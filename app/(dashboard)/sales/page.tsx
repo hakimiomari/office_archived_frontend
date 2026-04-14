@@ -137,6 +137,8 @@ export default function SalesPage() {
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | "ALL">(
     "ALL",
   );
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   // Create invoice dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -167,6 +169,8 @@ export default function SalesPage() {
         limit,
         search: search || undefined,
         paymentStatus: statusFilter !== "ALL" ? statusFilter : undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
       }),
       getSummary(),
     ]);
@@ -189,7 +193,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     fetch();
-  }, [page, limit, statusFilter]);
+  }, [page, limit, statusFilter, fromDate, toDate]);
 
   useEffect(() => {
     fetchLookups();
@@ -501,6 +505,45 @@ export default function SalesPage() {
               </SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">
+              {t("from")}
+            </Label>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setFromDate(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground">{t("to")}</Label>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setToDate(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 w-[150px]"
+            />
+          </div>
+          {(fromDate || toDate) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+                setPage(1);
+              }}
+            >
+              {tCommon("reset")}
+            </Button>
+          )}
         </div>
 
         <div className="overflow-x-auto rounded-md border">
