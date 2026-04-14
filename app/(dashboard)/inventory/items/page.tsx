@@ -61,6 +61,8 @@ type ItemFormData = {
   unit: string;
   description: string;
   minStock: number;
+  salePrice: number;
+  purchasePrice: number;
 };
 
 const emptyForm: ItemFormData = {
@@ -70,6 +72,8 @@ const emptyForm: ItemFormData = {
   unit: "pcs",
   description: "",
   minStock: 0,
+  salePrice: 0,
+  purchasePrice: 0,
 };
 
 export default function InventoryItemsPage() {
@@ -133,6 +137,8 @@ export default function InventoryItemsPage() {
       unit: item.unit,
       description: item.description ?? "",
       minStock: item.minStock,
+      salePrice: item.salePrice ?? 0,
+      purchasePrice: item.purchasePrice ?? 0,
     });
     setDialogOpen(true);
   };
@@ -147,6 +153,8 @@ export default function InventoryItemsPage() {
       unit: form.unit || "pcs",
       description: form.description || undefined,
       minStock: Number(form.minStock) || 0,
+      salePrice: Number(form.salePrice) || 0,
+      purchasePrice: Number(form.purchasePrice) || 0,
     };
     const result = editingItem
       ? await updateItem(editingItem.id, payload)
@@ -444,15 +452,45 @@ export default function InventoryItemsPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="minStock">{t("minStock")}</Label>
-              <Input
-                id="minStock"
-                type="number"
-                min="0"
-                value={form.minStock}
-                onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })}
-              />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="minStock">{t("minStock")}</Label>
+                <Input
+                  id="minStock"
+                  type="number"
+                  min="0"
+                  value={form.minStock}
+                  onChange={(e) =>
+                    setForm({ ...form, minStock: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salePrice">{t("salePrice")}</Label>
+                <Input
+                  id="salePrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.salePrice}
+                  onChange={(e) =>
+                    setForm({ ...form, salePrice: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="purchasePrice">{t("purchasePrice")}</Label>
+                <Input
+                  id="purchasePrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.purchasePrice}
+                  onChange={(e) =>
+                    setForm({ ...form, purchasePrice: Number(e.target.value) })
+                  }
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

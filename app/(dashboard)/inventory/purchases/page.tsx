@@ -47,6 +47,7 @@ import {
   IconDotsVertical,
   IconTrash,
   IconCheck,
+  IconCash,
   IconX,
   IconChevronLeft,
   IconChevronRight,
@@ -72,6 +73,7 @@ export default function PurchasesPage() {
     getItems,
     getSuppliers,
     getWarehouses,
+    createSupplierPayment,
   } = useInventory();
   const { can } = usePermission();
   const t = useTranslations("inventory");
@@ -95,6 +97,7 @@ export default function PurchasesPage() {
     referenceNo: "",
     purchaseDate: new Date().toISOString().slice(0, 10),
     notes: "",
+    paidAmount: "0",
     lineItems: [{ itemId: "", quantity: "", price: "" }] as LineItem[],
   });
   const [saving, setSaving] = useState(false);
@@ -104,6 +107,11 @@ export default function PurchasesPage() {
 
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Supplier payment dialog
+  const [payDialog, setPayDialog] = useState<Purchase | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [savingPayment, setSavingPayment] = useState(false);
 
   const fetch = async () => {
     setLoading(true);
@@ -141,6 +149,7 @@ export default function PurchasesPage() {
       referenceNo: "",
       purchaseDate: new Date().toISOString().slice(0, 10),
       notes: "",
+      paidAmount: "0",
       lineItems: [{ itemId: "", quantity: "", price: "" }],
     });
     setCreateDialog(true);
@@ -189,6 +198,7 @@ export default function PurchasesPage() {
       referenceNo: form.referenceNo || undefined,
       purchaseDate: form.purchaseDate,
       notes: form.notes || undefined,
+      paidAmount: Number(form.paidAmount) || 0,
       items: validItems,
     });
     setSaving(false);
@@ -291,6 +301,9 @@ export default function PurchasesPage() {
                 <TableHead className="px-4 py-2">{t("supplier")}</TableHead>
                 <TableHead className="px-4 py-2">{t("purchaseDate")}</TableHead>
                 <TableHead className="px-4 py-2">{t("totalAmount")}</TableHead>
+                <TableHead className="px-4 py-2">{t("paidAmount")}</TableHead>
+                <TableHead className="px-4 py-2">{t("remainingAmount")}</TableHead>
+                <TableHead className="px-4 py-2">{t("paymentStatus")}</TableHead>
                 <TableHead className="px-4 py-2">{t("status")}</TableHead>
                 <TableHead className="px-4 py-2">{tCommon("actions")}</TableHead>
               </TableRow>
@@ -299,7 +312,7 @@ export default function PurchasesPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={`sk-${i}`}>
-                    {Array.from({ length: 7 }).map((_, j) => (
+                    {Array.from({ length: 10 }).map((_, j) => (
                       <TableCell key={j} className="px-4 py-3">
                         <Skeleton className="h-4 w-full max-w-[120px]" />
                       </TableCell>
@@ -308,7 +321,7 @@ export default function PurchasesPage() {
                 ))
               ) : purchases.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={10} className="h-24 text-center">
                     {t("noPurchases")}
                   </TableCell>
                 </TableRow>
@@ -329,6 +342,27 @@ export default function PurchasesPage() {
                     </TableCell>
                     <TableCell className="px-4 py-2 font-medium">
                       {p.totalAmount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-green-600">
+                      {p.paidAmount.toFixed(2)}
+                    </TableCell>
+                    <TableCell
+                      className={`px-4 py-2 ${p.remainingAmount > 0 ? "text-red-600 font-semibold" : ""}`}
+                    >
+                      {p.remainingAmount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <Badge
+                        variant={
+                          p.paymentStatus === "PAID"
+                            ? "default"
+                            : p.paymentStatus === "PARTIAL"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                      >
+                        {t(`paymentStatus_${p.paymentStatus}`)}
+                      </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <Badge variant={statusVariant(p.status)}>
@@ -354,6 +388,19 @@ export default function PurchasesPage() {
                               {t("receivePurchase")}
                             </DropdownMenuItem>
                           )}
+                          {p.remainingAmount > 0 &&
+                            can("inventory.create") &&
+                            p.supplierId && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setPayDialog(p);
+                                  setPayAmount(String(p.remainingAmount));
+                                }}
+                              >
+                                <IconCash className="me-2 h-4 w-4 text-green-600" />
+                                {t("recordSupplierPayment")}
+                              </DropdownMenuItem>
+                            )}
                           {can("inventory.delete") && (
                             <DropdownMenuItem
                               onClick={() => setDeleteId(p.id)}
@@ -546,13 +593,29 @@ export default function PurchasesPage() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="pNotes">{t("notes")}</Label>
-              <Input
-                id="pNotes"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="pPaid">{t("paidAmount")}</Label>
+                <Input
+                  id="pPaid"
+                  type="number"
+                  min="0"
+                  max={totalAmount}
+                  step="0.01"
+                  value={form.paidAmount}
+                  onChange={(e) =>
+                    setForm({ ...form, paidAmount: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pNotes">{t("notes")}</Label>
+                <Input
+                  id="pNotes"
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -602,6 +665,93 @@ export default function PurchasesPage() {
               {t("receivePurchase")}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Supplier payment dialog */}
+      <Dialog
+        open={!!payDialog}
+        onOpenChange={(open) => !open && setPayDialog(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("recordSupplierPayment")}</DialogTitle>
+          </DialogHeader>
+          {payDialog && (
+            <div className="grid gap-4">
+              <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("referenceNo")}:
+                  </span>
+                  <span className="font-semibold">
+                    {payDialog.referenceNo || `#${payDialog.id}`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("supplier")}:
+                  </span>
+                  <span>{payDialog.supplier?.name ?? "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("remainingAmount")}:
+                  </span>
+                  <span className="text-red-600 font-semibold">
+                    {payDialog.remainingAmount.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="supAmount">{t("amount")}</Label>
+                <Input
+                  id="supAmount"
+                  type="number"
+                  min="0.01"
+                  max={payDialog.remainingAmount}
+                  step="0.01"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setPayDialog(null)}
+                >
+                  {tCommon("cancel")}
+                </Button>
+                <Button
+                  disabled={
+                    savingPayment ||
+                    !payAmount ||
+                    Number(payAmount) <= 0 ||
+                    Number(payAmount) > payDialog.remainingAmount
+                  }
+                  onClick={async () => {
+                    if (!payDialog || !payDialog.supplierId) return;
+                    const amount = Number(payAmount);
+                    if (!amount || amount <= 0) return;
+                    setSavingPayment(true);
+                    const result = await createSupplierPayment({
+                      supplierId: payDialog.supplierId,
+                      purchaseId: payDialog.id,
+                      amount,
+                      method: "CASH",
+                    });
+                    setSavingPayment(false);
+                    if (result) {
+                      setPayDialog(null);
+                      fetch();
+                    }
+                  }}
+                >
+                  {savingPayment ? tCommon("saving") : t("recordPayment")}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

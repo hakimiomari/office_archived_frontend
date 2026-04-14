@@ -15,7 +15,6 @@ export type StockMovementType = "IN" | "OUT" | "TRANSFER" | "ADJUSTMENT";
 
 export type StockMovementReference =
   | "PURCHASE"
-  | "TENDER"
   | "MANUAL"
   | "TRANSFER"
   | "ADJUSTMENT";
@@ -48,6 +47,8 @@ export type Item = {
   unit: string;
   description: string | null;
   minStock: number;
+  salePrice: number;
+  purchasePrice: number;
   createdAt: string;
   updatedAt: string;
   stocks?: InventoryStock[];
@@ -61,6 +62,7 @@ export type Supplier = {
   email: string | null;
   phone: string | null;
   address: string | null;
+  totalOwed: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -74,11 +76,16 @@ export type PurchaseItem = {
   item?: Item;
 };
 
+export type PurchasePaymentStatus = "PAID" | "PARTIAL" | "UNPAID";
+
 export type Purchase = {
   id: number;
   supplierId: number | null;
   referenceNo: string | null;
   totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  paymentStatus: PurchasePaymentStatus;
   purchaseDate: string;
   status: PurchaseStatus;
   notes: string | null;
@@ -86,6 +93,27 @@ export type Purchase = {
   updatedAt: string;
   supplier?: Supplier | null;
   items?: PurchaseItem[];
+};
+
+export type SupplierPaymentMethod =
+  | "CASH"
+  | "BANK"
+  | "MOBILE"
+  | "CREDIT"
+  | "OTHER";
+
+export type SupplierPayment = {
+  id: number;
+  supplierId: number;
+  purchaseId: number | null;
+  amount: number;
+  method: SupplierPaymentMethod;
+  paymentDate: string;
+  referenceNo: string | null;
+  notes: string | null;
+  createdAt: string;
+  supplier?: Supplier;
+  purchase?: { id: number; referenceNo: string | null; totalAmount: number } | null;
 };
 
 export type StockMovement = {
@@ -97,7 +125,6 @@ export type StockMovement = {
   targetWarehouseId: number | null;
   referenceType: StockMovementReference;
   referenceId: number | null;
-  tenderId: string | null;
   purchaseId: number | null;
   notes: string | null;
   createdAt: string;
@@ -319,7 +346,6 @@ export const useInventory = () => {
     itemId: number;
     sourceWarehouseId: number;
     quantity: number;
-    tenderId?: string;
     notes?: string;
   }): Promise<boolean> => {
     try {
@@ -377,6 +403,7 @@ export const useInventory = () => {
     notes?: string;
     items: { itemId: number; quantity: number; price?: number }[];
     targetWarehouseId?: number;
+    paidAmount?: number;
   }): Promise<Purchase | null> => {
     try {
       const response = await api.post("inventory/purchases", data);
@@ -406,6 +433,68 @@ export const useInventory = () => {
       return true;
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to delete purchase");
+      return false;
+    }
+  };
+
+  // ---- Supplier Payments ----
+  const getSupplierPayments = async (
+    filters: {
+      page?: number;
+      limit?: number;
+      supplierId?: number;
+      purchaseId?: number;
+    } = {},
+  ): Promise<ListResponse<SupplierPayment>> => {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && String(v) !== "") {
+          params.append(k, String(v));
+        }
+      });
+      const response = await api.get(
+        `inventory/supplier-payments?${params.toString()}`,
+      );
+      return response.data;
+    } catch {
+      return {
+        data: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      };
+    }
+  };
+
+  const createSupplierPayment = async (data: {
+    supplierId: number;
+    purchaseId?: number;
+    amount: number;
+    method?: SupplierPaymentMethod;
+    paymentDate?: string;
+    referenceNo?: string;
+    notes?: string;
+  }): Promise<SupplierPayment | null> => {
+    try {
+      const response = await api.post("inventory/supplier-payments", data);
+      toast.success("Supplier payment recorded");
+      return response.data;
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to record supplier payment",
+      );
+      return null;
+    }
+  };
+
+  const deleteSupplierPayment = async (id: number): Promise<boolean> => {
+    try {
+      await api.delete(`inventory/supplier-payments/${id}`);
+      toast.success("Supplier payment deleted");
+      return true;
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Failed to delete supplier payment",
+      );
       return false;
     }
   };
@@ -467,6 +556,8 @@ export const useInventory = () => {
     getMovements, stockIn, stockOut, stockTransfer,
     // purchases
     getPurchases, createPurchase, receivePurchase, deletePurchase,
+    // supplier payments
+    getSupplierPayments, createSupplierPayment, deleteSupplierPayment,
     // reports
     getReportSummary, getLowStock, getMovementStats, getByWarehouse, getMonthlyUsage,
   };

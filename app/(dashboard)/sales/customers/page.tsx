@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  useExecutive,
-  MinisterTravel,
-  TravelType,
-  Meta,
-} from "@/config/executive/executive";
+import { useSales, Customer, Meta } from "@/config/sales/sales";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,44 +49,43 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useTranslations } from "next-intl";
 
 type FormData = {
-  type: TravelType;
-  destination: string;
-  purpose: string;
-  startDate: string;
-  endDate: string;
-  cost: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  creditLimit: string;
+  notes: string;
 };
 
 const emptyForm: FormData = {
-  type: "DOMESTIC",
-  destination: "",
-  purpose: "",
-  startDate: "",
-  endDate: "",
-  cost: "0",
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  creditLimit: "0",
+  notes: "",
 };
 
-export default function TravelsPage() {
-  const { getTravels, createTravel, updateTravel, deleteTravel } = useExecutive();
+export default function CustomersPage() {
+  const {
+    getCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer,
+  } = useSales();
   const { can } = usePermission();
-  const t = useTranslations("executive");
+  const t = useTranslations("sales");
   const tCommon = useTranslations("common");
 
-  const [travels, setTravels] = useState<MinisterTravel[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TravelType | "ALL">("ALL");
-  const [yearFilter, setYearFilter] = useState<string>("ALL");
-
-  // Build list of years: current year + 9 previous years
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<MinisterTravel | null>(null);
+  const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -100,42 +94,35 @@ export default function TravelsPage() {
 
   const fetch = async () => {
     setLoading(true);
-    const result = await getTravels({
+    const result = await getCustomers({
       page,
       limit,
       search: search || undefined,
-      type: typeFilter !== "ALL" ? typeFilter : undefined,
-      year: yearFilter !== "ALL" ? Number(yearFilter) : undefined,
     });
-    setTravels(result.data);
+    setCustomers(result.data);
     setMeta(result.meta);
     setLoading(false);
   };
 
   useEffect(() => {
     fetch();
-  }, [page, limit, typeFilter, yearFilter]);
+  }, [page, limit]);
 
   const openCreate = () => {
     setEditing(null);
-    setForm({
-      ...emptyForm,
-      startDate: new Date().toISOString().slice(0, 10),
-    });
+    setForm(emptyForm);
     setDialogOpen(true);
   };
 
-  const openEdit = (travel: MinisterTravel) => {
-    setEditing(travel);
+  const openEdit = (c: Customer) => {
+    setEditing(c);
     setForm({
-      type: travel.type,
-      destination: travel.destination,
-      purpose: travel.purpose ?? "",
-      startDate: new Date(travel.startDate).toISOString().slice(0, 10),
-      endDate: travel.endDate
-        ? new Date(travel.endDate).toISOString().slice(0, 10)
-        : "",
-      cost: String(travel.cost),
+      name: c.name,
+      phone: c.phone ?? "",
+      email: c.email ?? "",
+      address: c.address ?? "",
+      creditLimit: String(c.creditLimit),
+      notes: c.notes ?? "",
     });
     setDialogOpen(true);
   };
@@ -144,16 +131,16 @@ export default function TravelsPage() {
     e.preventDefault();
     setSaving(true);
     const payload = {
-      type: form.type,
-      destination: form.destination,
-      purpose: form.purpose || undefined,
-      startDate: form.startDate,
-      endDate: form.endDate || undefined,
-      cost: Number(form.cost) || 0,
+      name: form.name,
+      phone: form.phone || undefined,
+      email: form.email || undefined,
+      address: form.address || undefined,
+      creditLimit: Number(form.creditLimit) || 0,
+      notes: form.notes || undefined,
     };
     const result = editing
-      ? await updateTravel(editing.id, payload as any)
-      : await createTravel(payload as any);
+      ? await updateCustomer(editing.id, payload as any)
+      : await createCustomer(payload as any);
     setSaving(false);
     if (result) {
       setDialogOpen(false);
@@ -164,28 +151,28 @@ export default function TravelsPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
-    const ok = await deleteTravel(deleteId);
+    const ok = await deleteCustomer(deleteId);
     setDeleting(false);
     setDeleteId(null);
     if (ok) fetch();
   };
 
   return (
-    <RouteGuard permission="executive.read">
+    <RouteGuard permission="customer.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{t("ministerTravels")}</h1>
+            <h1 className="text-2xl font-bold">{t("customers")}</h1>
             {meta && (
               <Badge variant="default" className="text-sm">
                 {meta.total}
               </Badge>
             )}
           </div>
-          <PermissionGate permission="executive.create">
+          <PermissionGate permission="customer.create">
             <Button onClick={openCreate}>
               <IconPlus className="me-2 h-4 w-4" />
-              {t("newTravel")}
+              {t("newCustomer")}
             </Button>
           </PermissionGate>
         </div>
@@ -201,43 +188,6 @@ export default function TravelsPage() {
           <Button variant="outline" onClick={fetch}>
             {tCommon("search")}
           </Button>
-          <Select
-            value={typeFilter}
-            onValueChange={(v) => {
-              setTypeFilter(v as any);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={t("allTypes")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allTypes")}</SelectItem>
-              <SelectItem value="DOMESTIC">{t("domesticTravels")}</SelectItem>
-              <SelectItem value="INTERNATIONAL">
-                {t("internationalTravels")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={yearFilter}
-            onValueChange={(v) => {
-              setYearFilter(v);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-9 w-[150px]">
-              <SelectValue placeholder={t("allYears")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allYears")}</SelectItem>
-              {yearOptions.map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -245,12 +195,11 @@ export default function TravelsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>#</TableHead>
-                <TableHead>{t("travelType")}</TableHead>
-                <TableHead>{t("destination")}</TableHead>
-                <TableHead>{t("purpose")}</TableHead>
-                <TableHead>{t("startDate")}</TableHead>
-                <TableHead>{t("endDate")}</TableHead>
-                <TableHead>{t("cost")}</TableHead>
+                <TableHead>{tCommon("name")}</TableHead>
+                <TableHead>{t("phone")}</TableHead>
+                <TableHead>{tCommon("email")}</TableHead>
+                <TableHead>{t("creditLimit")}</TableHead>
+                <TableHead>{t("totalOwed")}</TableHead>
                 <TableHead>{tCommon("actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -258,52 +207,35 @@ export default function TravelsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={`sk-${i}`}>
-                    {Array.from({ length: 8 }).map((_, j) => (
+                    {Array.from({ length: 7 }).map((_, j) => (
                       <TableCell key={j}>
-                        <Skeleton className="h-4 w-full max-w-[100px]" />
+                        <Skeleton className="h-4 w-full max-w-[120px]" />
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
-              ) : travels.length === 0 ? (
+              ) : customers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    {t("noTravels")}
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    {t("noCustomers")}
                   </TableCell>
                 </TableRow>
               ) : (
-                travels.map((travel, idx) => (
-                  <TableRow key={travel.id}>
+                customers.map((c, idx) => (
+                  <TableRow key={c.id}>
                     <TableCell>
                       {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
                     </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          travel.type === "INTERNATIONAL" ? "default" : "secondary"
-                        }
-                      >
-                        {travel.type === "DOMESTIC"
-                          ? t("domesticTravels")
-                          : t("internationalTravels")}
-                      </Badge>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>{c.phone || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {c.email || "—"}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {travel.destination}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {travel.purpose || "—"}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(travel.startDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {travel.endDate
-                        ? new Date(travel.endDate).toLocaleDateString()
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {travel.cost.toLocaleString()}
+                    <TableCell>{c.creditLimit.toLocaleString()}</TableCell>
+                    <TableCell
+                      className={c.totalOwed > 0 ? "text-red-600 font-semibold" : ""}
+                    >
+                      {c.totalOwed.toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -313,15 +245,15 @@ export default function TravelsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {can("executive.update") && (
-                            <DropdownMenuItem onClick={() => openEdit(travel)}>
+                          {can("customer.update") && (
+                            <DropdownMenuItem onClick={() => openEdit(c)}>
                               <IconEdit className="me-2 h-4 w-4" />
                               {tCommon("edit")}
                             </DropdownMenuItem>
                           )}
-                          {can("executive.delete") && (
+                          {can("customer.delete") && (
                             <DropdownMenuItem
-                              onClick={() => setDeleteId(travel.id)}
+                              onClick={() => setDeleteId(c.id)}
                               className="text-red-600"
                             >
                               <IconTrash className="me-2 h-4 w-4" />
@@ -362,7 +294,7 @@ export default function TravelsPage() {
               </Select>
               <span>
                 {tCommon("showing")}{" "}
-                {travels.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {customers.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
                 {tCommon("to")}{" "}
                 {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
                 {meta.total}
@@ -401,76 +333,67 @@ export default function TravelsPage() {
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editing ? t("editTravel") : t("newTravel")}
+              {editing ? t("editCustomer") : t("newCustomer")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="space-y-2">
-              <Label>{t("travelType")}</Label>
-              <Select
-                value={form.type}
-                onValueChange={(v) => setForm({ ...form, type: v as TravelType })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DOMESTIC">{t("domesticTravels")}</SelectItem>
-                  <SelectItem value="INTERNATIONAL">
-                    {t("internationalTravels")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dest">{t("destination")}</Label>
+              <Label htmlFor="cname">{tCommon("name")}</Label>
               <Input
-                id="dest"
-                value={form.destination}
-                onChange={(e) => setForm({ ...form, destination: e.target.value })}
+                id="cname"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
             </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="cphone">{t("phone")}</Label>
+                <Input
+                  id="cphone"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cemail">{tCommon("email")}</Label>
+                <Input
+                  id="cemail"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="purpose">{t("purpose")}</Label>
-              <textarea
-                id="purpose"
-                value={form.purpose}
-                onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                rows={2}
-                className="border-input bg-background flex min-h-[60px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              <Label htmlFor="caddr">{t("address")}</Label>
+              <Input
+                id="caddr"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start">{t("startDate")}</Label>
-                <Input
-                  id="start"
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end">{t("endDate")}</Label>
-                <Input
-                  id="end"
-                  type="date"
-                  value={form.endDate}
-                  onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                />
-              </div>
-            </div>
             <div className="space-y-2">
-              <Label htmlFor="cost">{t("cost")}</Label>
+              <Label htmlFor="ccredit">{t("creditLimit")}</Label>
               <Input
-                id="cost"
+                id="ccredit"
                 type="number"
                 min="0"
                 step="0.01"
-                value={form.cost}
-                onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                value={form.creditLimit}
+                onChange={(e) =>
+                  setForm({ ...form, creditLimit: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cnotes">{tCommon("notes") || "Notes"}</Label>
+              <textarea
+                id="cnotes"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={2}
+                className="border-input bg-background flex min-h-[60px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -492,8 +415,8 @@ export default function TravelsPage() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title={t("deleteTravel")}
-        description={t("deleteTravelConfirm")}
+        title={t("deleteCustomer")}
+        description={t("deleteCustomerConfirm")}
         onConfirm={handleDelete}
         loading={deleting}
       />

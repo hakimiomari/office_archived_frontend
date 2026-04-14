@@ -2,41 +2,27 @@
 
 import * as React from "react";
 import {
-  IconCamera,
-  IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
   IconHelp,
   IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
   IconSearch,
   IconSettings,
   IconUsers,
-  IconChartInfographic,
   IconShieldLock,
-  IconGavel,
   IconPackage,
   IconBuildingWarehouse,
   IconTruck,
   IconArrowsExchange,
   IconShoppingCart,
-  IconPresentation,
-  IconTrendingUp,
-  IconFileText,
-  IconPlane,
-  IconDeviceLaptop,
-  IconTool,
-  IconUserCheck,
   IconBuilding,
   IconUsersGroup,
+  IconReceipt,
+  IconCash,
+  IconUserPlus,
+  IconReportAnalytics,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/shared/nav-user";
@@ -61,41 +47,6 @@ const getAllNavItems = (t: (key: string) => string) => [
     title: t("dashboard"),
     url: "/dashboard",
     icon: IconDashboard,
-  },
-  {
-    title: t("officeArchive"),
-    url: "/office-archive",
-    icon: IconChartInfographic,
-  },
-  {
-    title: t("miningLicenses"),
-    url: "/licenses",
-    icon: IconFileDescription,
-    requiredPermissions: ["license.read", "license.create", "report.view"],
-    items: [
-      {
-        title: t("allLicenses"),
-        url: "/licenses",
-        icon: IconFileDescription,
-      },
-      {
-        title: t("miningLicensesReport"),
-        url: "/reports",
-        icon: IconReport,
-      },
-    ],
-  },
-  {
-    title: t("tenders"),
-    url: "/tenders",
-    icon: IconGavel,
-    requiredPermissions: ["tender.read", "tender.create"],
-  },
-  {
-    title: t("tenderReports"),
-    url: "/tender-reports",
-    icon: IconChartBar,
-    requiredPermissions: ["tender.read"],
   },
   {
     title: t("inventory"),
@@ -136,57 +87,6 @@ const getAllNavItems = (t: (key: string) => string) => [
     ],
   },
   {
-    title: t("executive"),
-    url: "/executive",
-    icon: IconPresentation,
-    requiredPermissions: ["executive.read"],
-    items: [
-      {
-        title: t("executiveDashboard"),
-        url: "/executive",
-        icon: IconTrendingUp,
-      },
-      {
-        title: t("executiveKpis"),
-        url: "/executive/kpis",
-        icon: IconChartBar,
-      },
-      {
-        title: t("executiveContracts"),
-        url: "/executive/contracts",
-        icon: IconFileText,
-      },
-      {
-        title: t("executiveTravels"),
-        url: "/executive/travels",
-        icon: IconPlane,
-      },
-    ],
-  },
-  {
-    title: t("equipment"),
-    url: "/equipment",
-    icon: IconDeviceLaptop,
-    requiredPermissions: ["equipment.read"],
-    items: [
-      {
-        title: t("equipmentList"),
-        url: "/equipment",
-        icon: IconDeviceLaptop,
-      },
-      {
-        title: t("equipmentAssignments"),
-        url: "/equipment/assignments",
-        icon: IconUserCheck,
-      },
-      {
-        title: t("equipmentMaintenance"),
-        url: "/equipment/maintenance",
-        icon: IconTool,
-      },
-    ],
-  },
-  {
     title: t("employees"),
     url: "/employees",
     icon: IconUsersGroup,
@@ -201,6 +101,39 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("departments"),
         url: "/employees/departments",
         icon: IconBuilding,
+      },
+    ],
+  },
+  {
+    title: t("sales"),
+    url: "/sales",
+    icon: IconReceipt,
+    requiredPermissions: ["sale.read"],
+    items: [
+      {
+        title: t("salesList"),
+        url: "/sales",
+        icon: IconReceipt,
+      },
+      {
+        title: t("customers"),
+        url: "/sales/customers",
+        icon: IconUserPlus,
+      },
+      {
+        title: t("payments"),
+        url: "/sales/payments",
+        icon: IconCash,
+      },
+      {
+        title: t("overdue"),
+        url: "/sales/overdue",
+        icon: IconAlertTriangle,
+      },
+      {
+        title: t("salesReports"),
+        url: "/sales/reports",
+        icon: IconReportAnalytics,
       },
     ],
   },
@@ -232,12 +165,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: tNav("search"), url: "#", icon: IconSearch },
   ];
 
-  const documents = [
-    { name: "Data Library", url: "#", icon: IconDatabase },
-    { name: tNav("reports"), url: "#", icon: IconReport },
-    { name: "Word Assistant", url: "#", icon: IconFileWord },
-  ];
-
   // Filter nav items based on user permissions
   const visibleNavItems = allNavItems.filter((item) => {
     if (!item.requiredPermissions) return true;
@@ -263,7 +190,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={visibleNavItems} />
-        <NavDocuments items={documents} />
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>

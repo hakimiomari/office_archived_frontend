@@ -59,8 +59,8 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
-import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { DataTableViewOptions } from "@/components/data-table/data-table-view-options";
 import { useTranslations } from "next-intl";
 
 type UserFormData = {

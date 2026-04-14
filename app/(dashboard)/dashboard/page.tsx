@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useExecutive, DashboardData } from "@/config/executive/executive";
-import { useTenders } from "@/config/tender/tender";
-import { useInventory } from "@/config/inventory/inventory";
 import { useEmployees, EmployeeSummary } from "@/config/employees/employees";
-import { useEquipment, EquipmentSummary } from "@/config/equipment/equipment";
-import api from "@/lib/api/axios";
+import { useInventory } from "@/config/inventory/inventory";
+import {
+  useSales,
+  SalesSummary,
+  SalesReport,
+  Sale,
+} from "@/config/sales/sales";
 import {
   Card,
   CardContent,
@@ -25,18 +27,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  IconCoin,
+  IconUsers,
+  IconBuilding,
+  IconPackage,
+  IconBuildingWarehouse,
+  IconAlertTriangle,
+  IconChartBar,
+  IconCash,
+  IconReceipt,
   IconTrendingUp,
   IconTrendingDown,
-  IconFileText,
-  IconPlane,
-  IconGavel,
-  IconPackage,
-  IconAlertTriangle,
-  IconBuildingWarehouse,
-  IconChartBar,
-  IconUsers,
-  IconDeviceLaptop,
+  IconUserPlus,
 } from "@tabler/icons-react";
 import {
   Area,
@@ -45,8 +46,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   XAxis,
@@ -64,20 +63,6 @@ import { useTranslations } from "next-intl";
 import { useUser } from "@/contexts/UserContext";
 import { nextRoute } from "@/lib/route";
 
-type LicenseStats = {
-  totalLicenses: number;
-  byStatus: { status: string; count: number }[];
-  byType: { type: string; count: number }[];
-};
-
-type TenderSummary = {
-  total: number;
-  open: number;
-  closed: number;
-  closingSoon: number;
-  highPriority: number;
-};
-
 type InventorySummary = {
   itemCount: number;
   warehouseCount: number;
@@ -86,153 +71,99 @@ type InventorySummary = {
   lowStockCount: number;
 };
 
-const CONTRACT_COLORS: Record<string, string> = {
-  active: "hsl(142, 71%, 45%)",
-  suspended: "hsl(45, 93%, 47%)",
-  cancelled: "hsl(0, 70%, 55%)",
-};
-
-const LICENSE_COLORS: Record<string, string> = {
-  ACTIVE: "hsl(142, 71%, 45%)",
-  EXPIRED: "hsl(0, 70%, 55%)",
-  SUSPENDED: "hsl(45, 93%, 47%)",
-};
+const DEPT_COLORS = [
+  "hsl(221, 83%, 53%)",
+  "hsl(142, 71%, 45%)",
+  "hsl(45, 93%, 47%)",
+  "hsl(280, 65%, 55%)",
+  "hsl(0, 70%, 55%)",
+  "hsl(190, 80%, 50%)",
+];
 
 export default function DashboardPage() {
-  const { getDashboard, getRevenueTrend } = useExecutive();
-  const { getReportSummary: getTenderSummary } = useTenders();
-  const { getReportSummary: getInventorySummary } = useInventory();
   const { getSummary: getEmployeeSummary } = useEmployees();
-  const { getSummary: getEquipmentSummary } = useEquipment();
+  const { getReportSummary: getInventorySummary, getLowStock } = useInventory();
+  const {
+    getSummary: getSalesSummary,
+    getReport: getSalesReport,
+    getOverdueSales,
+  } = useSales();
   const { user } = useUser();
   const { changeRoute } = nextRoute();
 
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const tExec = useTranslations("executive");
-  const tLic = useTranslations("licenses");
-  const tTenders = useTranslations("tenders");
-  const tInv = useTranslations("inventory");
   const tEmp = useTranslations("employees");
-  const tEquip = useTranslations("equipment");
+  const tInv = useTranslations("inventory");
+  const tSales = useTranslations("sales");
 
   const [loading, setLoading] = useState(true);
-  const [exec, setExec] = useState<DashboardData | null>(null);
-  const [revenueTrend, setRevenueTrend] = useState<
-    { year: number; revenue: number; expenses: number }[]
-  >([]);
-  const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(null);
-  const [invSummary, setInvSummary] = useState<InventorySummary | null>(null);
-  const [licenseStats, setLicenseStats] = useState<LicenseStats | null>(null);
   const [empSummary, setEmpSummary] = useState<EmployeeSummary | null>(null);
-  const [equipSummary, setEquipSummary] = useState<EquipmentSummary | null>(
-    null,
-  );
-
-  const fetchLicenseStats = async (): Promise<LicenseStats | null> => {
-    try {
-      const res = await api.get("reports/licenses/charts");
-      const data = res.data;
-      const totalLicenses =
-        data.byStatus?.reduce((s: number, r: any) => s + r.count, 0) ?? 0;
-      return {
-        totalLicenses,
-        byStatus: data.byStatus ?? [],
-        byType: data.byType ?? [],
-      };
-    } catch {
-      return null;
-    }
-  };
+  const [invSummary, setInvSummary] = useState<InventorySummary | null>(null);
+  const [lowStock, setLowStock] = useState<any[]>([]);
+  const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
+  const [salesReport, setSalesReport] = useState<SalesReport | null>(null);
+  const [overdue, setOverdue] = useState<Sale[]>([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [execData, rt, ts, is, ls, emp, equip] = await Promise.all([
-        getDashboard(),
-        getRevenueTrend(),
-        getTenderSummary(),
-        getInventorySummary(),
-        fetchLicenseStats(),
+      const [emp, inv, low, ss, rep, od] = await Promise.all([
         getEmployeeSummary(),
-        getEquipmentSummary(),
+        getInventorySummary(),
+        getLowStock(),
+        getSalesSummary(),
+        getSalesReport("monthly"),
+        getOverdueSales(),
       ]);
-      setExec(execData);
-      setRevenueTrend(rt);
-      setTenderSummary(ts);
-      setInvSummary(is);
-      setLicenseStats(ls);
       setEmpSummary(emp);
-      setEquipSummary(equip);
+      setInvSummary(inv);
+      setLowStock(low ?? []);
+      setSalesSummary(ss);
+      setSalesReport(rep);
+      setOverdue(od);
       setLoading(false);
     })();
   }, []);
 
-  const fmt = (v: number | null | undefined) => {
-    if (v === null || v === undefined) return "—";
-    return v.toLocaleString();
+  const fmt = (v: number) => v.toLocaleString();
+  const daysBetween = (a: Date, b: Date) =>
+    Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Department distribution pie chart
+  const deptChartData = (empSummary?.byDepartment ?? [])
+    .filter((d) => d.count > 0)
+    .map((d, i) => ({
+      name: d.departmentName,
+      value: d.count,
+      fill: DEPT_COLORS[i % DEPT_COLORS.length],
+    }));
+
+  const deptChartConfig: ChartConfig = deptChartData.reduce(
+    (acc, d) => ({
+      ...acc,
+      [d.name]: { label: d.name, color: d.fill },
+    }),
+    {} as ChartConfig,
+  );
+
+  // Revenue trend from sales report
+  const trendData = (salesReport?.revenueTrend ?? []).map((r) => ({
+    day: new Date(r.day).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }),
+    revenue: r.revenue,
+  }));
+
+  const trendConfig: ChartConfig = {
+    revenue: { label: tSales("revenue"), color: "hsl(142, 71%, 45%)" },
   };
 
-  // Chart data
-  const contractsData = exec?.contracts
-    ? [
-        {
-          name: "active",
-          value: exec.contracts.activeContracts,
-          fill: CONTRACT_COLORS.active,
-        },
-        {
-          name: "suspended",
-          value: exec.contracts.suspendedContracts,
-          fill: CONTRACT_COLORS.suspended,
-        },
-        {
-          name: "cancelled",
-          value: exec.contracts.cancelledContracts,
-          fill: CONTRACT_COLORS.cancelled,
-        },
-      ].filter((d) => d.value > 0)
-    : [];
-
-  const contractsChartConfig: ChartConfig = {
-    active: { label: tExec("activeContracts"), color: CONTRACT_COLORS.active },
-    suspended: {
-      label: tExec("suspendedContracts"),
-      color: CONTRACT_COLORS.suspended,
-    },
-    cancelled: {
-      label: tExec("cancelledContracts"),
-      color: CONTRACT_COLORS.cancelled,
-    },
-  };
-
-  const licenseChartData =
-    licenseStats?.byStatus.map((s) => ({
-      name: s.status,
-      value: s.count,
-      fill: LICENSE_COLORS[s.status] ?? "hsl(var(--muted))",
-    })) ?? [];
-
-  const licenseChartConfig: ChartConfig = {
-    ACTIVE: { label: tLic("active"), color: LICENSE_COLORS.ACTIVE },
-    EXPIRED: { label: tLic("expired"), color: LICENSE_COLORS.EXPIRED },
-    SUSPENDED: { label: tLic("suspended"), color: LICENSE_COLORS.SUSPENDED },
-  };
-
-  const revenueChartConfig: ChartConfig = {
-    revenue: { label: tExec("totalRevenue"), color: "hsl(142, 71%, 45%)" },
-    expenses: { label: tExec("totalExpenses"), color: "hsl(0, 70%, 55%)" },
-  };
-
-  const contractsTrendConfig: ChartConfig = {
-    totalContracts: {
-      label: tExec("totalContracts"),
-      color: "hsl(221, 83%, 53%)",
-    },
-    activeContracts: {
-      label: tExec("activeContracts"),
-      color: "hsl(142, 71%, 45%)",
-    },
+  // Top products bar
+  const topProducts = (salesReport?.topProducts ?? []).slice(0, 6);
+  const topProductsConfig: ChartConfig = {
+    revenue: { label: tSales("revenue"), color: "hsl(221, 83%, 53%)" },
   };
 
   return (
@@ -246,50 +177,55 @@ export default function DashboardPage() {
               {user?.name ? `, ${user.name}` : ""}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {tExec("subtitle")} · {tExec("year")} {exec?.year ?? new Date().getFullYear()}
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </div>
-          <Badge variant="outline" className="text-base px-3 py-1">
-            {tExec("year")}: {exec?.year ?? new Date().getFullYear()}
+          <Badge variant="default" className="text-base px-3 py-1">
+            {new Date().getFullYear()}
           </Badge>
         </div>
       </div>
 
-      {/* Top financial cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Financial KPIs from sales */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-green-500">
           <CardContent className="flex items-center gap-4 p-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
-              <IconCoin className="h-6 w-6 text-green-600" />
+              <IconCash className="h-6 w-6 text-green-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                {tExec("totalRevenue")}
+                {tSales("todayRevenue")}
               </p>
               <p className="text-2xl font-bold">
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-7 w-24" />
                 ) : (
-                  fmt(exec?.financial.totalRevenue)
+                  fmt(salesSummary?.todayRevenue ?? 0)
                 )}
               </p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-red-500">
+        <Card className="border-l-4 border-l-blue-500">
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-500/10">
-              <IconTrendingDown className="h-6 w-6 text-red-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
+              <IconReceipt className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                {tExec("totalExpenses")}
+                {tSales("monthRevenue")}
               </p>
               <p className="text-2xl font-bold">
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-7 w-24" />
                 ) : (
-                  fmt(exec?.financial.totalExpenses)
+                  fmt(salesSummary?.monthRevenue ?? 0)
                 )}
               </p>
             </div>
@@ -302,13 +238,36 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                {tExec("netProfit")}
+                {tSales("profit")}
+              </p>
+              <p
+                className={`text-2xl font-bold ${
+                  (salesReport?.financial.profit ?? 0) < 0 ? "text-red-600" : ""
+                }`}
+              >
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesReport?.financial.profit ?? 0)
+                )}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-red-500">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-500/10">
+              <IconAlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {tSales("pendingPayments")}
               </p>
               <p className="text-2xl font-bold">
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-7 w-24" />
                 ) : (
-                  fmt(exec?.financial.netProfit)
+                  fmt(salesSummary?.pendingPayments ?? 0)
                 )}
               </p>
             </div>
@@ -316,25 +275,25 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Cross-module quick stats */}
+      {/* Cross-module cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card
           className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/licenses")}
+          onClick={() => changeRoute("/sales/customers")}
         >
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-              <IconFileText className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
+              <IconUserPlus className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                {tLic("title")}
+                {tSales("totalCustomers")}
               </p>
               <p className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
-                  licenseStats?.totalLicenses ?? 0
+                  salesSummary?.totalCustomers ?? 0
                 )}
               </p>
             </div>
@@ -342,34 +301,27 @@ export default function DashboardPage() {
         </Card>
         <Card
           className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/tenders")}
+          onClick={() => changeRoute("/employees")}
         >
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-              <IconGavel className="h-5 w-5 text-purple-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <IconUsers className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">
-                {tTenders("title")}
-              </p>
+              <p className="text-sm text-muted-foreground">{tEmp("total")}</p>
               <p className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
-                  tenderSummary?.total ?? 0
+                  empSummary?.totalEmployees ?? 0
                 )}
               </p>
-              {tenderSummary && tenderSummary.closingSoon > 0 && (
-                <p className="text-xs text-orange-600">
-                  {tenderSummary.closingSoon} {tTenders("closingSoon").toLowerCase()}
-                </p>
-              )}
             </div>
           </CardContent>
         </Card>
         <Card
           className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/inventory")}
+          onClick={() => changeRoute("/inventory/items")}
         >
           <CardContent className="flex items-center gap-4 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
@@ -389,7 +341,8 @@ export default function DashboardPage() {
               {invSummary && invSummary.lowStockCount > 0 && (
                 <p className="text-xs text-orange-600 flex items-center gap-0.5">
                   <IconAlertTriangle className="h-3 w-3" />
-                  {invSummary.lowStockCount} {tInv("lowStockAlert").toLowerCase()}
+                  {invSummary.lowStockCount}{" "}
+                  {tInv("lowStockAlert").toLowerCase()}
                 </p>
               )}
             </div>
@@ -397,136 +350,23 @@ export default function DashboardPage() {
         </Card>
         <Card
           className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/executive/travels")}
-        >
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10">
-              <IconPlane className="h-5 w-5 text-cyan-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {tExec("totalTravels")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  exec?.travel.total ?? 0
-                )}
-              </p>
-              {exec && exec.travel.totalCost > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {fmt(exec.travel.totalCost)}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* HR + Equipment cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card
-          className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/employees")}
-        >
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
-              <IconUsers className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {tEmp("total")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  empSummary?.totalEmployees ?? 0
-                )}
-              </p>
-              {empSummary && empSummary.activeEmployees > 0 && (
-                <p className="text-xs text-green-600">
-                  {empSummary.activeEmployees} {tEmp("active").toLowerCase()}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/employees/departments")}
-        >
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10">
-              <IconBuildingWarehouse className="h-5 w-5 text-pink-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {tEmp("departments")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  empSummary?.totalDepartments ?? 0
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/equipment")}
+          onClick={() => changeRoute("/inventory/warehouses")}
         >
           <CardContent className="flex items-center gap-4 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
-              <IconDeviceLaptop className="h-5 w-5 text-teal-600" />
+              <IconBuildingWarehouse className="h-5 w-5 text-teal-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                {tEquip("total")}
+                {tInv("warehouses")}
               </p>
               <p className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
-                  equipSummary?.totalEquipment ?? 0
+                  invSummary?.warehouseCount ?? 0
                 )}
               </p>
-              {equipSummary && equipSummary.assigned > 0 && (
-                <p className="text-xs text-blue-600">
-                  {equipSummary.assigned} {tEquip("assigned").toLowerCase()}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/equipment/maintenance")}
-        >
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-              <IconAlertTriangle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {tEquip("inMaintenance")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  equipSummary?.maintenance ?? 0
-                )}
-              </p>
-              {equipSummary && equipSummary.warrantyExpiringSoon > 0 && (
-                <p className="text-xs text-orange-600">
-                  {equipSummary.warrantyExpiringSoon}{" "}
-                  {tEquip("warrantyExpiringSoon").toLowerCase()}
-                </p>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -537,27 +377,28 @@ export default function DashboardPage() {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
             <IconChartBar className="h-5 w-5 text-primary" />
-            {tExec("revenueTrend")}
+            {tSales("revenueTrend")}
           </CardTitle>
-          <CardDescription>
-            {tExec("totalRevenue")} / {tExec("totalExpenses")}
-          </CardDescription>
+          <CardDescription>{tSales("periodMonthly")}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <Skeleton className="h-[280px] w-full" />
-          ) : revenueTrend.length === 0 ? (
+            <Skeleton className="h-[260px] w-full" />
+          ) : trendData.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-8">
-              {tExec("noKpis")}
+              {tSales("noData")}
             </p>
           ) : (
-            <ChartContainer
-              config={revenueChartConfig}
-              className="h-[280px] w-full"
-            >
-              <AreaChart data={revenueTrend}>
+            <ChartContainer config={trendConfig} className="h-[260px] w-full">
+              <AreaChart data={trendData}>
                 <defs>
-                  <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient
+                    id="fillDashRevenue"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
                     <stop
                       offset="5%"
                       stopColor="var(--color-revenue)"
@@ -569,84 +410,66 @@ export default function DashboardPage() {
                       stopOpacity={0.1}
                     />
                   </linearGradient>
-                  <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-expenses)"
-                      stopOpacity={0.6}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-expenses)"
-                      stopOpacity={0.1}
-                    />
-                  </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="year" tickLine={false} axisLine={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
+                  tickFormatter={(v) =>
+                    v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)
+                  }
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Area
                   dataKey="revenue"
                   type="monotone"
-                  fill="url(#fillRevenue)"
+                  fill="url(#fillDashRevenue)"
                   stroke="var(--color-revenue)"
                   strokeWidth={2}
                 />
-                <Area
-                  dataKey="expenses"
-                  type="monotone"
-                  fill="url(#fillExpenses)"
-                  stroke="var(--color-expenses)"
-                  strokeWidth={2}
-                />
-                <ChartLegend content={<ChartLegendContent />} />
               </AreaChart>
             </ChartContainer>
           )}
         </CardContent>
       </Card>
 
-      {/* Pie charts: contracts distribution + license status */}
+      {/* Charts row: top products + dept distribution */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>{tExec("contractsDistribution")}</CardTitle>
-            <CardDescription>{exec?.year ?? ""}</CardDescription>
+            <CardTitle>{tSales("topProducts")}</CardTitle>
+            <CardDescription>{tSales("byRevenue")}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="mx-auto h-[260px] w-[260px] rounded-full" />
-            ) : contractsData.length === 0 ? (
+              <Skeleton className="h-[260px] w-full" />
+            ) : topProducts.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-8">
-                {tExec("noContractsSummary")}
+                {tSales("noData")}
               </p>
             ) : (
               <ChartContainer
-                config={contractsChartConfig}
-                className="mx-auto aspect-square h-[260px]"
+                config={topProductsConfig}
+                className="h-[260px] w-full"
               >
-                <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                  <Pie
-                    data={contractsData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
-                  >
-                    {contractsData.map((entry, idx) => (
-                      <Cell key={idx} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-                </PieChart>
+                <BarChart data={topProducts} layout="vertical">
+                  <CartesianGrid horizontal={false} />
+                  <XAxis type="number" tickLine={false} axisLine={false} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tickLine={false}
+                    axisLine={false}
+                    width={100}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar
+                    dataKey="revenue"
+                    fill="var(--color-revenue)"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
               </ChartContainer>
             )}
           </CardContent>
@@ -654,29 +477,25 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>
-              {tLic("title")} — {tCommon("status")}
-            </CardTitle>
-            <CardDescription>
-              {licenseStats?.totalLicenses ?? 0} {tLic("title").toLowerCase()}
-            </CardDescription>
+            <CardTitle>{tEmp("departments")}</CardTitle>
+            <CardDescription>{tEmp("total")}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="mx-auto h-[260px] w-[260px] rounded-full" />
-            ) : licenseChartData.length === 0 ? (
+            ) : deptChartData.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-8">
-                {tLic("noLicenses")}
+                {tEmp("noDepartments")}
               </p>
             ) : (
               <ChartContainer
-                config={licenseChartConfig}
+                config={deptChartConfig}
                 className="mx-auto aspect-square h-[260px]"
               >
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
                   <Pie
-                    data={licenseChartData}
+                    data={deptChartData}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -684,7 +503,7 @@ export default function DashboardPage() {
                     innerRadius={50}
                     outerRadius={90}
                   >
-                    {licenseChartData.map((entry, idx) => (
+                    {deptChartData.map((entry, idx) => (
                       <Cell key={idx} fill={entry.fill} />
                     ))}
                   </Pie>
@@ -696,99 +515,134 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Contracts yearly trend */}
-      {exec && exec.contractsYearlyTrend.length > 0 && (
+      {/* Alerts row: overdue invoices + low stock */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>{tExec("contractsYearlyTrend")}</CardTitle>
-            <CardDescription>{tExec("contractsSummary")}</CardDescription>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IconAlertTriangle className="h-5 w-5 text-red-600" />
+              {tSales("overdue")}
+              {overdue.length > 0 && (
+                <Badge variant="destructive" className="ms-2">
+                  {overdue.length}
+                </Badge>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={contractsTrendConfig}
-              className="h-[260px] w-full"
-            >
-              <BarChart data={exec.contractsYearlyTrend}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="year" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar
-                  dataKey="totalContracts"
-                  fill="var(--color-totalContracts)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="activeContracts"
-                  fill="var(--color-activeContracts)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-              </BarChart>
-            </ChartContainer>
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
+            ) : overdue.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                {tSales("noOverdue")}
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tSales("invoiceNo")}</TableHead>
+                    <TableHead>{tSales("customer")}</TableHead>
+                    <TableHead>{tSales("remainingAmount")}</TableHead>
+                    <TableHead>{tSales("dueDate")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {overdue.slice(0, 5).map((s) => {
+                    const days = s.dueDate
+                      ? daysBetween(new Date(s.dueDate), new Date())
+                      : 0;
+                    return (
+                      <TableRow
+                        key={s.id}
+                        className="cursor-pointer hover:bg-accent/50"
+                        onClick={() => changeRoute("/sales")}
+                      >
+                        <TableCell className="font-mono text-xs">
+                          {s.invoiceNo}
+                        </TableCell>
+                        <TableCell>{s.customer?.name ?? "—"}</TableCell>
+                        <TableCell className="font-semibold text-red-600">
+                          {fmt(s.remainingAmount)}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {s.dueDate
+                            ? new Date(s.dueDate).toLocaleDateString()
+                            : "—"}
+                          {days > 0 && (
+                            <span className="ms-1 text-red-600">
+                              ({days} {tSales("daysOverdue")})
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Recent travels */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconPlane className="h-5 w-5 text-cyan-600" />
-            {tExec("recentTravels")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
-              ))}
-            </div>
-          ) : !exec || exec.recentTravels.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              {tExec("noTravels")}
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{tExec("travelType")}</TableHead>
-                  <TableHead>{tExec("destination")}</TableHead>
-                  <TableHead>{tExec("startDate")}</TableHead>
-                  <TableHead>{tExec("cost")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {exec.recentTravels.slice(0, 5).map((travel) => (
-                  <TableRow key={travel.id}>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          travel.type === "INTERNATIONAL"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {travel.type === "DOMESTIC"
-                          ? tExec("domesticTravels")
-                          : tExec("internationalTravels")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {travel.destination}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(travel.startDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{fmt(travel.cost)}</TableCell>
-                  </TableRow>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IconAlertTriangle className="h-5 w-5 text-orange-600" />
+              {tInv("lowStockAlert")}
+              {lowStock.length > 0 && (
+                <Badge variant="destructive" className="ms-2">
+                  {lowStock.length}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            ) : lowStock.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                {tInv("noLowStock")}
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{tSales("item")}</TableHead>
+                    <TableHead>{tInv("unit")}</TableHead>
+                    <TableHead>{tInv("minStock")}</TableHead>
+                    <TableHead>{tInv("currentStock")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lowStock.slice(0, 5).map((it: any) => (
+                    <TableRow
+                      key={it.id}
+                      className="cursor-pointer hover:bg-accent/50"
+                      onClick={() => changeRoute("/inventory/items")}
+                    >
+                      <TableCell className="font-medium">{it.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {it.unit}
+                      </TableCell>
+                      <TableCell>{it.minStock}</TableCell>
+                      <TableCell className="font-semibold text-red-600">
+                        {it.totalStock ?? 0}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
