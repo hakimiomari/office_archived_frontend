@@ -65,6 +65,7 @@ import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
+import { nextRoute } from "@/lib/route";
 
 type LineItem = {
   itemId: string;
@@ -119,6 +120,7 @@ export default function SalesPage() {
   } = useSales();
   const { getItems, getWarehouses } = useInventory();
   const { can } = usePermission();
+  const { changeRoute } = nextRoute();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
 
@@ -153,6 +155,9 @@ export default function SalesPage() {
   const [cancelling, setCancelling] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Post-sale bill dialog
+  const [createdSale, setCreatedSale] = useState<Sale | null>(null);
 
   const fetch = async () => {
     setLoading(true);
@@ -304,6 +309,7 @@ export default function SalesPage() {
     setSaving(false);
     if (result) {
       setDialogOpen(false);
+      setCreatedSale(result);
       fetch();
     }
   };
@@ -538,7 +544,21 @@ export default function SalesPage() {
                     <TableCell className="font-mono font-medium">
                       {sale.invoiceNo}
                     </TableCell>
-                    <TableCell>{sale.customer?.name || "—"}</TableCell>
+                    <TableCell>
+                      {sale.customer ? (
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() =>
+                            changeRoute(`/sales/customers/${sale.customer!.id}`)
+                          }
+                        >
+                          {sale.customer.name}
+                        </button>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
                     <TableCell>
                       {new Date(sale.saleDate).toLocaleDateString()}
                     </TableCell>
@@ -1088,6 +1108,77 @@ export default function SalesPage() {
                   onClick={handlePayment}
                 >
                   {savingPayment ? tCommon("saving") : t("recordPayment")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Post-sale bill dialog */}
+      <Dialog
+        open={!!createdSale}
+        onOpenChange={(open) => !open && setCreatedSale(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <IconReceipt className="h-5 w-5 text-green-600" />
+              {t("saleCreated")}
+            </DialogTitle>
+          </DialogHeader>
+          {createdSale && (
+            <div className="grid gap-4">
+              <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("invoiceNo")}:
+                  </span>
+                  <span className="font-mono font-semibold">
+                    {createdSale.invoiceNo}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("totalAmount")}:
+                  </span>
+                  <span className="font-bold text-lg">
+                    {fmt(createdSale.totalAmount)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("paidAmount")}:
+                  </span>
+                  <span className="text-green-600 font-semibold">
+                    {fmt(createdSale.paidAmount)}
+                  </span>
+                </div>
+                {createdSale.remainingAmount > 0 && (
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="text-muted-foreground">
+                      {t("remainingAmount")}:
+                    </span>
+                    <span className="text-red-600 font-semibold">
+                      {fmt(createdSale.remainingAmount)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCreatedSale(null)}
+                >
+                  {tCommon("close") || "Close"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    downloadInvoicePdf(createdSale.id, createdSale.invoiceNo);
+                  }}
+                >
+                  <IconFileDownload className="me-2 h-4 w-4" />
+                  {t("downloadPdf")}
                 </Button>
               </div>
             </div>

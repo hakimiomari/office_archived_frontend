@@ -23,6 +23,17 @@ export type Customer = {
   updatedAt: string;
 };
 
+export type CustomerDetail = Customer & {
+  sales: Sale[];
+  recentPayments: Payment[];
+  stats: {
+    salesCount: number;
+    totalSpent: number;
+    totalPaid: number;
+    totalRemaining: number;
+  };
+};
+
 export type SaleItem = {
   id: number;
   saleId: number;
@@ -201,6 +212,17 @@ export const useSales = () => {
         data: [],
         meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
       };
+    }
+  };
+
+  const getCustomerById = async (
+    id: number,
+  ): Promise<CustomerDetail | null> => {
+    try {
+      const response = await api.get(`sales/customers/${id}`);
+      return response.data;
+    } catch {
+      return null;
     }
   };
 
@@ -398,6 +420,7 @@ export const useSales = () => {
     getReport,
     getOverdueSales,
     getCustomers,
+    getCustomerById,
     createCustomer,
     updateCustomer,
     deleteCustomer,

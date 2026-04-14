@@ -739,7 +739,13 @@
     "scanBarcode": "Scan Barcode / SKU",
     "scanBarcodePlaceholder": "Scan or type SKU and press Enter",
     "unknownBarcode": "Unknown barcode",
-    "totalOverdue": "Total Overdue Amount"
+    "totalOverdue": "Total Overdue Amount",
+    "saleCreated": "Sale Created Successfully",
+    "salesHistory": "Sales History",
+    "paymentHistory": "Payment History",
+    "totalSpent": "Total Spent",
+    "totalPaid": "Total Paid",
+    "remainingBalance": "Remaining Balance"
   },
   "provinces": {
     "selectProvince": "Select a province",

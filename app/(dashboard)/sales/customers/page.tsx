@@ -47,6 +47,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useTranslations } from "next-intl";
+import { nextRoute } from "@/lib/route";
 
 type FormData = {
   name: string;
@@ -76,6 +77,7 @@ export default function CustomersPage() {
   const { can } = usePermission();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
+  const { changeRoute } = nextRoute();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -226,7 +228,15 @@ export default function CustomersPage() {
                     <TableCell>
                       {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
                     </TableCell>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        className="font-medium text-primary hover:underline"
+                        onClick={() => changeRoute(`/sales/customers/${c.id}`)}
+                      >
+                        {c.name}
+                      </button>
+                    </TableCell>
                     <TableCell>{c.phone || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {c.email || "—"}

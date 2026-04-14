@@ -739,7 +739,13 @@
     "scanBarcode": "بارکوډ / SKU سکین کړئ",
     "scanBarcodePlaceholder": "سکین کړئ یا SKU ولیکئ او Enter ووهئ",
     "unknownBarcode": "نامعلوم بارکوډ",
-    "totalOverdue": "د ناوخته ټول مقدار"
+    "totalOverdue": "د ناوخته ټول مقدار",
+    "saleCreated": "پلورنه په بریالیتوب سره جوړه شوه",
+    "salesHistory": "د پلورنو تاریخچه",
+    "paymentHistory": "د پرداخت تاریخچه",
+    "totalSpent": "ټول لګښت",
+    "totalPaid": "ټول پرداخت شوی",
+    "remainingBalance": "پاتې بیلانس"
   },
   "provinces": {
     "selectProvince": "ولایت غوره کړئ",

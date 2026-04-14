@@ -739,7 +739,13 @@
     "scanBarcode": "اسکن بارکد / SKU",
     "scanBarcodePlaceholder": "اسکن کنید یا SKU را تایپ کرده و Enter بزنید",
     "unknownBarcode": "بارکد ناشناخته",
-    "totalOverdue": "مجموع معوقات"
+    "totalOverdue": "مجموع معوقات",
+    "saleCreated": "فروش با موفقیت ایجاد شد",
+    "salesHistory": "تاریخچه فروش",
+    "paymentHistory": "تاریخچه پرداخت",
+    "totalSpent": "مجموع خرج",
+    "totalPaid": "مجموع پرداخت شده",
+    "remainingBalance": "مانده بدهی"
   },
   "provinces": {
     "selectProvince": "یک ولایت انتخاب کنید",
