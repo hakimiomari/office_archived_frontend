@@ -403,13 +403,13 @@ export default function SalesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("todayRevenue")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-24" />
                   ) : (
                     fmt(summary?.todayRevenue ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -422,13 +422,13 @@ export default function SalesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("monthRevenue")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-24" />
                   ) : (
                     fmt(summary?.monthRevenue ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -441,13 +441,13 @@ export default function SalesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("pendingPayments")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-24" />
                   ) : (
                     fmt(summary?.pendingPayments ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -460,13 +460,13 @@ export default function SalesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("totalCustomers")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-16" />
                   ) : (
                     summary?.totalCustomers ?? 0
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>

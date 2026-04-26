@@ -152,13 +152,13 @@ export default function SalesReportsPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("revenue")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-24" />
                   ) : (
                     fmt(report?.financial.revenue ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -169,13 +169,13 @@ export default function SalesReportsPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("expenses")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-24" />
                   ) : (
                     fmt(report?.financial.expenses ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -186,7 +186,7 @@ export default function SalesReportsPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("profit")}</p>
-                <p
+                <div
                   className={`text-2xl font-bold ${
                     (report?.financial.profit ?? 0) < 0 ? "text-red-600" : ""
                   }`}
@@ -196,7 +196,7 @@ export default function SalesReportsPage() {
                   ) : (
                     fmt(report?.financial.profit ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -209,13 +209,13 @@ export default function SalesReportsPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("pendingPayments")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-24" />
                   ) : (
                     fmt(report?.financial.pendingPayments ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -232,13 +232,13 @@ export default function SalesReportsPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("salesCount")}
                 </p>
-                <p className="text-xl font-bold">
+                <div className="text-xl font-bold">
                   {loading ? (
                     <Skeleton className="h-6 w-16" />
                   ) : (
                     report?.counts.salesCount ?? 0
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -251,13 +251,13 @@ export default function SalesReportsPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("cashReceived")}
                 </p>
-                <p className="text-xl font-bold">
+                <div className="text-xl font-bold">
                   {loading ? (
                     <Skeleton className="h-6 w-24" />
                   ) : (
                     fmt(report?.financial.cashReceived ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -268,13 +268,13 @@ export default function SalesReportsPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("subtotal")}</p>
-                <p className="text-xl font-bold">
+                <div className="text-xl font-bold">
                   {loading ? (
                     <Skeleton className="h-6 w-24" />
                   ) : (
                     fmt(report?.financial.subtotal ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -285,13 +285,13 @@ export default function SalesReportsPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("discount")}</p>
-                <p className="text-xl font-bold">
+                <div className="text-xl font-bold">
                   {loading ? (
                     <Skeleton className="h-6 w-24" />
                   ) : (
                     fmt(report?.financial.discount ?? 0)
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>

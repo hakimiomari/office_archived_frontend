@@ -202,13 +202,13 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tSales("todayRevenue")}
               </p>
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {loading ? (
                   <Skeleton className="h-7 w-24" />
                 ) : (
                   fmt(salesSummary?.todayRevenue ?? 0)
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -221,13 +221,13 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tSales("monthRevenue")}
               </p>
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {loading ? (
                   <Skeleton className="h-7 w-24" />
                 ) : (
                   fmt(salesSummary?.monthRevenue ?? 0)
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tSales("profit")}
               </p>
-              <p
+              <div
                 className={`text-2xl font-bold ${
                   (salesReport?.financial.profit ?? 0) < 0 ? "text-red-600" : ""
                 }`}
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                 ) : (
                   fmt(salesReport?.financial.profit ?? 0)
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -263,13 +263,13 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tSales("pendingPayments")}
               </p>
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {loading ? (
                   <Skeleton className="h-7 w-24" />
                 ) : (
                   fmt(salesSummary?.pendingPayments ?? 0)
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -289,13 +289,13 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tSales("totalCustomers")}
               </p>
-              <p className="text-xl font-bold">
+              <div className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
                   salesSummary?.totalCustomers ?? 0
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -309,13 +309,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{tEmp("total")}</p>
-              <p className="text-xl font-bold">
+              <div className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
                   empSummary?.totalEmployees ?? 0
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -331,13 +331,13 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tInv("totalItems")}
               </p>
-              <p className="text-xl font-bold">
+              <div className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
                   invSummary?.itemCount ?? 0
                 )}
-              </p>
+              </div>
               {invSummary && invSummary.lowStockCount > 0 && (
                 <p className="text-xs text-orange-600 flex items-center gap-0.5">
                   <IconAlertTriangle className="h-3 w-3" />
@@ -360,13 +360,13 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tInv("warehouses")}
               </p>
-              <p className="text-xl font-bold">
+              <div className="text-xl font-bold">
                 {loading ? (
                   <Skeleton className="h-6 w-12" />
                 ) : (
                   invSummary?.warehouseCount ?? 0
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>

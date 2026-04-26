@@ -262,13 +262,13 @@ export default function EmployeesPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("total")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-16" />
                   ) : (
                     summary?.totalEmployees ?? 0
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -281,13 +281,13 @@ export default function EmployeesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("active")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-16" />
                   ) : (
                     summary?.activeEmployees ?? 0
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -300,13 +300,13 @@ export default function EmployeesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("onLeave")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-16" />
                   ) : (
                     summary?.onLeave ?? 0
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -319,13 +319,13 @@ export default function EmployeesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("departments")}
                 </p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? (
                     <Skeleton className="h-7 w-16" />
                   ) : (
                     summary?.totalDepartments ?? 0
                   )}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>

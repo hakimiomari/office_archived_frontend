@@ -52,7 +52,8 @@
     "hide": "پټول",
     "show": "ښکاره کول",
     "toggleColumns": "د کالمونو ښکاره کول",
-    "viewColumns": "کتنه"
+    "viewColumns": "کتنه",
+    "notes": "یادداښتونه"
   },
   "auth": {
     "welcomeBack": "بېرته ښه راغلاست",

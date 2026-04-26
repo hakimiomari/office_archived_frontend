@@ -52,7 +52,8 @@
     "hide": "پنهان کردن",
     "show": "نمایش",
     "toggleColumns": "تغییر ستون‌ها",
-    "viewColumns": "نمایش"
+    "viewColumns": "نمایش",
+    "notes": "یادداشت‌ها"
   },
   "auth": {
     "welcomeBack": "خوش آمدید",

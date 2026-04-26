@@ -52,7 +52,8 @@
     "hide": "Hide",
     "show": "Show",
     "toggleColumns": "Toggle columns",
-    "viewColumns": "View"
+    "viewColumns": "View",
+    "notes": "Notes"
   },
   "auth": {
     "welcomeBack": "Welcome back",

@@ -41,7 +41,9 @@ import {
   IconTrash,
   IconChevronLeft,
   IconChevronRight,
+  IconEye,
 } from "@tabler/icons-react";
+import { nextRoute } from "@/lib/route";
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
@@ -56,6 +58,7 @@ export default function WarehousesPage() {
     deleteWarehouse,
   } = useInventory();
   const { can } = usePermission();
+  const { changeRoute } = nextRoute();
   const t = useTranslations("inventory");
   const tCommon = useTranslations("common");
 
@@ -193,7 +196,15 @@ export default function WarehousesPage() {
                     <TableCell className="px-4 py-2">
                       {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
                     </TableCell>
-                    <TableCell className="px-4 py-2 font-medium">{w.name}</TableCell>
+                    <TableCell className="px-4 py-2 font-medium">
+                      <button
+                        type="button"
+                        className="text-left hover:underline cursor-pointer"
+                        onClick={() => changeRoute(`/inventory/warehouses/${w.id}`)}
+                      >
+                        {w.name}
+                      </button>
+                    </TableCell>
                     <TableCell className="px-4 py-2 text-muted-foreground">
                       {w.location || "—"}
                     </TableCell>
@@ -207,6 +218,14 @@ export default function WarehousesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              changeRoute(`/inventory/warehouses/${w.id}`)
+                            }
+                          >
+                            <IconEye className="me-2 h-4 w-4" />
+                            View items
+                          </DropdownMenuItem>
                           {can("inventory.update") && (
                             <DropdownMenuItem onClick={() => openEdit(w)}>
                               <IconEdit className="me-2 h-4 w-4" />

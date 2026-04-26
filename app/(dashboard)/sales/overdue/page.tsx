@@ -197,13 +197,13 @@ export default function OverdueInvoicesPage() {
               <p className="text-sm text-muted-foreground">
                 {t("totalOverdue")}
               </p>
-              <p className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-red-600">
                 {loading ? (
                   <Skeleton className="h-7 w-32" />
                 ) : (
                   fmt(totalOverdueAmount)
                 )}
-              </p>
+              </div>
             </div>
           </CardContent>
         </Card>

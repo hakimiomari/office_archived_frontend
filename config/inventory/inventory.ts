@@ -219,6 +219,15 @@ export const useInventory = () => {
   };
 
   // ---- Warehouses ----
+  const getWarehouse = async (id: number): Promise<(Warehouse & { stocks: (InventoryStock & { item: Item })[] }) | null> => {
+    try {
+      const response = await api.get(`inventory/warehouses/${id}`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  };
+
   const getWarehouses = async (filters: { page?: number; limit?: number; search?: string } = {}): Promise<ListResponse<Warehouse>> => {
     try {
       const params = new URLSearchParams();
@@ -623,7 +632,7 @@ export const useInventory = () => {
     // items
     getItems, getItem, createItem, updateItem, deleteItem,
     // warehouses
-    getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse,
+    getWarehouses, getWarehouse, createWarehouse, updateWarehouse, deleteWarehouse,
     // suppliers
     getSuppliers, createSupplier, updateSupplier, deleteSupplier,
     // movements
