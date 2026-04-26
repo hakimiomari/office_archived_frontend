@@ -29,7 +29,10 @@ export default function DashboardGroupLayout({ children }: Props) {
           />
         </div>
         <div className="flex flex-col items-center gap-1">
-          <p className="text-xs text-muted-foreground">
+          <p
+            className="text-xs text-muted-foreground"
+            suppressHydrationWarning
+          >
             {t("loadingMessage")}
           </p>
         </div>

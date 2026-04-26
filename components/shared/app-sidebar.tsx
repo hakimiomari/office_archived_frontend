@@ -21,6 +21,8 @@ import {
   IconUserPlus,
   IconReportAnalytics,
   IconAlertTriangle,
+  IconCategory,
+  IconClipboardList,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -83,6 +85,26 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("inventoryPurchases"),
         url: "/inventory/purchases",
         icon: IconShoppingCart,
+      },
+      {
+        title: "Categories",
+        url: "/inventory/categories",
+        icon: IconCategory,
+      },
+      {
+        title: "Stock counts",
+        url: "/inventory/stock-counts",
+        icon: IconClipboardList,
+      },
+      {
+        title: "Alerts",
+        url: "/inventory/alerts",
+        icon: IconAlertTriangle,
+      },
+      {
+        title: "Analytics",
+        url: "/inventory/reports",
+        icon: IconReportAnalytics,
       },
     ],
   },

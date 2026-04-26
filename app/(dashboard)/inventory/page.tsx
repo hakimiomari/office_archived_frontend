@@ -134,9 +134,9 @@ export default function InventoryDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("totalItems")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? <Skeleton className="h-6 w-12" /> : summary?.itemCount ?? 0}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -147,9 +147,9 @@ export default function InventoryDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("warehouses")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? <Skeleton className="h-6 w-12" /> : summary?.warehouseCount ?? 0}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -160,9 +160,9 @@ export default function InventoryDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("suppliers")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? <Skeleton className="h-6 w-12" /> : summary?.supplierCount ?? 0}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -173,9 +173,9 @@ export default function InventoryDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("totalQuantity")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? <Skeleton className="h-6 w-12" /> : summary?.totalQuantity ?? 0}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -186,9 +186,9 @@ export default function InventoryDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("lowStockAlert")}</p>
-                <p className="text-2xl font-bold">
+                <div className="text-2xl font-bold">
                   {loading ? <Skeleton className="h-6 w-12" /> : summary?.lowStockCount ?? 0}
-                </p>
+                </div>
               </div>
             </CardContent>
           </Card>

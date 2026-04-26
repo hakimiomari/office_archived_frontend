@@ -76,6 +76,9 @@ export default function MovementsPage() {
     sourceWarehouseId: "",
     targetWarehouseId: "",
     quantity: "",
+    unitCost: "",
+    batchNo: "",
+    expiryDate: "",
     notes: "",
   });
   const [saving, setSaving] = useState(false);
@@ -114,32 +117,46 @@ export default function MovementsPage() {
       sourceWarehouseId: "",
       targetWarehouseId: "",
       quantity: "",
+      unitCost: "",
+      batchNo: "",
+      expiryDate: "",
       notes: "",
     });
   };
+
+  // Idempotency key — generated once per dialog open so accidental
+  // double-submits collapse to a single movement on the backend.
+  const newKey = () =>
+    `mv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     let ok = false;
-    const payload: any = {
+    const idempotencyKey = newKey();
+    const base = {
       itemId: Number(form.itemId),
       quantity: Number(form.quantity),
       notes: form.notes || undefined,
     };
     if (dialogOp === "IN") {
       ok = await stockIn({
-        ...payload,
+        ...base,
         targetWarehouseId: Number(form.targetWarehouseId),
+        unitCost: form.unitCost ? Number(form.unitCost) : undefined,
+        batchNo: form.batchNo || undefined,
+        expiryDate: form.expiryDate || undefined,
+        idempotencyKey,
       });
     } else if (dialogOp === "OUT") {
       ok = await stockOut({
-        ...payload,
+        ...base,
         sourceWarehouseId: Number(form.sourceWarehouseId),
+        idempotencyKey,
       });
     } else if (dialogOp === "TRANSFER") {
       ok = await stockTransfer({
-        ...payload,
+        ...base,
         sourceWarehouseId: Number(form.sourceWarehouseId),
         targetWarehouseId: Number(form.targetWarehouseId),
       });
@@ -227,6 +244,8 @@ export default function MovementsPage() {
                 <TableHead className="px-4 py-2">{t("movementType")}</TableHead>
                 <TableHead className="px-4 py-2">{t("item")}</TableHead>
                 <TableHead className="px-4 py-2">{t("quantity")}</TableHead>
+                <TableHead className="px-4 py-2">Unit cost</TableHead>
+                <TableHead className="px-4 py-2">Batch</TableHead>
                 <TableHead className="px-4 py-2">{t("sourceWarehouse")}</TableHead>
                 <TableHead className="px-4 py-2">{t("targetWarehouse")}</TableHead>
                 <TableHead className="px-4 py-2">{tCommon("created")}</TableHead>
@@ -236,7 +255,7 @@ export default function MovementsPage() {
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={`sk-${i}`}>
-                    {Array.from({ length: 7 }).map((_, j) => (
+                    {Array.from({ length: 9 }).map((_, j) => (
                       <TableCell key={j} className="px-4 py-3">
                         <Skeleton className="h-4 w-full max-w-[100px]" />
                       </TableCell>
@@ -245,7 +264,7 @@ export default function MovementsPage() {
                 ))
               ) : movements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={9} className="h-24 text-center">
                     {t("noMovements")}
                   </TableCell>
                 </TableRow>
@@ -263,6 +282,12 @@ export default function MovementsPage() {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       {m.quantity} {m.item?.unit ?? ""}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-muted-foreground">
+                      {m.unitCost != null ? m.unitCost.toFixed(2) : "—"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 text-muted-foreground">
+                      {m.batchId ? `#${m.batchId}` : "—"}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-muted-foreground">
                       {m.sourceWarehouse?.name ?? "—"}
@@ -383,6 +408,49 @@ export default function MovementsPage() {
                 required
               />
             </div>
+
+            {dialogOp === "IN" && (
+              <>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="unitCost">Unit cost</Label>
+                    <Input
+                      id="unitCost"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="defaults to purchasePrice"
+                      value={form.unitCost}
+                      onChange={(e) =>
+                        setForm({ ...form, unitCost: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="batchNo">Batch / lot</Label>
+                    <Input
+                      id="batchNo"
+                      placeholder="optional"
+                      value={form.batchNo}
+                      onChange={(e) =>
+                        setForm({ ...form, batchNo: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expiryDate">Expiry date</Label>
+                    <Input
+                      id="expiryDate"
+                      type="date"
+                      value={form.expiryDate}
+                      onChange={(e) =>
+                        setForm({ ...form, expiryDate: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="notes">{t("notes")}</Label>

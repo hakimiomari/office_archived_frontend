@@ -1,6 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+ * Workaround for Radix Dialog occasionally leaving `pointer-events: none` on
+ * <body> after a dialog closes — happens reliably when the dialog closes
+ * during an async submit + toast. Forcing pointer-events back on the body
+ * keeps the page interactive even if Radix forgets to clean up.
+ * See: https://github.com/radix-ui/primitives/issues/1241
+ */
+body {
+  pointer-events: auto !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 @custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *));
 @custom-variant ltr (&:where([dir="ltr"], [dir="ltr"] *));

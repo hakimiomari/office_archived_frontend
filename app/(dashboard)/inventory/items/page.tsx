@@ -7,6 +7,7 @@ import {
   ItemCategory,
   Meta,
 } from "@/config/inventory/inventory";
+import { useCategories, Category } from "@/config/categories/categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,9 +59,14 @@ type ItemFormData = {
   name: string;
   sku: string;
   category: ItemCategory;
+  categoryId: string;
   unit: string;
   description: string;
   minStock: number;
+  maxStock: string;
+  reorderPoint: string;
+  reorderQuantity: string;
+  leadTimeDays: string;
   salePrice: number;
   purchasePrice: number;
 };
@@ -69,15 +75,21 @@ const emptyForm: ItemFormData = {
   name: "",
   sku: "",
   category: "OTHER",
+  categoryId: "",
   unit: "pcs",
   description: "",
   minStock: 0,
+  maxStock: "",
+  reorderPoint: "",
+  reorderQuantity: "",
+  leadTimeDays: "",
   salePrice: 0,
   purchasePrice: 0,
 };
 
 export default function InventoryItemsPage() {
   const { getItems, createItem, updateItem, deleteItem } = useInventory();
+  const { list: listCategories } = useCategories();
   const { can } = usePermission();
   const t = useTranslations("inventory");
   const tCommon = useTranslations("common");
@@ -91,6 +103,7 @@ export default function InventoryItemsPage() {
   const [categoryFilter, setCategoryFilter] = useState<ItemCategory | "ALL">(
     "ALL",
   );
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
@@ -117,6 +130,10 @@ export default function InventoryItemsPage() {
     fetchItems();
   }, [page, limit, categoryFilter]);
 
+  useEffect(() => {
+    listCategories({ limit: 500 }).then((r) => setCategories(r.data));
+  }, []);
+
   const handleSearch = () => {
     setPage(1);
     fetchItems();
@@ -134,9 +151,16 @@ export default function InventoryItemsPage() {
       name: item.name,
       sku: item.sku ?? "",
       category: item.category,
+      categoryId: item.categoryId != null ? String(item.categoryId) : "",
       unit: item.unit,
       description: item.description ?? "",
       minStock: item.minStock,
+      maxStock: item.maxStock != null ? String(item.maxStock) : "",
+      reorderPoint: item.reorderPoint != null ? String(item.reorderPoint) : "",
+      reorderQuantity:
+        item.reorderQuantity != null ? String(item.reorderQuantity) : "",
+      leadTimeDays:
+        item.leadTimeDays != null ? String(item.leadTimeDays) : "",
       salePrice: item.salePrice ?? 0,
       purchasePrice: item.purchasePrice ?? 0,
     });
@@ -146,13 +170,22 @@ export default function InventoryItemsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const payload = {
+    const payload: Partial<Item> = {
       name: form.name,
       sku: form.sku || undefined,
       category: form.category,
+      categoryId:
+        form.categoryId === "" ? null : Number(form.categoryId),
       unit: form.unit || "pcs",
       description: form.description || undefined,
       minStock: Number(form.minStock) || 0,
+      maxStock: form.maxStock === "" ? null : Number(form.maxStock),
+      reorderPoint:
+        form.reorderPoint === "" ? null : Number(form.reorderPoint),
+      reorderQuantity:
+        form.reorderQuantity === "" ? null : Number(form.reorderQuantity),
+      leadTimeDays:
+        form.leadTimeDays === "" ? null : Number(form.leadTimeDays),
       salePrice: Number(form.salePrice) || 0,
       purchasePrice: Number(form.purchasePrice) || 0,
     };
@@ -442,6 +475,31 @@ export default function InventoryItemsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>Subcategory</Label>
+                <Select
+                  value={form.categoryId === "" ? "NONE" : form.categoryId}
+                  onValueChange={(v) =>
+                    setForm({ ...form, categoryId: v === "NONE" ? "" : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">— None —</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.parent ? `${c.parent.name} › ` : ""}
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
                 <Label htmlFor="unit">{t("unit")}</Label>
                 <Input
                   id="unit"
@@ -450,9 +508,22 @@ export default function InventoryItemsPage() {
                   placeholder="pcs, kg, liter"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="leadTimeDays">Lead time (days)</Label>
+                <Input
+                  id="leadTimeDays"
+                  type="number"
+                  min="0"
+                  placeholder="7"
+                  value={form.leadTimeDays}
+                  onChange={(e) =>
+                    setForm({ ...form, leadTimeDays: e.target.value })
+                  }
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="minStock">{t("minStock")}</Label>
                 <Input
@@ -465,6 +536,48 @@ export default function InventoryItemsPage() {
                   }
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxStock">Max stock</Label>
+                <Input
+                  id="maxStock"
+                  type="number"
+                  min="0"
+                  placeholder="—"
+                  value={form.maxStock}
+                  onChange={(e) =>
+                    setForm({ ...form, maxStock: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reorderPoint">Reorder point</Label>
+                <Input
+                  id="reorderPoint"
+                  type="number"
+                  min="0"
+                  placeholder="—"
+                  value={form.reorderPoint}
+                  onChange={(e) =>
+                    setForm({ ...form, reorderPoint: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reorderQuantity">Reorder qty</Label>
+                <Input
+                  id="reorderQuantity"
+                  type="number"
+                  min="0"
+                  placeholder="—"
+                  value={form.reorderQuantity}
+                  onChange={(e) =>
+                    setForm({ ...form, reorderQuantity: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="salePrice">{t("salePrice")}</Label>
                 <Input

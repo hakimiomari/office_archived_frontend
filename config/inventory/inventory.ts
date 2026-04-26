@@ -44,9 +44,14 @@ export type Item = {
   name: string;
   sku: string | null;
   category: ItemCategory;
+  categoryId: number | null;
   unit: string;
   description: string | null;
   minStock: number;
+  maxStock: number | null;
+  reorderPoint: number | null;
+  reorderQuantity: number | null;
+  leadTimeDays: number | null;
   salePrice: number;
   purchasePrice: number;
   createdAt: string;
@@ -121,11 +126,14 @@ export type StockMovement = {
   itemId: number;
   type: StockMovementType;
   quantity: number;
+  unitCost: number | null;
+  batchId: number | null;
   sourceWarehouseId: number | null;
   targetWarehouseId: number | null;
   referenceType: StockMovementReference;
   referenceId: number | null;
   purchaseId: number | null;
+  idempotencyKey: string | null;
   notes: string | null;
   createdAt: string;
   item?: Item;
@@ -330,6 +338,10 @@ export const useInventory = () => {
     itemId: number;
     targetWarehouseId: number;
     quantity: number;
+    unitCost?: number;
+    batchNo?: string;
+    expiryDate?: string;
+    idempotencyKey?: string;
     notes?: string;
   }): Promise<boolean> => {
     try {
@@ -346,6 +358,7 @@ export const useInventory = () => {
     itemId: number;
     sourceWarehouseId: number;
     quantity: number;
+    idempotencyKey?: string;
     notes?: string;
   }): Promise<boolean> => {
     try {
@@ -371,6 +384,22 @@ export const useInventory = () => {
       return true;
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to transfer stock");
+      return false;
+    }
+  };
+
+  const stockAdjustment = async (data: {
+    itemId: number;
+    warehouseId: number;
+    newQuantity: number;
+    notes?: string;
+  }): Promise<boolean> => {
+    try {
+      await api.post("inventory/stock/adjustment", data);
+      toast.success("Stock adjusted successfully");
+      return true;
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to adjust stock");
       return false;
     }
   };
@@ -545,6 +574,51 @@ export const useInventory = () => {
     }
   };
 
+  const getDeadStock = async (days = 90) => {
+    try {
+      const response = await api.get(`inventory/reports/dead-stock?days=${days}`);
+      return response.data as DeadStockRow[];
+    } catch {
+      return [];
+    }
+  };
+
+  const getSalesVelocity = async (days = 30) => {
+    try {
+      const response = await api.get(`inventory/reports/sales-velocity?days=${days}`);
+      return response.data as SalesVelocityReport;
+    } catch {
+      return null;
+    }
+  };
+
+  const getTurnover = async (days = 90) => {
+    try {
+      const response = await api.get(`inventory/reports/turnover?days=${days}`);
+      return response.data as TurnoverReport;
+    } catch {
+      return null;
+    }
+  };
+
+  const getProfitPerProduct = async (days = 30) => {
+    try {
+      const response = await api.get(`inventory/reports/profit-per-product?days=${days}`);
+      return response.data as ProfitPerProductReport;
+    } catch {
+      return null;
+    }
+  };
+
+  const getReorderSuggestions = async () => {
+    try {
+      const response = await api.get(`inventory/reports/reorder-suggestions`);
+      return response.data as ReorderSuggestion[];
+    } catch {
+      return [];
+    }
+  };
+
   return {
     // items
     getItems, getItem, createItem, updateItem, deleteItem,
@@ -553,12 +627,74 @@ export const useInventory = () => {
     // suppliers
     getSuppliers, createSupplier, updateSupplier, deleteSupplier,
     // movements
-    getMovements, stockIn, stockOut, stockTransfer,
+    getMovements, stockIn, stockOut, stockTransfer, stockAdjustment,
     // purchases
     getPurchases, createPurchase, receivePurchase, deletePurchase,
     // supplier payments
     getSupplierPayments, createSupplierPayment, deleteSupplierPayment,
     // reports
     getReportSummary, getLowStock, getMovementStats, getByWarehouse, getMonthlyUsage,
+    getDeadStock, getSalesVelocity, getTurnover, getProfitPerProduct, getReorderSuggestions,
   };
+};
+
+// ====================== Advanced report types ======================
+
+export type DeadStockRow = {
+  id: number;
+  name: string;
+  sku: string | null;
+  totalStock: number;
+  lastOutAt: string | null;
+  daysSinceLastOut: number | null;
+};
+
+export type VelocityRow = {
+  id: number;
+  name: string;
+  sku: string | null;
+  soldQty: number;
+  velocityPerDay: number;
+};
+
+export type SalesVelocityReport = {
+  windowDays: number;
+  items: VelocityRow[];
+  fastMoving: VelocityRow[];
+  slowMoving: VelocityRow[];
+};
+
+export type TurnoverReport = {
+  windowDays: number;
+  cogs: number;
+  avgInventoryValue: number;
+  turnoverRate: number;
+  daysOfInventory: number | null;
+};
+
+export type ProfitPerProductRow = {
+  id: number;
+  name: string;
+  sku: string | null;
+  unitsSold: number;
+  revenue: number;
+  cogs: number;
+  profit: number;
+};
+
+export type ProfitPerProductReport = {
+  windowDays: number;
+  items: ProfitPerProductRow[];
+};
+
+export type ReorderSuggestion = {
+  id: number;
+  name: string;
+  sku: string | null;
+  totalStock: number;
+  velocityPerDay: number;
+  leadTimeDays: number;
+  reorderPoint: number;
+  suggestedQuantity: number;
+  needsReorder: boolean;
 };
