@@ -37,6 +37,7 @@ import {
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
+import { useTranslations } from "next-intl";
 
 const typeColor: Record<AlertType, "default" | "destructive" | "secondary" | "outline"> = {
   LOW_STOCK: "destructive",
@@ -55,6 +56,20 @@ export default function AlertsPage() {
   const { list, scan, scanDeadStock, dispatch, acknowledge, resolve, remove } =
     useAlerts();
   const { can } = usePermission();
+  const t = useTranslations("alerts");
+  const tCommon = useTranslations("common");
+
+  const typeLabels: Record<AlertType, string> = {
+    LOW_STOCK: t("typeLowStock"),
+    OVERSTOCK: t("typeOverstock"),
+    DEAD_STOCK: t("typeDeadStock"),
+    REORDER: t("typeReorder"),
+  };
+  const statusLabels: Record<AlertStatus, string> = {
+    OPEN: t("statusOpen"),
+    ACKNOWLEDGED: t("statusAcknowledged"),
+    RESOLVED: t("statusResolved"),
+  };
 
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -95,7 +110,7 @@ export default function AlertsPage() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <IconAlertTriangle className="h-5 w-5 text-orange-500" />
-            <h1 className="text-2xl font-bold">Alerts</h1>
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
             {meta && <Badge variant="default">{meta.total}</Badge>}
           </div>
           <PermissionGate permission="inventory.update">
@@ -106,11 +121,11 @@ export default function AlertsPage() {
                 disabled={scanning}
               >
                 <IconRefresh className="me-2 h-4 w-4" />
-                {scanning ? "Scanning..." : "Re-scan"}
+                {scanning ? t("rescanning") : t("rescan")}
               </Button>
               <Button variant="outline" onClick={dispatch}>
                 <IconSend className="me-2 h-4 w-4" />
-                Dispatch open
+                {t("dispatchOpen")}
               </Button>
             </div>
           </PermissionGate>
@@ -119,25 +134,25 @@ export default function AlertsPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={type} onValueChange={(v) => { setType(v as any); setPage(1); }}>
             <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder="All types" />
+              <SelectValue placeholder={t("allTypes")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All types</SelectItem>
-              <SelectItem value="LOW_STOCK">Low stock</SelectItem>
-              <SelectItem value="OVERSTOCK">Overstock</SelectItem>
-              <SelectItem value="DEAD_STOCK">Dead stock</SelectItem>
-              <SelectItem value="REORDER">Reorder</SelectItem>
+              <SelectItem value="ALL">{t("allTypes")}</SelectItem>
+              <SelectItem value="LOW_STOCK">{t("typeLowStock")}</SelectItem>
+              <SelectItem value="OVERSTOCK">{t("typeOverstock")}</SelectItem>
+              <SelectItem value="DEAD_STOCK">{t("typeDeadStock")}</SelectItem>
+              <SelectItem value="REORDER">{t("typeReorder")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => { setStatus(v as any); setPage(1); }}>
             <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder={t("allStatuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All statuses</SelectItem>
-              <SelectItem value="OPEN">Open</SelectItem>
-              <SelectItem value="ACKNOWLEDGED">Acknowledged</SelectItem>
-              <SelectItem value="RESOLVED">Resolved</SelectItem>
+              <SelectItem value="ALL">{t("allStatuses")}</SelectItem>
+              <SelectItem value="OPEN">{t("statusOpen")}</SelectItem>
+              <SelectItem value="ACKNOWLEDGED">{t("statusAcknowledged")}</SelectItem>
+              <SelectItem value="RESOLVED">{t("statusResolved")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -146,15 +161,15 @@ export default function AlertsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="px-4 py-2">Type</TableHead>
-                <TableHead className="px-4 py-2">Status</TableHead>
-                <TableHead className="px-4 py-2">Item</TableHead>
-                <TableHead className="px-4 py-2">Warehouse</TableHead>
-                <TableHead className="px-4 py-2">Current</TableHead>
-                <TableHead className="px-4 py-2">Threshold</TableHead>
-                <TableHead className="px-4 py-2">Message</TableHead>
-                <TableHead className="px-4 py-2">Created</TableHead>
-                <TableHead className="px-4 py-2">Actions</TableHead>
+                <TableHead className="px-4 py-2">{t("columnType")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnStatus")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnItem")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnWarehouse")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnCurrent")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnThreshold")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnMessage")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnCreated")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnActions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,7 +186,7 @@ export default function AlertsPage() {
               ) : alerts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="h-24 text-center">
-                    No alerts.
+                    {t("noAlerts")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -179,11 +194,11 @@ export default function AlertsPage() {
                   <TableRow key={a.id}>
                     <TableCell className="px-4 py-2">
                       <Badge variant={typeColor[a.type]}>
-                        {a.type.replace("_", " ")}
+                        {typeLabels[a.type]}
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <Badge variant={statusColor[a.status]}>{a.status}</Badge>
+                      <Badge variant={statusColor[a.status]}>{statusLabels[a.status]}</Badge>
                     </TableCell>
                     <TableCell className="px-4 py-2 font-medium">
                       {a.item.name}
@@ -194,7 +209,7 @@ export default function AlertsPage() {
                       )}
                     </TableCell>
                     <TableCell className="px-4 py-2 text-muted-foreground">
-                      {a.warehouse?.name ?? "all"}
+                      {a.warehouse?.name ?? t("allWarehousesShort")}
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       {a.currentValue ?? "—"}
@@ -258,10 +273,10 @@ export default function AlertsPage() {
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
             >
-              Previous
+              {tCommon("previous")}
             </Button>
             <span className="text-sm">
-              Page {meta.page} of {meta.totalPages}
+              {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
             </span>
             <Button
               variant="outline"
@@ -269,7 +284,7 @@ export default function AlertsPage() {
               disabled={page >= meta.totalPages}
               onClick={() => setPage(page + 1)}
             >
-              Next
+              {tCommon("next")}
             </Button>
           </div>
         )}

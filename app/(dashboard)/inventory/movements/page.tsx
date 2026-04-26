@@ -244,8 +244,8 @@ export default function MovementsPage() {
                 <TableHead className="px-4 py-2">{t("movementType")}</TableHead>
                 <TableHead className="px-4 py-2">{t("item")}</TableHead>
                 <TableHead className="px-4 py-2">{t("quantity")}</TableHead>
-                <TableHead className="px-4 py-2">Unit cost</TableHead>
-                <TableHead className="px-4 py-2">Batch</TableHead>
+                <TableHead className="px-4 py-2">{t("unitCost")}</TableHead>
+                <TableHead className="px-4 py-2">{t("batchLot")}</TableHead>
                 <TableHead className="px-4 py-2">{t("sourceWarehouse")}</TableHead>
                 <TableHead className="px-4 py-2">{t("targetWarehouse")}</TableHead>
                 <TableHead className="px-4 py-2">{tCommon("created")}</TableHead>
@@ -413,13 +413,13 @@ export default function MovementsPage() {
               <>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="unitCost">Unit cost</Label>
+                    <Label htmlFor="unitCost">{t("unitCost")}</Label>
                     <Input
                       id="unitCost"
                       type="number"
                       min="0"
                       step="0.01"
-                      placeholder="defaults to purchasePrice"
+                      placeholder={t("unitCostPlaceholder")}
                       value={form.unitCost}
                       onChange={(e) =>
                         setForm({ ...form, unitCost: e.target.value })
@@ -427,10 +427,10 @@ export default function MovementsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="batchNo">Batch / lot</Label>
+                    <Label htmlFor="batchNo">{t("batchLot")}</Label>
                     <Input
                       id="batchNo"
-                      placeholder="optional"
+                      placeholder={tCommon("unitOptional")}
                       value={form.batchNo}
                       onChange={(e) =>
                         setForm({ ...form, batchNo: e.target.value })
@@ -438,7 +438,7 @@ export default function MovementsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="expiryDate">Expiry date</Label>
+                    <Label htmlFor="expiryDate">{t("expiryDate")}</Label>
                     <Input
                       id="expiryDate"
                       type="date"

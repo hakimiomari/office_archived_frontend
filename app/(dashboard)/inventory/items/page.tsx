@@ -475,7 +475,7 @@ export default function InventoryItemsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Subcategory</Label>
+                <Label>{t("subcategory")}</Label>
                 <Select
                   value={form.categoryId === "" ? "NONE" : form.categoryId}
                   onValueChange={(v) =>
@@ -486,7 +486,7 @@ export default function InventoryItemsPage() {
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NONE">— None —</SelectItem>
+                    <SelectItem value="NONE">{tCommon("noneOption")}</SelectItem>
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         {c.parent ? `${c.parent.name} › ` : ""}
@@ -509,7 +509,7 @@ export default function InventoryItemsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="leadTimeDays">Lead time (days)</Label>
+                <Label htmlFor="leadTimeDays">{t("leadTimeDays")}</Label>
                 <Input
                   id="leadTimeDays"
                   type="number"
@@ -537,7 +537,7 @@ export default function InventoryItemsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxStock">Max stock</Label>
+                <Label htmlFor="maxStock">{t("maxStock")}</Label>
                 <Input
                   id="maxStock"
                   type="number"
@@ -550,7 +550,7 @@ export default function InventoryItemsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reorderPoint">Reorder point</Label>
+                <Label htmlFor="reorderPoint">{t("reorderPoint")}</Label>
                 <Input
                   id="reorderPoint"
                   type="number"
@@ -563,7 +563,7 @@ export default function InventoryItemsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reorderQuantity">Reorder qty</Label>
+                <Label htmlFor="reorderQuantity">{t("reorderQuantity")}</Label>
                 <Input
                   id="reorderQuantity"
                   type="number"

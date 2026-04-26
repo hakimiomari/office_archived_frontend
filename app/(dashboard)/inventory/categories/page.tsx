@@ -34,6 +34,7 @@ import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useTranslations } from "next-intl";
 
 type FormData = {
   name: string;
@@ -63,6 +64,8 @@ function flatten(nodes: CategoryNode[], depth = 0): { node: CategoryNode; depth:
 export default function CategoriesPage() {
   const { tree, list, create, update, remove } = useCategories();
   const { can } = usePermission();
+  const t = useTranslations("categories");
+  const tCommon = useTranslations("common");
 
   const [nodes, setNodes] = useState<CategoryNode[]>([]);
   const [flat, setFlat] = useState<Category[]>([]);
@@ -141,13 +144,13 @@ export default function CategoriesPage() {
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Categories</h1>
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
             <Badge variant="default">{flat.length}</Badge>
           </div>
           <PermissionGate permission="inventory.create">
             <Button onClick={() => openCreate()}>
               <IconPlus className="me-2 h-4 w-4" />
-              New category
+              {t("newCategory")}
             </Button>
           </PermissionGate>
         </div>
@@ -161,7 +164,7 @@ export default function CategoriesPage() {
             </div>
           ) : rows.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              No categories yet — create your first to start grouping items.
+              {t("noCategories")}
             </div>
           ) : (
             <ul className="divide-y">
@@ -185,7 +188,7 @@ export default function CategoriesPage() {
                     )}
                     {node._count?.items ? (
                       <Badge variant="outline" className="ms-2 text-xs">
-                        {node._count.items} items
+                        {node._count.items} {t("itemsLabel")}
                       </Badge>
                     ) : null}
                   </div>
@@ -229,12 +232,12 @@ export default function CategoriesPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editing ? "Edit category" : "New category"}
+              {editing ? t("editCategory") : t("newCategory")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-3">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("name")}</Label>
               <Input
                 id="name"
                 value={form.name}
@@ -243,16 +246,16 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">{t("slug")}</Label>
               <Input
                 id="slug"
                 value={form.slug}
                 onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                placeholder="optional, must be unique"
+                placeholder={t("slugPlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label>Parent</Label>
+              <Label>{t("parent")}</Label>
               <Select
                 value={form.parentId === "" ? "NONE" : form.parentId}
                 onValueChange={(v) =>
@@ -263,7 +266,7 @@ export default function CategoriesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NONE">— Top level —</SelectItem>
+                  <SelectItem value="NONE">{tCommon("topLevelOption")}</SelectItem>
                   {flat
                     .filter((c) => !editing || c.id !== editing.id)
                     .map((c) => (
@@ -276,7 +279,7 @@ export default function CategoriesPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t("description")}</Label>
               <textarea
                 id="description"
                 value={form.description}
@@ -293,10 +296,14 @@ export default function CategoriesPage() {
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? "Saving..." : editing ? "Update" : "Create"}
+                {saving
+                  ? tCommon("saving")
+                  : editing
+                    ? tCommon("update")
+                    : tCommon("create")}
               </Button>
             </div>
           </form>
@@ -306,8 +313,8 @@ export default function CategoriesPage() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete category"
-        description="Items in this category will be unassigned. This cannot be undone."
+        title={t("deleteTitle")}
+        description={t("deleteDescription")}
         onConfirm={handleDelete}
         loading={deleting}
       />

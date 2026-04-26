@@ -6,6 +6,7 @@ import {
   SalesReport,
   ReportPeriod,
 } from "@/config/sales/sales";
+import { useInventory, Warehouse } from "@/config/inventory/inventory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +39,7 @@ import {
   IconTrendingDown,
   IconAlertTriangle,
   IconChartBar,
+  IconDownload,
 } from "@tabler/icons-react";
 import {
   Area,
@@ -69,24 +71,34 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function SalesReportsPage() {
-  const { getReport } = useSales();
+  const { getReport, downloadReportPdf } = useSales();
+  const { getWarehouses } = useInventory();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
 
   const [period, setPeriod] = useState<ReportPeriod>("monthly");
+  const [warehouseId, setWarehouseId] = useState<"ALL" | string>("ALL");
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [report, setReport] = useState<SalesReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  const whIdNum = warehouseId === "ALL" ? undefined : Number(warehouseId);
 
   const fetch = async () => {
     setLoading(true);
-    const result = await getReport(period);
+    const result = await getReport(period, undefined, undefined, whIdNum);
     setReport(result);
     setLoading(false);
   };
 
   useEffect(() => {
+    getWarehouses({ limit: 200 }).then((r) => setWarehouses(r.data));
+  }, []);
+
+  useEffect(() => {
     fetch();
-  }, [period]);
+  }, [period, warehouseId]);
 
   const fmt = (v: number) => v.toLocaleString();
 
@@ -127,20 +139,50 @@ export default function SalesReportsPage() {
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-2xl font-bold">{t("reports")}</h1>
-          <Select
-            value={period}
-            onValueChange={(v) => setPeriod(v as ReportPeriod)}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">{t("periodDaily")}</SelectItem>
-              <SelectItem value="weekly">{t("periodWeekly")}</SelectItem>
-              <SelectItem value="monthly">{t("periodMonthly")}</SelectItem>
-              <SelectItem value="yearly">{t("periodYearly")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select
+              value={warehouseId}
+              onValueChange={(v) => setWarehouseId(v)}
+            >
+              <SelectTrigger className="h-9 w-[200px]">
+                <SelectValue placeholder={tCommon("allWarehouses")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">{tCommon("allWarehouses")}</SelectItem>
+                {warehouses.map((w) => (
+                  <SelectItem key={w.id} value={String(w.id)}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={period}
+              onValueChange={(v) => setPeriod(v as ReportPeriod)}
+            >
+              <SelectTrigger className="h-9 w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">{t("periodDaily")}</SelectItem>
+                <SelectItem value="weekly">{t("periodWeekly")}</SelectItem>
+                <SelectItem value="monthly">{t("periodMonthly")}</SelectItem>
+                <SelectItem value="yearly">{t("periodYearly")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="default"
+              disabled={loading || generating}
+              onClick={async () => {
+                setGenerating(true);
+                await downloadReportPdf(period, undefined, undefined, whIdNum);
+                setGenerating(false);
+              }}
+            >
+              <IconDownload className="me-2 h-4 w-4" />
+              {generating ? tCommon("loading") : tCommon("generatePdf")}
+            </Button>
+          </div>
         </div>
 
         {/* Financial KPI cards */}

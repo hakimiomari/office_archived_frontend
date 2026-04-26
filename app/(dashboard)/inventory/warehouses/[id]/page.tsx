@@ -140,7 +140,7 @@ export default function WarehouseDetailPage() {
             </div>
           ) : (
             <h1 className="text-2xl font-bold text-muted-foreground">
-              Warehouse not found
+              {t("warehouseNotFound")}
             </h1>
           )}
         </div>
@@ -149,24 +149,24 @@ export default function WarehouseDetailPage() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <SummaryCard
             icon={<IconPackage className="h-5 w-5 text-primary" />}
-            label="Distinct items"
+            label={t("distinctItems")}
             value={loading ? null : rows.length}
           />
           <SummaryCard
             icon={<IconChartBar className="h-5 w-5 text-blue-600" />}
-            label="Total quantity"
+            label={t("totalQuantity")}
             value={loading ? null : totals.totalQty}
           />
           <SummaryCard
             icon={<IconCash className="h-5 w-5 text-green-600" />}
-            label="Stock value"
+            label={t("stockValue")}
             value={
               loading ? null : totals.stockValue.toFixed(2)
             }
           />
           <SummaryCard
             icon={<IconAlertTriangle className="h-5 w-5 text-orange-600" />}
-            label="Low / out"
+            label={t("lowOutShort")}
             value={loading ? null : `${totals.lowCount} / ${totals.zeroCount}`}
           />
         </div>
@@ -213,10 +213,10 @@ export default function WarehouseDetailPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All stock levels</SelectItem>
-                <SelectItem value="OK">In stock</SelectItem>
-                <SelectItem value="LOW">Low stock</SelectItem>
-                <SelectItem value="ZERO">Out of stock</SelectItem>
+                <SelectItem value="ALL">{t("allStockLevels")}</SelectItem>
+                <SelectItem value="OK">{t("inStock")}</SelectItem>
+                <SelectItem value="LOW">{t("lowStockAlert")}</SelectItem>
+                <SelectItem value="ZERO">{t("outOfStock")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,13 +232,13 @@ export default function WarehouseDetailPage() {
                 <TableHead className="px-4 py-2">{t("sku")}</TableHead>
                 <TableHead className="px-4 py-2">{t("category")}</TableHead>
                 <TableHead className="px-4 py-2">{t("unit")}</TableHead>
-                <TableHead className="px-4 py-2">Qty here</TableHead>
+                <TableHead className="px-4 py-2">{t("qtyHere")}</TableHead>
                 <TableHead className="px-4 py-2">{t("minStock")}</TableHead>
-                <TableHead className="px-4 py-2">Max</TableHead>
-                <TableHead className="px-4 py-2">Reorder pt.</TableHead>
-                <TableHead className="px-4 py-2">Purchase $</TableHead>
-                <TableHead className="px-4 py-2">Sale $</TableHead>
-                <TableHead className="px-4 py-2">Line value</TableHead>
+                <TableHead className="px-4 py-2">{t("maxStock")}</TableHead>
+                <TableHead className="px-4 py-2">{t("reorderPoint")}</TableHead>
+                <TableHead className="px-4 py-2">{t("purchasePrice")}</TableHead>
+                <TableHead className="px-4 py-2">{t("salePrice")}</TableHead>
+                <TableHead className="px-4 py-2">{t("lineValue")}</TableHead>
                 <TableHead className="px-4 py-2">{tCommon("actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -256,7 +256,7 @@ export default function WarehouseDetailPage() {
               ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={13} className="h-24 text-center">
-                    No items match the current filters.
+                    {t("noItemsFilter")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -330,7 +330,7 @@ export default function WarehouseDetailPage() {
                             changeRoute(`/inventory/items?search=${encodeURIComponent(r.item.sku ?? r.item.name)}`)
                           }
                         >
-                          Open
+                          {tCommon("open")}
                         </Button>
                       </TableCell>
                     </TableRow>

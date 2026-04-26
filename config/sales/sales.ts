@@ -103,6 +103,7 @@ export type ReportPeriod = "daily" | "weekly" | "monthly" | "yearly";
 export type SalesReport = {
   period: ReportPeriod;
   range: { start: string; end: string };
+  warehouse: { id: number; name: string } | null;
   financial: {
     revenue: number;
     expenses: number;
@@ -173,15 +174,51 @@ export const useSales = () => {
     period: ReportPeriod = "monthly",
     from?: string,
     to?: string,
+    warehouseId?: number,
   ): Promise<SalesReport | null> => {
     try {
       const params = new URLSearchParams({ period });
       if (from) params.append("from", from);
       if (to) params.append("to", to);
+      if (warehouseId) params.append("warehouseId", String(warehouseId));
       const response = await api.get(`sales/reports?${params.toString()}`);
       return response.data;
     } catch {
       return null;
+    }
+  };
+
+  /**
+   * Trigger a server-side PDF download of the current sales report.
+   * Streams the file via the browser; rejects only on outright failure.
+   */
+  const downloadReportPdf = async (
+    period: ReportPeriod = "monthly",
+    from?: string,
+    to?: string,
+    warehouseId?: number,
+  ): Promise<boolean> => {
+    try {
+      const params = new URLSearchParams({ period });
+      if (from) params.append("from", from);
+      if (to) params.append("to", to);
+      if (warehouseId) params.append("warehouseId", String(warehouseId));
+      const response = await api.get(`sales/reports/pdf?${params.toString()}`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.download = `sales_report_${period}_${stamp}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return true;
+    } catch {
+      return false;
     }
   };
 
@@ -476,5 +513,6 @@ export const useSales = () => {
     deletePayment,
     downloadInvoicePdf,
     downloadCustomerReportPdf,
+    downloadReportPdf,
   };
 };

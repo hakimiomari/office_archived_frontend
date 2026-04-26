@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { IconReportAnalytics, IconRefresh } from "@tabler/icons-react";
 import { RouteGuard } from "@/components/route-guard";
+import { useTranslations } from "next-intl";
 
 export default function InventoryReportsPage() {
   const {
@@ -35,6 +36,8 @@ export default function InventoryReportsPage() {
     getProfitPerProduct,
     getReorderSuggestions,
   } = useInventory();
+  const t = useTranslations("analytics");
+  const tCommon = useTranslations("common");
 
   const [days, setDays] = useState(90);
   const [salesDays, setSalesDays] = useState(30);
@@ -73,11 +76,11 @@ export default function InventoryReportsPage() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <IconReportAnalytics className="h-5 w-5" />
-            <h1 className="text-2xl font-bold">Inventory analytics</h1>
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              <Label className="text-xs">Window (days)</Label>
+              <Label className="text-xs">{t("window")}</Label>
               <Input
                 type="number"
                 min="1"
@@ -87,7 +90,7 @@ export default function InventoryReportsPage() {
               />
             </div>
             <div className="flex items-center gap-1">
-              <Label className="text-xs">Sales window</Label>
+              <Label className="text-xs">{t("salesWindow")}</Label>
               <Input
                 type="number"
                 min="1"
@@ -98,18 +101,18 @@ export default function InventoryReportsPage() {
             </div>
             <Button variant="outline" onClick={fetchAll}>
               <IconRefresh className="me-2 h-4 w-4" />
-              Refresh
+              {t("refresh")}
             </Button>
           </div>
         </div>
 
         <Tabs defaultValue="reorder" className="w-full">
           <TabsList>
-            <TabsTrigger value="reorder">Reorder suggestions</TabsTrigger>
-            <TabsTrigger value="velocity">Sales velocity</TabsTrigger>
-            <TabsTrigger value="dead">Dead stock</TabsTrigger>
-            <TabsTrigger value="turnover">Turnover</TabsTrigger>
-            <TabsTrigger value="profit">Profit per product</TabsTrigger>
+            <TabsTrigger value="reorder">{t("tabReorder")}</TabsTrigger>
+            <TabsTrigger value="velocity">{t("tabVelocity")}</TabsTrigger>
+            <TabsTrigger value="dead">{t("tabDead")}</TabsTrigger>
+            <TabsTrigger value="turnover">{t("tabTurnover")}</TabsTrigger>
+            <TabsTrigger value="profit">{t("tabProfit")}</TabsTrigger>
           </TabsList>
 
           {/* Reorder suggestions */}
@@ -117,19 +120,19 @@ export default function InventoryReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  Items needing reorder ({reorder.length})
+                  {t("reorderTitle")} ({reorder.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Velocity / day</TableHead>
-                      <TableHead>Lead time</TableHead>
-                      <TableHead>Reorder point</TableHead>
-                      <TableHead>Suggested qty</TableHead>
+                      <TableHead>{t("columnItem")}</TableHead>
+                      <TableHead>{t("columnStock")}</TableHead>
+                      <TableHead>{t("columnVelocity")}</TableHead>
+                      <TableHead>{t("columnLeadTime")}</TableHead>
+                      <TableHead>{t("columnReorderPoint")}</TableHead>
+                      <TableHead>{t("columnSuggestedQty")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -146,7 +149,7 @@ export default function InventoryReportsPage() {
                     ) : reorder.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center h-20">
-                          Nothing needs reordering.
+                          {t("nothingToReorder")}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -181,15 +184,15 @@ export default function InventoryReportsPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Fast moving</CardTitle>
+                  <CardTitle className="text-base">{t("fastMoving")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Sold</TableHead>
-                        <TableHead>Per day</TableHead>
+                        <TableHead>{t("columnItem")}</TableHead>
+                        <TableHead>{t("columnSold")}</TableHead>
+                        <TableHead>{t("columnPerDay")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -203,7 +206,7 @@ export default function InventoryReportsPage() {
                       {!loading && (vel?.fastMoving ?? []).length === 0 && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center h-16">
-                            No data
+                            {tCommon("noData")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -213,15 +216,15 @@ export default function InventoryReportsPage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Slow moving</CardTitle>
+                  <CardTitle className="text-base">{t("slowMoving")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Sold</TableHead>
-                        <TableHead>Per day</TableHead>
+                        <TableHead>{t("columnItem")}</TableHead>
+                        <TableHead>{t("columnSold")}</TableHead>
+                        <TableHead>{t("columnPerDay")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -235,7 +238,7 @@ export default function InventoryReportsPage() {
                       {!loading && (vel?.slowMoving ?? []).length === 0 && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center h-16">
-                            No data
+                            {tCommon("noData")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -251,17 +254,17 @@ export default function InventoryReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  Dead stock — no OUT in last {days} days ({dead.length})
+                  {t("deadStockTitle", { days })} ({dead.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Last OUT</TableHead>
-                      <TableHead>Days idle</TableHead>
+                      <TableHead>{t("columnItem")}</TableHead>
+                      <TableHead>{t("columnStock")}</TableHead>
+                      <TableHead>{t("columnLastOut")}</TableHead>
+                      <TableHead>{t("columnDaysIdle")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -272,7 +275,7 @@ export default function InventoryReportsPage() {
                         <TableCell className="text-xs">
                           {d.lastOutAt
                             ? new Date(d.lastOutAt).toLocaleDateString()
-                            : "never"}
+                            : tCommon("never")}
                         </TableCell>
                         <TableCell>
                           {d.daysSinceLastOut == null
@@ -284,7 +287,7 @@ export default function InventoryReportsPage() {
                     {!loading && dead.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center h-16">
-                          No dead stock 🎉
+                          {t("noDeadStock")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -299,22 +302,22 @@ export default function InventoryReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  Turnover — last {turnover?.windowDays ?? days} days
+                  {t("turnoverTitle", { days: turnover?.windowDays ?? days })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <Stat label="COGS" value={turnover?.cogs.toFixed(2)} />
+                  <Stat label={t("cogs")} value={turnover?.cogs.toFixed(2)} />
                   <Stat
-                    label="Avg inventory $"
+                    label={t("avgInventoryValue")}
                     value={turnover?.avgInventoryValue.toFixed(2)}
                   />
                   <Stat
-                    label="Turnover rate"
+                    label={t("turnoverRate")}
                     value={turnover?.turnoverRate.toFixed(2)}
                   />
                   <Stat
-                    label="Days of inventory"
+                    label={t("daysOfInventory")}
                     value={
                       turnover?.daysOfInventory == null
                         ? "—"
@@ -331,18 +334,18 @@ export default function InventoryReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  Profit per product — last {profit?.windowDays ?? salesDays} days
+                  {t("profitTitle", { days: profit?.windowDays ?? salesDays })}
                 </CardTitle>
               </CardHeader>
               <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Units sold</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>COGS</TableHead>
-                      <TableHead>Profit</TableHead>
+                      <TableHead>{t("columnItem")}</TableHead>
+                      <TableHead>{t("columnUnitsSold")}</TableHead>
+                      <TableHead>{t("columnRevenue")}</TableHead>
+                      <TableHead>{t("columnCogs")}</TableHead>
+                      <TableHead>{t("columnProfit")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -366,7 +369,7 @@ export default function InventoryReportsPage() {
                     {!loading && (profit?.items ?? []).length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center h-16">
-                          No sales data
+                          {t("noSalesData")}
                         </TableCell>
                       </TableRow>
                     )}

@@ -43,6 +43,7 @@ import {
 import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
+import { useTranslations } from "next-intl";
 
 const statusColor: Record<StockCountStatus, "default" | "destructive" | "secondary" | "outline"> = {
   DRAFT: "outline",
@@ -56,6 +57,15 @@ export default function StockCountsPage() {
     useStockCounts();
   const { getWarehouses } = useInventory();
   const { can } = usePermission();
+  const t = useTranslations("stockCounts");
+  const tCommon = useTranslations("common");
+
+  const statusLabels: Record<StockCountStatus, string> = {
+    DRAFT: t("statusDraft"),
+    IN_PROGRESS: t("statusInProgress"),
+    COMPLETED: t("statusCompleted"),
+    CANCELLED: t("statusCancelled"),
+  };
 
   const [counts, setCounts] = useState<StockCount[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -167,13 +177,13 @@ export default function StockCountsPage() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <IconClipboardList className="h-5 w-5" />
-            <h1 className="text-2xl font-bold">Stock counts</h1>
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
             {meta && <Badge>{meta.total}</Badge>}
           </div>
           <PermissionGate permission="inventory.create">
             <Button onClick={() => setCreateOpen(true)}>
               <IconPlus className="me-2 h-4 w-4" />
-              New count
+              {t("newCount")}
             </Button>
           </PermissionGate>
         </div>
@@ -187,14 +197,14 @@ export default function StockCountsPage() {
             }}
           >
             <SelectTrigger className="h-9 w-[200px]">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder={tCommon("allStatuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="IN_PROGRESS">In progress</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
+              <SelectItem value="DRAFT">{t("statusDraft")}</SelectItem>
+              <SelectItem value="IN_PROGRESS">{t("statusInProgress")}</SelectItem>
+              <SelectItem value="COMPLETED">{t("statusCompleted")}</SelectItem>
+              <SelectItem value="CANCELLED">{t("statusCancelled")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -203,13 +213,13 @@ export default function StockCountsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="px-4 py-2">Reference</TableHead>
-                <TableHead className="px-4 py-2">Warehouse</TableHead>
-                <TableHead className="px-4 py-2">Status</TableHead>
-                <TableHead className="px-4 py-2">Lines</TableHead>
-                <TableHead className="px-4 py-2">Started</TableHead>
-                <TableHead className="px-4 py-2">Completed</TableHead>
-                <TableHead className="px-4 py-2">Actions</TableHead>
+                <TableHead className="px-4 py-2">{t("columnReference")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnWarehouse")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnStatus")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnLines")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnStarted")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnCompleted")}</TableHead>
+                <TableHead className="px-4 py-2">{t("columnActions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -226,7 +236,7 @@ export default function StockCountsPage() {
               ) : counts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    No stock counts yet.
+                    {t("noCounts")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -239,7 +249,7 @@ export default function StockCountsPage() {
                       {c.warehouse?.name ?? `WH ${c.warehouseId}`}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <Badge variant={statusColor[c.status]}>{c.status}</Badge>
+                      <Badge variant={statusColor[c.status]}>{statusLabels[c.status]}</Badge>
                     </TableCell>
                     <TableCell className="px-4 py-2 text-muted-foreground">
                       {c._count?.lines ?? 0}
@@ -259,7 +269,7 @@ export default function StockCountsPage() {
                           size="sm"
                           onClick={() => openDetail(c.id)}
                         >
-                          Open
+                          {tCommon("open")}
                         </Button>
                         {c.status === "IN_PROGRESS" &&
                           can("inventory.update") && (
@@ -301,10 +311,10 @@ export default function StockCountsPage() {
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
             >
-              Previous
+              {tCommon("previous")}
             </Button>
             <span className="text-sm">
-              Page {meta.page} of {meta.totalPages}
+              {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
             </span>
             <Button
               variant="outline"
@@ -312,7 +322,7 @@ export default function StockCountsPage() {
               disabled={page >= meta.totalPages}
               onClick={() => setPage(page + 1)}
             >
-              Next
+              {tCommon("next")}
             </Button>
           </div>
         )}
@@ -322,11 +332,11 @@ export default function StockCountsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>New stock count</DialogTitle>
+            <DialogTitle>{t("create")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={onCreate} className="grid gap-3">
             <div className="space-y-2">
-              <Label>Warehouse</Label>
+              <Label>{t("columnWarehouse")}</Label>
               <Select
                 value={createForm.warehouseId}
                 onValueChange={(v) =>
@@ -334,7 +344,7 @@ export default function StockCountsPage() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select warehouse" />
+                  <SelectValue placeholder={t("selectWarehouse")} />
                 </SelectTrigger>
                 <SelectContent>
                   {warehouses.map((w) => (
@@ -346,17 +356,17 @@ export default function StockCountsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Reference</Label>
+              <Label>{t("reference")}</Label>
               <Input
                 value={createForm.reference}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, reference: e.target.value })
                 }
-                placeholder="auto if empty"
+                placeholder={tCommon("autoIfEmpty")}
               />
             </div>
             <div className="space-y-2">
-              <Label>Notes</Label>
+              <Label>{t("notes")}</Label>
               <Input
                 value={createForm.notes}
                 onChange={(e) =>
@@ -370,10 +380,10 @@ export default function StockCountsPage() {
                 variant="outline"
                 onClick={() => setCreateOpen(false)}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={creating}>
-                {creating ? "Creating..." : "Create"}
+                {creating ? t("creating") : tCommon("create")}
               </Button>
             </div>
           </form>
@@ -398,10 +408,10 @@ export default function StockCountsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="px-3 py-2">Item</TableHead>
-                      <TableHead className="px-3 py-2">Expected</TableHead>
-                      <TableHead className="px-3 py-2">Counted</TableHead>
-                      <TableHead className="px-3 py-2">Variance</TableHead>
+                      <TableHead className="px-3 py-2">{tCommon("name")}</TableHead>
+                      <TableHead className="px-3 py-2">{t("columnExpected")}</TableHead>
+                      <TableHead className="px-3 py-2">{t("columnCounted")}</TableHead>
+                      <TableHead className="px-3 py-2">{t("columnVariance")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -461,7 +471,7 @@ export default function StockCountsPage() {
                     onClick={onSubmitLines}
                     disabled={submitting}
                   >
-                    {submitting ? "Saving..." : "Save counts"}
+                    {submitting ? t("saving") : t("saveCounts")}
                   </Button>
                   <div className="flex gap-2">
                     <Button
@@ -469,14 +479,14 @@ export default function StockCountsPage() {
                       onClick={() => onComplete(false)}
                       disabled={completing}
                     >
-                      Complete (no adjust)
+                      {t("completeNoAdjust")}
                     </Button>
                     <Button
                       onClick={() => onComplete(true)}
                       disabled={completing}
                     >
                       <IconCheck className="me-2 h-4 w-4" />
-                      Complete & apply
+                      {t("completeAndApply")}
                     </Button>
                   </div>
                 </div>

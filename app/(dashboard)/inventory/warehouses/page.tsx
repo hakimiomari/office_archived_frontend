@@ -224,7 +224,7 @@ export default function WarehousesPage() {
                             }
                           >
                             <IconEye className="me-2 h-4 w-4" />
-                            View items
+                            {t("viewItems")}
                           </DropdownMenuItem>
                           {can("inventory.update") && (
                             <DropdownMenuItem onClick={() => openEdit(w)}>

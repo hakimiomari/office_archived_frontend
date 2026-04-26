@@ -87,22 +87,22 @@ const getAllNavItems = (t: (key: string) => string) => [
         icon: IconShoppingCart,
       },
       {
-        title: "Categories",
+        title: t("inventoryCategories"),
         url: "/inventory/categories",
         icon: IconCategory,
       },
       {
-        title: "Stock counts",
+        title: t("inventoryStockCounts"),
         url: "/inventory/stock-counts",
         icon: IconClipboardList,
       },
       {
-        title: "Alerts",
+        title: t("inventoryAlerts"),
         url: "/inventory/alerts",
         icon: IconAlertTriangle,
       },
       {
-        title: "Analytics",
+        title: t("inventoryAnalytics"),
         url: "/inventory/reports",
         icon: IconReportAnalytics,
       },
