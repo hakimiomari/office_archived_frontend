@@ -96,6 +96,17 @@ export type SalesSummary = {
   totalCustomers: number;
   pendingPayments: number;
   monthCashReceived: number;
+  totalPurchases: number;
+  purchasesPaid: number;
+  purchasesRemaining: number;
+  realizedRevenue: number;
+  realizedCogs: number;
+  realizedProfit: number;
+  netProfit: number;
+  unsoldCost: number;
+  unsoldRevenue: number;
+  projectedProfit: number;
+  approximateProfit: number;
 };
 
 export type ReportPeriod = "daily" | "weekly" | "monthly" | "yearly";

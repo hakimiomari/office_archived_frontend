@@ -38,6 +38,7 @@ import {
   IconTrendingUp,
   IconTrendingDown,
   IconUserPlus,
+  IconShoppingCart,
 } from "@tabler/icons-react";
 import {
   Area,
@@ -237,20 +238,27 @@ export default function DashboardPage() {
               <IconTrendingUp className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">
-                {tSales("profit")}
+              <p
+                className="text-sm text-muted-foreground"
+                title="Best-case projection: realized gross margin (revenue − COGS) plus profit if every unit currently in stock sells at salePrice."
+              >
+                {tSales("profit")} (approx.)
               </p>
               <div
                 className={`text-2xl font-bold ${
-                  (salesReport?.financial.profit ?? 0) < 0 ? "text-red-600" : ""
+                  (salesSummary?.approximateProfit ?? 0) < 0 ? "text-red-600" : ""
                 }`}
               >
                 {loading ? (
                   <Skeleton className="h-7 w-24" />
                 ) : (
-                  fmt(salesReport?.financial.profit ?? 0)
+                  fmt(salesSummary?.approximateProfit ?? 0)
                 )}
               </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                realized {fmt(salesSummary?.realizedProfit ?? 0)} + projected{" "}
+                {fmt(salesSummary?.projectedProfit ?? 0)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -268,6 +276,165 @@ export default function DashboardPage() {
                   <Skeleton className="h-7 w-24" />
                 ) : (
                   fmt(salesSummary?.pendingPayments ?? 0)
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Purchases & supplier liability */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-l-4 border-l-orange-500">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-500/10">
+              <IconShoppingCart className="h-6 w-6 text-orange-600" />
+            </div>
+            <div>
+              <p
+                className="text-sm text-muted-foreground"
+                title="Total amount spent on RECEIVED purchases (cash spent on inventory)."
+              >
+                Total purchases
+              </p>
+              <div className="text-2xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesSummary?.totalPurchases ?? 0)
+                )}
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                paid {fmt(salesSummary?.purchasesPaid ?? 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-500/10">
+              <IconAlertTriangle className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div>
+              <p
+                className="text-sm text-muted-foreground"
+                title="Outstanding amount still owed to suppliers (purchases.remainingAmount)."
+              >
+                Owed to suppliers
+              </p>
+              <div
+                className={`text-2xl font-bold ${
+                  (salesSummary?.purchasesRemaining ?? 0) > 0 ? "text-red-600" : ""
+                }`}
+              >
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesSummary?.purchasesRemaining ?? 0)
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-blue-500">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
+              <IconCash className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <p
+                className="text-sm text-muted-foreground"
+                title="Realized profit (revenue − COGS) minus what is still owed to suppliers."
+              >
+                Net profit
+              </p>
+              <div
+                className={`text-2xl font-bold ${
+                  (salesSummary?.netProfit ?? 0) < 0 ? "text-red-600" : "text-green-600"
+                }`}
+              >
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesSummary?.netProfit ?? 0)
+                )}
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                realized {fmt(salesSummary?.realizedProfit ?? 0)} −{" "}
+                {fmt(salesSummary?.purchasesRemaining ?? 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Inventory on-hand value & projected profit */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-l-4 border-l-teal-500">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-500/10">
+              <IconBuildingWarehouse className="h-6 w-6 text-teal-600" />
+            </div>
+            <div>
+              <p
+                className="text-sm text-muted-foreground"
+                title="Cost value of stock currently on hand (qty × purchasePrice)."
+              >
+                Stock on hand (cost)
+              </p>
+              <div className="text-2xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesSummary?.unsoldCost ?? 0)
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-green-500">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
+              <IconTrendingUp className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <p
+                className="text-sm text-muted-foreground"
+                title="Sale-price value of stock currently on hand (qty × salePrice)."
+              >
+                Stock on hand (retail)
+              </p>
+              <div className="text-2xl font-bold">
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesSummary?.unsoldRevenue ?? 0)
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <IconTrendingUp className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <p
+                className="text-sm text-muted-foreground"
+                title="If everything currently on hand sells at salePrice, this is the additional profit you would book."
+              >
+                Projected profit
+              </p>
+              <div
+                className={`text-2xl font-bold ${
+                  (salesSummary?.projectedProfit ?? 0) < 0 ? "text-red-600" : ""
+                }`}
+              >
+                {loading ? (
+                  <Skeleton className="h-7 w-24" />
+                ) : (
+                  fmt(salesSummary?.projectedProfit ?? 0)
                 )}
               </div>
             </div>
