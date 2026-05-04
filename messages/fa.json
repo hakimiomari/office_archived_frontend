@@ -524,7 +524,8 @@
     "allStockLevels": "همه سطوح موجودی",
     "warehouseNotFound": "انبار یافت نشد",
     "noItemsFilter": "هیچ آیتمی با فیلترهای فعلی مطابقت ندارد.",
-    "viewItems": "مشاهده اقلام"
+    "viewItems": "مشاهده اقلام",
+    "currentStock": "موجودی فعلی"
   },
   "executive": {
     "title": "داشبورد اجرایی",

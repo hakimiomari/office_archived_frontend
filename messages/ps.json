@@ -524,7 +524,8 @@
     "allStockLevels": "د ذخیرې ټولې کچې",
     "warehouseNotFound": "ګودام ونه موندل شو",
     "noItemsFilter": "د اوسني فلټر سره هیڅ توکی سمون نه خوري.",
-    "viewItems": "توکي وګورئ"
+    "viewItems": "توکي وګورئ",
+    "currentStock": "اوسنۍ ذخیره"
   },
   "executive": {
     "title": "اجرایي ډاشبورډ",

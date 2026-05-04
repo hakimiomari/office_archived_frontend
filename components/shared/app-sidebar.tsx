@@ -39,7 +39,9 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/contexts/UserContext";
 import { usePermission } from "@/hooks/use-permission";
+import { useTenantFilter } from "@/contexts/TenantFilterContext";
 import { useTranslations } from "next-intl";
+import { CompanySwitcher } from "@/components/company-switcher";
 
 // Each nav item can optionally require one or more permissions.
 // If `requiredPermissions` is not set, the item is always visible.
@@ -176,10 +178,26 @@ const getAllNavItems = (t: (key: string) => string) => [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
   const { canAny } = usePermission();
+  const { filterCompanyId } = useTenantFilter();
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
 
   const allNavItems = getAllNavItems(tNav);
+
+  // "Companies" is a tenant-management surface — only shown when:
+  //   1. The user is SUPER_ADMIN, AND
+  //   2. They are NOT currently scoped into a specific company via the
+  //      sidebar picker. While a super-admin is "acting as" a company,
+  //      they get the full tenant UX (no admin entries leaking through).
+  const isAdminUnscoped =
+    user?.userRole === "SUPER_ADMIN" && filterCompanyId == null;
+  if (isAdminUnscoped) {
+    allNavItems.push({
+      title: "Companies",
+      url: "/companies",
+      icon: IconBuilding,
+    } as any);
+  }
 
   const navSecondary = [
     { title: tNav("settings"), url: "#", icon: IconSettings },
@@ -208,6 +226,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {/* SUPER_ADMIN-only company picker; renders nothing for tenants. */}
+          <CompanySwitcher />
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>

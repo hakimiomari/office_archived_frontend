@@ -524,7 +524,8 @@
     "allStockLevels": "All stock levels",
     "warehouseNotFound": "Warehouse not found",
     "noItemsFilter": "No items match the current filters.",
-    "viewItems": "View items"
+    "viewItems": "View items",
+    "currentStock": "Current stock"
   },
   "executive": {
     "title": "Executive Dashboard",

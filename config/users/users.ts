@@ -50,6 +50,10 @@ export const useUsers = () => {
     email: string;
     password: string;
     role: number;
+    /** Tenancy role; SUPER_ADMIN can set this. */
+    userRole?: "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
+    /** Required for non-SUPER_ADMIN users. */
+    companyId?: number | null;
   }) => {
     try {
       const response = await api.post("user/create", data);

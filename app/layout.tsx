@@ -44,6 +44,10 @@ export default async function RootLayout({
         />
       </head>
       <body
+        // Grammarly / LanguageTool / similar extensions inject attributes on
+        // <body> after SSR, causing a hydration mismatch warning. Scope the
+        // suppression to <body> so the rest of the tree still validates.
+        suppressHydrationWarning
         className={cn(
           "bg-background overscroll-none font-sans antialiased",
           activeThemeValue ? `theme-${activeThemeValue}` : "",
