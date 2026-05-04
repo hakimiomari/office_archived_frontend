@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useUsers } from "@/config/users/users";
 import { useRoles, RoleType } from "@/config/users/roles";
 import { useCompanies, Company } from "@/config/companies/companies";
@@ -17,12 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type UserRoleValue = "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
 
@@ -47,21 +43,18 @@ export default function CreateUserPage() {
 
   useEffect(() => {
     getRoles().then(setRoles);
-    if (isSuper) {
-      listCompanies({ limit: 200 }).then((r) => setCompanies(r.data));
-    }
-  }, [isSuper]);
+    // Always try to load companies — the API enforces SUPER_ADMIN-only at
+    // the backend, so a tenant user just gets an empty list (and the
+    // dropdown is disabled for them anyway).
+    listCompanies({ limit: 200 }).then((r) => setCompanies(r.data));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     // SUPER_ADMIN: take values from the form. Anyone else: their own companyId
-    // and force COMPANY_USER (backend ignores client-provided companyId for
-    // non-super users via the JWT-derived context anyway, but we send sane
-    // defaults so the API contract is satisfied).
-    const userRole: UserRoleValue = isSuper
-      ? form.userRole
-      : "COMPANY_USER";
+    // and force COMPANY_USER (backend re-derives companyId from the request
+    // user anyway, but we send sane defaults so the API contract is satisfied).
+    const userRole: UserRoleValue = isSuper ? form.userRole : "COMPANY_USER";
     const companyId =
       userRole === "SUPER_ADMIN"
         ? null
@@ -71,6 +64,19 @@ export default function CreateUserPage() {
             : null
           : (user?.companyId ?? null);
 
+    // Client-side validation: a non-SUPER_ADMIN target user MUST have a
+    // company. Catch this here so the user gets a clear inline message
+    // instead of a 400 from the backend.
+    if (userRole !== "SUPER_ADMIN" && companyId == null) {
+      toast.error(
+        isSuper
+          ? "Please pick a company for this user."
+          : "No company is associated with your account.",
+      );
+      return;
+    }
+
+    setLoading(true);
     const result = await createUser({
       name: form.name,
       email: form.email,
@@ -85,155 +91,212 @@ export default function CreateUserPage() {
 
   return (
     <RouteGuard permission="user.create">
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Create New User</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, email: e.target.value }))
-                  }
-                  placeholder="john@example.com"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, password: e.target.value }))
-                  }
-                  placeholder="Min 6 characters"
-                  minLength={6}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select
-                  value={form.role}
-                  onValueChange={(v) => setForm((p) => ({ ...p, role: v }))}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={String(role.id)}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* SUPER_ADMIN only: tenancy controls. */}
-            {isSuper && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 rounded-md border bg-muted/30 p-3">
+      <div className="flex flex-col gap-4 p-4 md:p-6">
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <CardTitle>Create New User</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="grid gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Tenancy role</Label>
-                  <Select
-                    value={form.userRole}
-                    onValueChange={(v) =>
-                      setForm((p) => ({
-                        ...p,
-                        userRole: v as UserRoleValue,
-                        // Clear companyId when switching to SUPER_ADMIN.
-                        companyId: v === "SUPER_ADMIN" ? "" : p.companyId,
-                      }))
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, name: e.target.value }))
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SUPER_ADMIN">
-                        Super admin (no company)
-                      </SelectItem>
-                      <SelectItem value="COMPANY_ADMIN">
-                        Company admin
-                      </SelectItem>
-                      <SelectItem value="COMPANY_USER">
-                        Company user
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    placeholder="John Doe"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Company</Label>
-                  <Select
-                    value={form.companyId}
-                    onValueChange={(v) =>
-                      setForm((p) => ({ ...p, companyId: v }))
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, email: e.target.value }))
                     }
-                    disabled={form.userRole === "SUPER_ADMIN"}
+                    placeholder="john@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, password: e.target.value }))
+                    }
+                    placeholder="Min 6 characters"
+                    minLength={6}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select
+                    value={form.role}
+                    onValueChange={(v) => setForm((p) => ({ ...p, role: v }))}
+                    required
                   >
                     <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          form.userRole === "SUPER_ADMIN"
-                            ? "—"
-                            : "Select a company"
-                        }
-                      />
+                      <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.name}
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={String(role.id)}>
+                          {role.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-            )}
+              {/*
+              Tenancy section. Always visible so the company dropdown is
+              never hidden. Non-SUPER_ADMINs see a locked-down view.
+            */}
+              <div className="rounded-md border-2 border-blue-500/40 bg-blue-500/5 p-3 space-y-3">
+                <div className="text-sm font-semibold text-blue-700 dark:text-blue-400">
+                  Tenancy assignment
+                  <span className="ms-2 text-xs font-normal text-muted-foreground">
+                    (
+                    {isSuper
+                      ? "you are super admin — pick any role + company"
+                      : `locked to your company${user?.company?.name ? ` (${user.company.name})` : ""}`}
+                    )
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Tenancy role</Label>
+                    <Select
+                      value={form.userRole}
+                      onValueChange={(v) =>
+                        setForm((p) => ({
+                          ...p,
+                          userRole: v as UserRoleValue,
+                          // Clear companyId when switching to SUPER_ADMIN.
+                          companyId: v === "SUPER_ADMIN" ? "" : p.companyId,
+                        }))
+                      }
+                      disabled={!isSuper}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {isSuper && (
+                          <SelectItem value="SUPER_ADMIN">
+                            Super admin (no company)
+                          </SelectItem>
+                        )}
+                        <SelectItem value="COMPANY_ADMIN">
+                          Company admin
+                        </SelectItem>
+                        <SelectItem value="COMPANY_USER">
+                          Company user
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {!isSuper && (
+                      <p className="text-xs text-muted-foreground">
+                        Locked to "Company user" — only super admins can grant
+                        other roles.
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>
+                      Company
+                      {form.userRole !== "SUPER_ADMIN" && (
+                        <span className="text-red-600 ms-1">*</span>
+                      )}
+                    </Label>
+                    {isSuper ? (
+                      <>
+                        <Select
+                          value={form.companyId}
+                          onValueChange={(v) =>
+                            setForm((p) => ({ ...p, companyId: v }))
+                          }
+                          disabled={form.userRole === "SUPER_ADMIN"}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                form.userRole === "SUPER_ADMIN"
+                                  ? "—"
+                                  : companies.length === 0
+                                    ? "No companies — create one first"
+                                    : "Select a company"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.map((c) => (
+                              <SelectItem key={c.id} value={String(c.id)}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.userRole !== "SUPER_ADMIN" &&
+                          companies.length === 0 && (
+                            <p className="text-xs text-red-600">
+                              Create at least one company before creating
+                              company users.
+                            </p>
+                          )}
+                      </>
+                    ) : (
+                      // Non-super sees their own company name, locked.
+                      <Input
+                        value={
+                          user?.company?.name ??
+                          `Company #${user?.companyId ?? "?"}`
+                        }
+                        disabled
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => changeRoute("/users")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create User"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => changeRoute("/users")}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    // SUPER_ADMIN creating a non-super user must pick a company.
+                    (isSuper &&
+                      form.userRole !== "SUPER_ADMIN" &&
+                      !form.companyId)
+                  }
+                >
+                  {loading ? "Creating..." : "Create User"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </RouteGuard>
   );
 }

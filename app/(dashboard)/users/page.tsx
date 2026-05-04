@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useUsers, UserType, UserMeta } from "@/config/users/users";
-import { useRoles, RoleType } from "@/config/users/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserForm } from "@/components/user-form";
 import {
   Table,
   TableBody,
@@ -63,23 +61,8 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { DataTableViewOptions } from "@/components/data-table/data-table-view-options";
 import { useTranslations } from "next-intl";
 
-type UserFormData = {
-  name: string;
-  email: string;
-  password: string;
-  roleIds: number[];
-};
-
-const emptyForm: UserFormData = {
-  name: "",
-  email: "",
-  password: "",
-  roleIds: [],
-};
-
 export default function UsersPage() {
-  const { getUsers, getUser, createUser, updateUser, deleteUser } = useUsers();
-  const { getRoles } = useRoles();
+  const { getUsers, deleteUser } = useUsers();
   const { can } = usePermission();
   const { getNameInitials } = settings();
   const t = useTranslations("users");
@@ -87,7 +70,6 @@ export default function UsersPage() {
 
   const [users, setUsers] = useState<UserType[]>([]);
   const [meta, setMeta] = useState<UserMeta | null>(null);
-  const [allRoles, setAllRoles] = useState<RoleType[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -97,11 +79,9 @@ export default function UsersPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  // Modal state
+  // Modal state — actual form lives in <UserForm /> (see components/user-form.tsx)
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
-  const [form, setForm] = useState<UserFormData>(emptyForm);
-  const [saving, setSaving] = useState(false);
 
   // Delete confirm state
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -110,14 +90,18 @@ export default function UsersPage() {
   const fetchUsers = async (p = page, l = limit, s = search) => {
     setLoading(true);
     const result = await getUsers(p, l, s);
-    setUsers(result.data);
-    setMeta(result.meta);
+    // Only replace the table data when the request actually returned an
+    // array. This protects the existing rows from being wiped by a transient
+    // error (e.g. brief 401 right after a write while cookies refresh).
+    if (Array.isArray(result?.data)) {
+      setUsers(result.data);
+      setMeta(result.meta ?? null);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchUsers();
-    getRoles().then(setAllRoles);
   }, [page, limit]);
 
   const handleSearch = () => {
@@ -127,56 +111,12 @@ export default function UsersPage() {
 
   const openCreate = () => {
     setEditingUser(null);
-    setForm(emptyForm);
     setDialogOpen(true);
   };
 
-  const openEdit = async (user: UserType) => {
-    const fullUser = await getUser(user.id);
-    if (fullUser) {
-      setEditingUser(user);
-      setForm({
-        name: fullUser.name,
-        email: fullUser.email,
-        password: "",
-        roleIds: fullUser.roles.map((r: any) => r.id),
-      });
-      setDialogOpen(true);
-    }
-  };
-
-  const toggleRole = (roleId: number) => {
-    setForm((prev) => ({
-      ...prev,
-      roleIds: prev.roleIds.includes(roleId)
-        ? prev.roleIds.filter((id) => id !== roleId)
-        : [...prev.roleIds, roleId],
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    let result;
-    if (editingUser) {
-      result = await updateUser(editingUser.id, {
-        name: form.name,
-        email: form.email,
-        roleIds: form.roleIds,
-      });
-    } else {
-      result = await createUser({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: form.roleIds[0] || 1,
-      });
-    }
-    setSaving(false);
-    if (result) {
-      setDialogOpen(false);
-      fetchUsers();
-    }
+  const openEdit = (user: UserType) => {
+    setEditingUser(user);
+    setDialogOpen(true);
   };
 
   const handleDelete = async () => {
@@ -204,16 +144,17 @@ export default function UsersPage() {
       ),
       cell: ({ row }) => {
         const user = row.original;
+        const displayName = user.name ?? "(no name)";
         return (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
               <AvatarImage
                 src={user.profile_picture || undefined}
-                alt={user.name}
+                alt={displayName}
               />
               <AvatarFallback>{getNameInitials(user.name)}</AvatarFallback>
             </Avatar>
-            <span className="font-medium">{user.name}</span>
+            <span className="font-medium">{displayName}</span>
           </div>
         );
       },
@@ -238,7 +179,9 @@ export default function UsersPage() {
               </Badge>
             ))}
             {user.roles.length === 0 && (
-              <span className="text-sm text-muted-foreground">{t("noRole")}</span>
+              <span className="text-sm text-muted-foreground">
+                {t("noRole")}
+              </span>
             )}
           </div>
         );
@@ -360,7 +303,7 @@ export default function UsersPage() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
@@ -394,7 +337,7 @@ export default function UsersPage() {
                       <TableCell key={cell.id} className="px-4 py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -410,8 +353,9 @@ export default function UsersPage() {
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
                 {tCommon("showing")}{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} {tCommon("to")}{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")} {meta.total}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {tCommon("to")} {Math.min(meta.page * meta.limit, meta.total)}{" "}
+                {tCommon("of")} {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">
@@ -465,118 +409,35 @@ export default function UsersPage() {
       </div>
 
       {/* Create / Edit User Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setEditingUser(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingUser ? t("editUser") : t("createUser")}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="userName">{tCommon("name")}</Label>
-                <Input
-                  id="userName"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder={t("fullNamePlaceholder")}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="userEmail">{tCommon("email")}</Label>
-                <Input
-                  id="userEmail"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, email: e.target.value }))
-                  }
-                  placeholder={t("emailPlaceholder")}
-                  required
-                />
-              </div>
-            </div>
-
-            {!editingUser && (
-              <div className="space-y-2">
-                <Label htmlFor="userPassword">{tCommon("password")}</Label>
-                <Input
-                  id="userPassword"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, password: e.target.value }))
-                  }
-                  placeholder={t("min6Characters")}
-                  minLength={6}
-                  required
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>{editingUser ? t("roles") : t("role")}</Label>
-              {editingUser ? (
-                <div className="grid grid-cols-2 gap-3 rounded-md border p-4 md:grid-cols-3">
-                  {allRoles.map((role) => (
-                    <div key={role.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`role-${role.id}`}
-                        checked={form.roleIds.includes(role.id)}
-                        onCheckedChange={() => toggleRole(role.id)}
-                      />
-                      <Label
-                        htmlFor={`role-${role.id}`}
-                        className="cursor-pointer capitalize"
-                      >
-                        {role.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <Select
-                  value={form.roleIds[0] ? String(form.roleIds[0]) : ""}
-                  onValueChange={(v) =>
-                    setForm((p) => ({ ...p, roleIds: [parseInt(v)] }))
-                  }
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectRole")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allRoles.map((role) => (
-                      <SelectItem key={role.id} value={String(role.id)}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving
-                  ? tCommon("saving")
-                  : editingUser
-                    ? t("updateUser")
-                    : t("createUser")}
-              </Button>
-            </div>
-          </form>
+          <UserForm
+            editingUser={editingUser}
+            onSuccess={() => {
+              // Close the dialog first, then refetch on the next tick so the
+              // close animation can run unblocked. Refetching before the
+              // dialog has closed has been observed to occasionally race with
+              // React's re-render and leave the table looking empty.
+              setDialogOpen(false);
+              setEditingUser(null);
+              setTimeout(() => fetchUsers(), 0);
+            }}
+            onCancel={() => {
+              setDialogOpen(false);
+              setEditingUser(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
 

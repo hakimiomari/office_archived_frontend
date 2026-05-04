@@ -7,6 +7,9 @@ export type UserType = {
   email: string;
   profile_picture: string | null;
   googleId: string | null;
+  userRole?: "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
+  companyId?: number | null;
+  company?: { id: number; name: string } | null;
   created_at: string;
   updated_at: string;
   roles: { id: number; name: string }[];
