@@ -16,12 +16,13 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // SUPER_ADMIN company filter: when the picker is set, automatically
-    // scope every read/write to that company. The backend ignores this
-    // header for non-SUPER_ADMIN users, so it's safe to send unconditionally.
+    // SUPER_ADMIN company filter: when the picker is set, scope every
+    // read/write to that company via the X-Tenant-Company-Id header. The
+    // backend ignores the header for non-SUPER_ADMIN users (it's a hint,
+    // not a permission), so it's safe to send unconditionally.
     const filterCompanyId = readTenantFilterFromStorage();
     if (filterCompanyId != null) {
-      config.params = { ...(config.params ?? {}), companyId: filterCompanyId };
+      config.headers["X-Tenant-Company-Id"] = String(filterCompanyId);
     }
     return config;
   },

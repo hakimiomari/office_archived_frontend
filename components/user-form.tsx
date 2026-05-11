@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useUsers, UserType } from "@/config/users/users";
 import { useRoles, RoleType } from "@/config/users/roles";
-import { useCompanies, Company } from "@/config/companies/companies";
+import { useCompanies, Company } from "@/api/hooks/use-companies";
 import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

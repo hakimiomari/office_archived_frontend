@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useTenantFilter } from "@/contexts/TenantFilterContext";
-import { useCompanies, Company } from "@/config/companies/companies";
+import {
+  useCompanies,
+  Company,
+  COMPANIES_CHANGED_EVENT,
+} from "@/api/hooks/use-companies";
 import {
   Select,
   SelectContent,
@@ -34,26 +38,50 @@ export function CompanySwitcher() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  // Load the dropdown list once.
+  // Load the dropdown list on mount AND whenever a mutation elsewhere
+  // fires `companies:changed` (see `useCompanies` in api/hooks/). That's
+  // how the picker stays in sync when a SUPER_ADMIN adds/edits/deletes
+  // a company on `/dashboard/companies` without a full page reload.
   useEffect(() => {
     if (user?.userRole !== "SUPER_ADMIN") return;
-    list({ limit: 200 }).then((r) => {
-      setCompanies(r.data);
-      setLoaded(true);
-    });
+    let cancelled = false;
+    const refresh = () => {
+      list({ limit: 200 }).then((r) => {
+        if (cancelled) return;
+        setCompanies(r.data);
+        setLoaded(true);
+      });
+    };
+    refresh();
+    window.addEventListener(COMPANIES_CHANGED_EVENT, refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(COMPANIES_CHANGED_EVENT, refresh);
+    };
   }, [user?.userRole]);
 
   // Belt-and-braces: if the selected company isn't in the list (pagination,
   // failed fetch, slow response, etc.), fetch it directly by id so the
   // trigger always shows the real name rather than `Company #N`.
+  //
+  // Two guards prevent the "company shown twice in the dropdown" race:
+  //   1. Wait for `loaded` so we never fire the fallback while the list
+  //      is still in flight. If the list arrives and contains the
+  //      company, this effect's body short-circuits at the .some() check.
+  //   2. Dedupe inside the setter so an out-of-order `get()` resolution
+  //      (e.g. list arrived first, get arrived second) cannot double-add.
   useEffect(() => {
     if (user?.userRole !== "SUPER_ADMIN") return;
     if (filterCompanyId == null) return;
+    if (!loaded) return;
     if (companies.some((c) => c.id === filterCompanyId)) return;
     get(filterCompanyId).then((c) => {
-      if (c) setCompanies((prev) => [...prev, c]);
+      if (!c) return;
+      setCompanies((prev) =>
+        prev.some((p) => p.id === c.id) ? prev : [...prev, c],
+      );
     });
-  }, [filterCompanyId, user?.userRole, companies]);
+  }, [filterCompanyId, user?.userRole, companies, loaded]);
 
   if (!user || user.userRole !== "SUPER_ADMIN") return null;
 

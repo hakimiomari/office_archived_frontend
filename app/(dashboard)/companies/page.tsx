@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import { useTenantFilter } from "@/contexts/TenantFilterContext";
-import { useCompanies, Company } from "@/config/companies/companies";
+import { useCompanies, Company } from "@/api/hooks/use-companies";
 import type { Meta } from "@/config/inventory/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

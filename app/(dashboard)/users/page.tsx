@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUsers, UserType, UserMeta } from "@/config/users/users";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +73,7 @@ export default function UsersPage() {
   const [meta, setMeta] = useState<UserMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -103,6 +105,15 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [page, limit]);
+
+  // Auto-search as the user types, 300ms after they stop. Reset to page 1
+  // on every new query so they see the first page of matches rather than
+  // a maybe-empty deep page from the previous search.
+  useEffect(() => {
+    setPage(1);
+    fetchUsers(1, limit, debouncedSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const handleSearch = () => {
     setPage(1);

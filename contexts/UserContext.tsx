@@ -21,7 +21,11 @@ type User = {
 type UserContextType = {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<any>>;
-  permissions: string[];
+  /**
+   * Set of permission strings the user holds, derived from all assigned
+   * roles. Lookups are O(1) — see `usePermission()` for the public API.
+   */
+  permissions: Set<string>;
   roles: string[];
   loading: boolean;
   fetchProfile: () => Promise<User | null>;
@@ -29,9 +33,11 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const EMPTY_PERMISSIONS: Set<string> = new Set();
+
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [permissions, setPermissions] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<Set<string>>(EMPTY_PERMISSIONS);
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
@@ -42,12 +48,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       const userData: User = response.data.user;
       setUser(userData);
 
-      // Extract permissions from all roles
+      // Extract permissions from all roles into a Set so the hot path
+      // (`permissions.has('inventory.read')`) is O(1). Previously this
+      // was a string[] with .includes() — O(n) per check, slow when a
+      // page has 20+ <PermissionGate> components.
       if (userData.roles) {
         const allPerms = userData.roles.flatMap(
           (r: any) => r.permissions?.map((p: any) => p.name) || []
         );
-        setPermissions([...new Set(allPerms)] as string[]);
+        setPermissions(new Set<string>(allPerms as string[]));
         setRoles(userData.roles.map((r: any) => r.name));
       }
       return userData;
