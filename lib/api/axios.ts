@@ -34,6 +34,9 @@ api.interceptors.request.use(
 // response interceptor for 401 responses
 let isRefreshing = false;
 let failedQueue: any[] = [];
+// Guards against firing the logout/redirect more than once when several
+// requests 401 at the same time and the refresh attempt fails for all.
+let loggingOut = false;
 
 function processQueue(error: any, token: string | null = null) {
   failedQueue.forEach((prom) => {
@@ -46,15 +49,62 @@ function processQueue(error: any, token: string | null = null) {
   failedQueue = [];
 }
 
+/**
+ * The refresh token is expired/invalid — the session can't be recovered.
+ * Clear what we can client-side, fire a best-effort server-side logout
+ * (to clear the httpOnly refresh cookie), and bounce to the login page.
+ * A full `window.location` navigation is deliberate: it nukes all React
+ * state so nothing keeps retrying against a dead session.
+ *
+ * No-ops when already on the login page (avoids a redirect loop) and is
+ * idempotent (the `loggingOut` flag).
+ */
+function forceLogout() {
+  if (typeof window === "undefined") return;
+  if (loggingOut) return;
+  loggingOut = true;
+
+  // Clear the non-httpOnly access token cookie.
+  document.cookie =
+    "access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  // Drop the SUPER_ADMIN tenant scope so a re-login starts clean.
+  try {
+    window.localStorage.removeItem("superAdminCompanyId");
+    window.localStorage.removeItem("superAdminCompanyName");
+  } catch {
+    /* ignore storage errors */
+  }
+  // Best-effort: ask the server to clear the httpOnly refresh cookie.
+  // Don't block the redirect on it — if the session is dead this may
+  // 401 too, which is fine.
+  void axios
+    .post(
+      "http://localhost:8001/api/auth/logout",
+      {},
+      { withCredentials: true },
+    )
+    .catch(() => {});
+
+  if (window.location.pathname !== "/") {
+    window.location.href = "/";
+  }
+}
+
+const REFRESH_URL = "http://localhost:8001/api/auth/refresh-token";
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
 
+    // Only attempt a refresh on a 401 for a normal request that hasn't
+    // already been retried, and isn't the refresh call itself.
     if (
-      error.response.status === 401 &&
+      status === 401 &&
+      originalRequest &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("refresh_token")
+      !String(originalRequest.url ?? "").includes("auth/refresh-token")
     ) {
       originalRequest._retry = true;
 
@@ -71,17 +121,19 @@ api.interceptors.response.use(
       }
       isRefreshing = true;
       try {
-        const res = await axios.get(
-          "http://localhost:8001/api/auth/refresh-token",
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await axios.get(REFRESH_URL, { withCredentials: true });
         const newAccessToken = res.data.access_token;
         processQueue(null, newAccessToken);
         return api(originalRequest);
-      } catch (err) {
+      } catch (err: any) {
         processQueue(err, null);
+        // Log the user out only when the server actually rejected the
+        // refresh — expired / blacklisted / invalid token. A pure
+        // network error (no `response`) is transient; don't kick the
+        // user out for a flaky connection.
+        if (err?.response) {
+          forceLogout();
+        }
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

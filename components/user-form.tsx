@@ -6,6 +6,7 @@ import { useUsers, UserType } from "@/config/users/users";
 import { useRoles, RoleType } from "@/config/users/roles";
 import { useCompanies, Company } from "@/api/hooks/use-companies";
 import { useUser } from "@/contexts/UserContext";
+import { useTenantFilter } from "@/contexts/TenantFilterContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +49,13 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
   const { getRoles } = useRoles();
   const { list: listCompanies } = useCompanies();
   const { user } = useUser();
+  const { filterCompanyId, filterCompanyName } = useTenantFilter();
   const isSuper = user?.userRole === "SUPER_ADMIN";
+  // SUPER_ADMIN scoped into a tenant via the sidebar picker. When this
+  // is true, user creation is locked to that one tenant — picking a
+  // different company would silently violate the "you are acting as
+  // this company" expectation from the sidebar banner.
+  const isScopedSuper = isSuper && filterCompanyId != null;
 
   const [allRoles, setAllRoles] = useState<RoleType[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -61,7 +68,9 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
     role: "" as string,           // create: single role id (string)
     roleIds: [] as number[],      // edit: multiple role ids
     userRole: "COMPANY_USER" as UserRoleValue,
-    companyId: "" as string,
+    // Pre-fill the company picker with the active SUPER_ADMIN scope when
+    // there is one — keeps the form consistent with the sidebar banner.
+    companyId: filterCompanyId != null ? String(filterCompanyId) : "",
   });
 
   // Load roles + companies once.
@@ -69,6 +78,19 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
     getRoles().then(setAllRoles);
     listCompanies({ limit: 200 }).then((r) => setCompanies(r.data));
   }, []);
+
+  // If the SUPER_ADMIN changes the sidebar scope while this form is
+  // open, sync the company picker. Also force the tenancy role away
+  // from SUPER_ADMIN — you can't create a global super admin while
+  // currently impersonating a tenant.
+  useEffect(() => {
+    if (!isScopedSuper) return;
+    setForm((p) => ({
+      ...p,
+      companyId: String(filterCompanyId),
+      userRole: p.userRole === "SUPER_ADMIN" ? "COMPANY_USER" : p.userRole,
+    }));
+  }, [filterCompanyId, isScopedSuper]);
 
   // When editing, hydrate the form from the full user record.
   useEffect(() => {
@@ -240,9 +262,11 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
             Tenancy assignment
             <span className="ms-2 text-xs font-normal text-muted-foreground">
               (
-              {isSuper
-                ? "you are super admin — pick any role + company"
-                : `locked to your company${user?.company?.name ? ` (${user.company.name})` : ""}`}
+              {isScopedSuper
+                ? `you are scoped into ${filterCompanyName ?? `Company #${filterCompanyId}`} — locked to this company`
+                : isSuper
+                  ? "you are super admin — pick any role + company"
+                  : `locked to your company${user?.company?.name ? ` (${user.company.name})` : ""}`}
               )
             </span>
           </div>
@@ -255,7 +279,12 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
                   setForm((p) => ({
                     ...p,
                     userRole: v as UserRoleValue,
-                    companyId: v === "SUPER_ADMIN" ? "" : p.companyId,
+                    companyId:
+                      v === "SUPER_ADMIN"
+                        ? ""
+                        : isScopedSuper
+                          ? String(filterCompanyId)
+                          : p.companyId,
                   }))
                 }
                 disabled={!isSuper}
@@ -264,7 +293,11 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {isSuper && (
+                  {/* Only offer "Super admin (no company)" when the caller
+                      is unscoped — when scoped into a tenant, creating a
+                      tenant-less super admin would contradict the
+                      "acting as <company>" sidebar banner. */}
+                  {isSuper && !isScopedSuper && (
                     <SelectItem value="SUPER_ADMIN">
                       Super admin (no company)
                     </SelectItem>
@@ -279,6 +312,11 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
                   other roles.
                 </p>
               )}
+              {isScopedSuper && (
+                <p className="text-xs text-muted-foreground">
+                  Unscope from the sidebar picker to create a super admin.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>
@@ -287,7 +325,27 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
                   <span className="text-red-600 ms-1">*</span>
                 )}
               </Label>
-              {isSuper ? (
+              {isScopedSuper ? (
+                // SUPER_ADMIN scoped into a tenant — picker is locked to
+                // the scoped company. Show it as a disabled text input
+                // so it's visually clear it can't be changed without
+                // leaving scope.
+                <>
+                  <Input
+                    value={
+                      filterCompanyName ??
+                      companies.find((c) => c.id === filterCompanyId)?.name ??
+                      `Company #${filterCompanyId}`
+                    }
+                    disabled
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Locked to the company you&apos;re scoped into. Switch
+                    back to "All companies" in the sidebar to assign a
+                    user to a different tenant.
+                  </p>
+                </>
+              ) : isSuper ? (
                 <>
                   <Select
                     value={form.companyId}
