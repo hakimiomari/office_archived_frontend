@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   IconDashboard,
   IconHelp,
-  IconInnerShadowTop,
   IconSearch,
   IconSettings,
   IconUsers,
@@ -42,6 +41,8 @@ import { usePermission } from "@/hooks/use-permission";
 import { useTenantFilter } from "@/contexts/TenantFilterContext";
 import { useTranslations } from "next-intl";
 import { CompanySwitcher } from "@/components/company-switcher";
+import { Logo } from "@/components/logo";
+import Link from "next/link";
 
 // Each nav item can optionally require one or more permissions.
 // If `requiredPermissions` is not set, the item is always visible.
@@ -220,10 +221,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+              <Link href="/dashboard">
+                <Logo className="!size-6" />
                 <span className="text-base font-semibold">{tCommon("appName")}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           {/* SUPER_ADMIN-only company picker; renders nothing for tenants. */}

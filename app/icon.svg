@@ -1,0 +1,12 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zermatoon">
+  <rect width="256" height="256" rx="52" fill="#102A47"/>
+  <g fill="#FFFFFF">
+    <rect x="36" y="64" width="50" height="14" rx="7"/>
+    <rect x="103" y="64" width="50" height="14" rx="7"/>
+    <rect x="170" y="64" width="50" height="14" rx="7"/>
+    <rect x="36" y="178" width="50" height="14" rx="7"/>
+    <rect x="103" y="178" width="50" height="14" rx="7"/>
+    <rect x="170" y="178" width="50" height="14" rx="7"/>
+  </g>
+  <line x1="66" y1="180" x2="190" y2="64" stroke="#2BC48A" stroke-width="20" stroke-linecap="round"/>
+</svg>
