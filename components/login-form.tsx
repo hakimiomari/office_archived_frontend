@@ -15,7 +15,6 @@ import React from "react";
 import { Loader2 } from "lucide-react";
 import GoogleAuth from "./google-auth";
 import { useTranslations } from "next-intl";
-import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function LoginForm({
   className,
@@ -32,9 +31,6 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex justify-end">
-        <LanguageSwitcher />
-      </div>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">{t("welcomeBack")}</CardTitle>
