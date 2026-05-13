@@ -19,7 +19,6 @@ export const config = {
     "/shipments",
     "/users",
     "/vehicles",
-    "/office-archive",
     "/licenses",
     "/licenses/:path*",
     "/reports",
