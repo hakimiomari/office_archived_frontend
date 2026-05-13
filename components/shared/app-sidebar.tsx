@@ -63,11 +63,6 @@ const getAllNavItems = (t: (key: string) => string) => [
     icon: IconDashboard,
   },
   {
-    title: t("officeArchive"),
-    url: "/office-archive",
-    icon: IconChartInfographic,
-  },
-  {
     title: t("miningLicenses"),
     url: "/licenses",
     icon: IconFileDescription,
@@ -232,11 +227,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: tNav("search"), url: "#", icon: IconSearch },
   ];
 
-  const documents = [
-    { name: "Data Library", url: "#", icon: IconDatabase },
-    { name: tNav("reports"), url: "#", icon: IconReport },
-    { name: "Word Assistant", url: "#", icon: IconFileWord },
-  ];
+  // const documents = [
+  //   { name: "Data Library", url: "#", icon: IconDatabase },
+  //   { name: tNav("reports"), url: "#", icon: IconReport },
+  //   { name: "Word Assistant", url: "#", icon: IconFileWord },
+  // ];
 
   // Filter nav items based on user permissions
   const visibleNavItems = allNavItems.filter((item) => {
@@ -255,7 +250,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">{tCommon("appName")}</span>
+                <span className="text-base font-semibold">
+                  {tCommon("appName")}
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -263,7 +260,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={visibleNavItems} />
-        <NavDocuments items={documents} />
+        {/* <NavDocuments items={documents} /> */}
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
