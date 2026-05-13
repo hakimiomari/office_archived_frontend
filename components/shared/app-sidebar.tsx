@@ -20,11 +20,6 @@ import {
   IconChartInfographic,
   IconShieldLock,
   IconGavel,
-  IconPackage,
-  IconBuildingWarehouse,
-  IconTruck,
-  IconArrowsExchange,
-  IconShoppingCart,
   IconPresentation,
   IconTrendingUp,
   IconFileText,
@@ -91,44 +86,6 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/tender-reports",
     icon: IconChartBar,
     requiredPermissions: ["tender.read"],
-  },
-  {
-    title: t("inventory"),
-    url: "/inventory",
-    icon: IconPackage,
-    requiredPermissions: ["inventory.read"],
-    items: [
-      {
-        title: t("inventoryDashboard"),
-        url: "/inventory",
-        icon: IconDashboard,
-      },
-      {
-        title: t("inventoryItems"),
-        url: "/inventory/items",
-        icon: IconPackage,
-      },
-      {
-        title: t("inventoryWarehouses"),
-        url: "/inventory/warehouses",
-        icon: IconBuildingWarehouse,
-      },
-      {
-        title: t("inventorySuppliers"),
-        url: "/inventory/suppliers",
-        icon: IconTruck,
-      },
-      {
-        title: t("inventoryMovements"),
-        url: "/inventory/movements",
-        icon: IconArrowsExchange,
-      },
-      {
-        title: t("inventoryPurchases"),
-        url: "/inventory/purchases",
-        icon: IconShoppingCart,
-      },
-    ],
   },
   {
     title: t("executive"),

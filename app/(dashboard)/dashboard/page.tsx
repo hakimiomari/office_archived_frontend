@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useExecutive, DashboardData } from "@/config/executive/executive";
 import { useTenders } from "@/config/tender/tender";
-import { useInventory } from "@/config/inventory/inventory";
 import { useEmployees, EmployeeSummary } from "@/config/employees/employees";
 import { useEquipment, EquipmentSummary } from "@/config/equipment/equipment";
 import api from "@/lib/api/axios";
@@ -31,7 +30,6 @@ import {
   IconFileText,
   IconPlane,
   IconGavel,
-  IconPackage,
   IconAlertTriangle,
   IconBuildingWarehouse,
   IconChartBar,
@@ -78,14 +76,6 @@ type TenderSummary = {
   highPriority: number;
 };
 
-type InventorySummary = {
-  itemCount: number;
-  warehouseCount: number;
-  supplierCount: number;
-  totalQuantity: number;
-  lowStockCount: number;
-};
-
 const CONTRACT_COLORS: Record<string, string> = {
   active: "hsl(142, 71%, 45%)",
   suspended: "hsl(45, 93%, 47%)",
@@ -101,7 +91,6 @@ const LICENSE_COLORS: Record<string, string> = {
 export default function DashboardPage() {
   const { getDashboard, getRevenueTrend } = useExecutive();
   const { getReportSummary: getTenderSummary } = useTenders();
-  const { getReportSummary: getInventorySummary } = useInventory();
   const { getSummary: getEmployeeSummary } = useEmployees();
   const { getSummary: getEquipmentSummary } = useEquipment();
   const { user } = useUser();
@@ -112,7 +101,6 @@ export default function DashboardPage() {
   const tExec = useTranslations("executive");
   const tLic = useTranslations("licenses");
   const tTenders = useTranslations("tenders");
-  const tInv = useTranslations("inventory");
   const tEmp = useTranslations("employees");
   const tEquip = useTranslations("equipment");
 
@@ -124,7 +112,6 @@ export default function DashboardPage() {
   const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(
     null,
   );
-  const [invSummary, setInvSummary] = useState<InventorySummary | null>(null);
   const [licenseStats, setLicenseStats] = useState<LicenseStats | null>(null);
   const [empSummary, setEmpSummary] = useState<EmployeeSummary | null>(null);
   const [equipSummary, setEquipSummary] = useState<EquipmentSummary | null>(
@@ -150,11 +137,10 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [execData, rt, ts, is, ls, emp, equip] = await Promise.all([
+      const [execData, rt, ts, ls, emp, equip] = await Promise.all([
         getDashboard(),
         getRevenueTrend(),
         getTenderSummary(),
-        getInventorySummary(),
         fetchLicenseStats(),
         getEmployeeSummary(),
         getEquipmentSummary(),
@@ -162,7 +148,6 @@ export default function DashboardPage() {
       setExec(execData);
       setRevenueTrend(rt);
       setTenderSummary(ts);
-      setInvSummary(is);
       setLicenseStats(ls);
       setEmpSummary(emp);
       setEquipSummary(equip);
@@ -354,33 +339,6 @@ export default function DashboardPage() {
                 <p className="text-xs text-orange-600">
                   {tenderSummary.closingSoon}{" "}
                   {tTenders("closingSoon").toLowerCase()}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/inventory")}
-        >
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-              <IconPackage className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {tInv("totalItems")}
-              </p>
-              {loading ? (
-                <Skeleton className="h-6 w-12" />
-              ) : (
-                (invSummary?.itemCount ?? 0)
-              )}
-              {invSummary && invSummary.lowStockCount > 0 && (
-                <p className="text-xs text-orange-600 flex items-center gap-0.5">
-                  <IconAlertTriangle className="h-3 w-3" />
-                  {invSummary.lowStockCount}{" "}
-                  {tInv("lowStockAlert").toLowerCase()}
                 </p>
               )}
             </div>
