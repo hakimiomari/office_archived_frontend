@@ -90,7 +90,10 @@ export default function ExecutiveDashboardPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [d, rt] = await Promise.all([getDashboard(year), getRevenueTrend()]);
+      const [d, rt] = await Promise.all([
+        getDashboard(year),
+        getRevenueTrend(),
+      ]);
       setData(d);
       setRevenueTrend(rt);
       setLoading(false);
@@ -213,13 +216,11 @@ export default function ExecutiveDashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("totalRevenue")}
                 </p>
-                <p className="text-xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-6 w-20" />
-                  ) : (
-                    fmt(data?.financial.totalRevenue)
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-20" />
+                ) : (
+                  fmt(data?.financial.totalRevenue)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -232,13 +233,11 @@ export default function ExecutiveDashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("totalExpenses")}
                 </p>
-                <p className="text-xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-6 w-20" />
-                  ) : (
-                    fmt(data?.financial.totalExpenses)
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-20" />
+                ) : (
+                  fmt(data?.financial.totalExpenses)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -251,13 +250,11 @@ export default function ExecutiveDashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("netProfit")}
                 </p>
-                <p className="text-xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-6 w-20" />
-                  ) : (
-                    fmt(data?.financial.netProfit)
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-20" />
+                ) : (
+                  fmt(data?.financial.netProfit)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -270,13 +267,11 @@ export default function ExecutiveDashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("totalContracts")}
                 </p>
-                <p className="text-xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-6 w-12" />
-                  ) : (
-                    data?.contracts.totalContracts ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (data?.contracts.totalContracts ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -289,13 +284,11 @@ export default function ExecutiveDashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("totalTravels")}
                 </p>
-                <p className="text-xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-6 w-12" />
-                  ) : (
-                    data?.travel.total ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (data?.travel.total ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -308,13 +301,11 @@ export default function ExecutiveDashboardPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("travelCost")}
                 </p>
-                <p className="text-xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-6 w-20" />
-                  ) : (
-                    fmt(data?.travel.totalCost)
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-20" />
+                ) : (
+                  fmt(data?.travel.totalCost)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -380,7 +371,9 @@ export default function ExecutiveDashboardPage() {
                   className="mx-auto aspect-square h-[260px]"
                 >
                   <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                    <ChartTooltip
+                      content={<ChartTooltipContent nameKey="name" />}
+                    />
                     <Pie
                       data={contractsData}
                       dataKey="value"
@@ -394,7 +387,9 @@ export default function ExecutiveDashboardPage() {
                         <Cell key={idx} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                    <ChartLegend
+                      content={<ChartLegendContent nameKey="name" />}
+                    />
                   </PieChart>
                 </ChartContainer>
               )}
@@ -417,7 +412,9 @@ export default function ExecutiveDashboardPage() {
                   className="mx-auto aspect-square h-[260px]"
                 >
                   <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                    <ChartTooltip
+                      content={<ChartTooltipContent nameKey="name" />}
+                    />
                     <Pie
                       data={travelData}
                       dataKey="value"
@@ -431,7 +428,9 @@ export default function ExecutiveDashboardPage() {
                         <Cell key={idx} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                    <ChartLegend
+                      content={<ChartLegendContent nameKey="name" />}
+                    />
                   </PieChart>
                 </ChartContainer>
               )}
@@ -505,7 +504,9 @@ export default function ExecutiveDashboardPage() {
                       <TableCell>
                         <Badge
                           variant={
-                            travel.type === "INTERNATIONAL" ? "default" : "secondary"
+                            travel.type === "INTERNATIONAL"
+                              ? "default"
+                              : "secondary"
                           }
                         >
                           {travel.type === "DOMESTIC"

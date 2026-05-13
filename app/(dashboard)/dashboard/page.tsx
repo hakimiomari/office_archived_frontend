@@ -121,7 +121,9 @@ export default function DashboardPage() {
   const [revenueTrend, setRevenueTrend] = useState<
     { year: number; revenue: number; expenses: number }[]
   >([]);
-  const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(null);
+  const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(
+    null,
+  );
   const [invSummary, setInvSummary] = useState<InventorySummary | null>(null);
   const [licenseStats, setLicenseStats] = useState<LicenseStats | null>(null);
   const [empSummary, setEmpSummary] = useState<EmployeeSummary | null>(null);
@@ -246,7 +248,8 @@ export default function DashboardPage() {
               {user?.name ? `, ${user.name}` : ""}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {tExec("subtitle")} · {tExec("year")} {exec?.year ?? new Date().getFullYear()}
+              {tExec("subtitle")} · {tExec("year")}{" "}
+              {exec?.year ?? new Date().getFullYear()}
             </p>
           </div>
           <Badge variant="outline" className="text-base px-3 py-1">
@@ -266,13 +269,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tExec("totalRevenue")}
               </p>
-              <p className="text-2xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-8 w-32" />
-                ) : (
-                  fmt(exec?.financial.totalRevenue)
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-8 w-32" />
+              ) : (
+                fmt(exec?.financial.totalRevenue)
+              )}
             </div>
           </CardContent>
         </Card>
@@ -285,13 +286,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tExec("totalExpenses")}
               </p>
-              <p className="text-2xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-8 w-32" />
-                ) : (
-                  fmt(exec?.financial.totalExpenses)
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-8 w-32" />
+              ) : (
+                fmt(exec?.financial.totalExpenses)
+              )}
             </div>
           </CardContent>
         </Card>
@@ -304,13 +303,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tExec("netProfit")}
               </p>
-              <p className="text-2xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-8 w-32" />
-                ) : (
-                  fmt(exec?.financial.netProfit)
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-8 w-32" />
+              ) : (
+                fmt(exec?.financial.netProfit)
+              )}
             </div>
           </CardContent>
         </Card>
@@ -327,16 +324,12 @@ export default function DashboardPage() {
               <IconFileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">
-                {tLic("title")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  licenseStats?.totalLicenses ?? 0
-                )}
-              </p>
+              <p className="text-sm text-muted-foreground">{tLic("title")}</p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (licenseStats?.totalLicenses ?? 0)
+              )}
             </div>
           </CardContent>
         </Card>
@@ -352,16 +345,15 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tTenders("title")}
               </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  tenderSummary?.total ?? 0
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (tenderSummary?.total ?? 0)
+              )}
               {tenderSummary && tenderSummary.closingSoon > 0 && (
                 <p className="text-xs text-orange-600">
-                  {tenderSummary.closingSoon} {tTenders("closingSoon").toLowerCase()}
+                  {tenderSummary.closingSoon}{" "}
+                  {tTenders("closingSoon").toLowerCase()}
                 </p>
               )}
             </div>
@@ -379,17 +371,16 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tInv("totalItems")}
               </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  invSummary?.itemCount ?? 0
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (invSummary?.itemCount ?? 0)
+              )}
               {invSummary && invSummary.lowStockCount > 0 && (
                 <p className="text-xs text-orange-600 flex items-center gap-0.5">
                   <IconAlertTriangle className="h-3 w-3" />
-                  {invSummary.lowStockCount} {tInv("lowStockAlert").toLowerCase()}
+                  {invSummary.lowStockCount}{" "}
+                  {tInv("lowStockAlert").toLowerCase()}
                 </p>
               )}
             </div>
@@ -407,13 +398,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tExec("totalTravels")}
               </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  exec?.travel.total ?? 0
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (exec?.travel.total ?? 0)
+              )}
               {exec && exec.travel.totalCost > 0 && (
                 <p className="text-xs text-muted-foreground">
                   {fmt(exec.travel.totalCost)}
@@ -435,16 +424,12 @@ export default function DashboardPage() {
               <IconUsers className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">
-                {tEmp("total")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  empSummary?.totalEmployees ?? 0
-                )}
-              </p>
+              <p className="text-sm text-muted-foreground">{tEmp("total")}</p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (empSummary?.totalEmployees ?? 0)
+              )}
               {empSummary && empSummary.activeEmployees > 0 && (
                 <p className="text-xs text-green-600">
                   {empSummary.activeEmployees} {tEmp("active").toLowerCase()}
@@ -465,13 +450,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tEmp("departments")}
               </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  empSummary?.totalDepartments ?? 0
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (empSummary?.totalDepartments ?? 0)
+              )}
             </div>
           </CardContent>
         </Card>
@@ -484,16 +467,12 @@ export default function DashboardPage() {
               <IconDeviceLaptop className="h-5 w-5 text-teal-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">
-                {tEquip("total")}
-              </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  equipSummary?.totalEquipment ?? 0
-                )}
-              </p>
+              <p className="text-sm text-muted-foreground">{tEquip("total")}</p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (equipSummary?.totalEquipment ?? 0)
+              )}
               {equipSummary && equipSummary.assigned > 0 && (
                 <p className="text-xs text-blue-600">
                   {equipSummary.assigned} {tEquip("assigned").toLowerCase()}
@@ -514,13 +493,11 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 {tEquip("inMaintenance")}
               </p>
-              <p className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  equipSummary?.maintenance ?? 0
-                )}
-              </p>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                (equipSummary?.maintenance ?? 0)
+              )}
               {equipSummary && equipSummary.warrantyExpiringSoon > 0 && (
                 <p className="text-xs text-orange-600">
                   {equipSummary.warrantyExpiringSoon}{" "}
@@ -631,7 +608,9 @@ export default function DashboardPage() {
                 className="mx-auto aspect-square h-[260px]"
               >
                 <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                  <ChartTooltip
+                    content={<ChartTooltipContent nameKey="name" />}
+                  />
                   <Pie
                     data={contractsData}
                     dataKey="value"
@@ -645,7 +624,9 @@ export default function DashboardPage() {
                       <Cell key={idx} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                  <ChartLegend
+                    content={<ChartLegendContent nameKey="name" />}
+                  />
                 </PieChart>
               </ChartContainer>
             )}
@@ -674,7 +655,9 @@ export default function DashboardPage() {
                 className="mx-auto aspect-square h-[260px]"
               >
                 <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                  <ChartTooltip
+                    content={<ChartTooltipContent nameKey="name" />}
+                  />
                   <Pie
                     data={licenseChartData}
                     dataKey="value"
@@ -688,7 +671,9 @@ export default function DashboardPage() {
                       <Cell key={idx} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                  <ChartLegend
+                    content={<ChartLegendContent nameKey="name" />}
+                  />
                 </PieChart>
               </ChartContainer>
             )}

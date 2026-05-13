@@ -13,12 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -137,9 +132,7 @@ export default function ReportsPage() {
   };
 
   const getStatusCount = (status: string) => {
-    return (
-      aggregations?.byStatus.find((s) => s.status === status)?.count || 0
-    );
+    return aggregations?.byStatus.find((s) => s.status === status)?.count || 0;
   };
 
   const columns: ColumnDef<LicenseType>[] = [
@@ -154,7 +147,10 @@ export default function ReportsPage() {
     {
       accessorKey: "licenseNumber",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("licenseNumber")} />
+        <DataTableColumnHeader
+          column={column}
+          title={tLicenses("licenseNumber")}
+        />
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("licenseNumber")}</span>
@@ -217,7 +213,10 @@ export default function ReportsPage() {
     {
       accessorKey: "expiryDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("expiryDate")} />
+        <DataTableColumnHeader
+          column={column}
+          title={tLicenses("expiryDate")}
+        />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("expiryDate")).toLocaleDateString(),
@@ -255,10 +254,10 @@ export default function ReportsPage() {
                 <IconLicense className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("totalLicenses")}</p>
-                <p className="text-2xl font-bold">
-                  {aggregations?.totalLicenses || 0}
+                <p className="text-sm text-muted-foreground">
+                  {t("totalLicenses")}
                 </p>
+                {aggregations?.totalLicenses || 0}
               </div>
             </CardContent>
           </Card>
@@ -268,10 +267,10 @@ export default function ReportsPage() {
                 <IconCheck className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("activeLicenses")}</p>
-                <p className="text-2xl font-bold">
-                  {getStatusCount("ACTIVE")}
+                <p className="text-sm text-muted-foreground">
+                  {t("activeLicenses")}
                 </p>
+                {getStatusCount("ACTIVE")}
               </div>
             </CardContent>
           </Card>
@@ -281,10 +280,10 @@ export default function ReportsPage() {
                 <IconAlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("expiredLicenses")}</p>
-                <p className="text-2xl font-bold">
-                  {getStatusCount("EXPIRED")}
+                <p className="text-sm text-muted-foreground">
+                  {t("expiredLicenses")}
                 </p>
+                {getStatusCount("EXPIRED")}
               </div>
             </CardContent>
           </Card>
@@ -294,10 +293,10 @@ export default function ReportsPage() {
                 <IconBan className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("suspendedLicenses")}</p>
-                <p className="text-2xl font-bold">
-                  {getStatusCount("SUSPENDED")}
+                <p className="text-sm text-muted-foreground">
+                  {t("suspendedLicenses")}
                 </p>
+                {getStatusCount("SUSPENDED")}
               </div>
             </CardContent>
           </Card>
@@ -354,8 +353,12 @@ export default function ReportsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">{t("allTypes")}</SelectItem>
-                    <SelectItem value="SMALL">{tLicenses("smallScale")}</SelectItem>
-                    <SelectItem value="LARGE">{tLicenses("largeScale")}</SelectItem>
+                    <SelectItem value="SMALL">
+                      {tLicenses("smallScale")}
+                    </SelectItem>
+                    <SelectItem value="LARGE">
+                      {tLicenses("largeScale")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -370,9 +373,15 @@ export default function ReportsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">{t("allStatuses")}</SelectItem>
-                    <SelectItem value="ACTIVE">{tLicenses("active")}</SelectItem>
-                    <SelectItem value="EXPIRED">{tLicenses("expired")}</SelectItem>
-                    <SelectItem value="SUSPENDED">{tLicenses("suspended")}</SelectItem>
+                    <SelectItem value="ACTIVE">
+                      {tLicenses("active")}
+                    </SelectItem>
+                    <SelectItem value="EXPIRED">
+                      {tLicenses("expired")}
+                    </SelectItem>
+                    <SelectItem value="SUSPENDED">
+                      {tLicenses("suspended")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -453,7 +462,7 @@ export default function ReportsPage() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
@@ -487,7 +496,7 @@ export default function ReportsPage() {
                       <TableCell key={cell.id} className="px-4 py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -504,8 +513,9 @@ export default function ReportsPage() {
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
                 {tCommon("showing")}{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} {tCommon("to")}{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")} {meta.total}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                {tCommon("to")} {Math.min(meta.page * meta.limit, meta.total)}{" "}
+                {tCommon("of")} {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">

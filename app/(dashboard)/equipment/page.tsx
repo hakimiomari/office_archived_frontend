@@ -15,10 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -135,9 +132,9 @@ export default function EquipmentPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<EquipmentCategory | "ALL">(
-    "ALL",
-  );
+  const [categoryFilter, setCategoryFilter] = useState<
+    EquipmentCategory | "ALL"
+  >("ALL");
   const [statusFilter, setStatusFilter] = useState<EquipmentStatus | "ALL">(
     "ALL",
   );
@@ -302,13 +299,11 @@ export default function EquipmentPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("total")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.totalEquipment ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.totalEquipment ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -321,13 +316,11 @@ export default function EquipmentPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("available")}
                 </p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.available ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.available ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -337,16 +330,12 @@ export default function EquipmentPage() {
                 <IconUser className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("assigned")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.assigned ?? 0
-                  )}
-                </p>
+                <p className="text-sm text-muted-foreground">{t("assigned")}</p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.assigned ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -359,13 +348,11 @@ export default function EquipmentPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("inMaintenance")}
                 </p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.maintenance ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.maintenance ?? 0)
+                )}
                 {summary && summary.warrantyExpiringSoon > 0 && (
                   <p className="text-xs text-yellow-600 flex items-center gap-0.5">
                     <IconAlertTriangle className="h-3 w-3" />
@@ -464,7 +451,9 @@ export default function EquipmentPage() {
                 equipment.map((eq, idx) => (
                   <TableRow key={eq.id}>
                     <TableCell>
-                      {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
+                      {((meta?.page || 1) - 1) * (meta?.limit || limit) +
+                        idx +
+                        1}
                     </TableCell>
                     <TableCell className="font-medium">{eq.name}</TableCell>
                     <TableCell>{t(`category_${eq.category}`)}</TableCell>
@@ -479,13 +468,19 @@ export default function EquipmentPage() {
                         {t(`status_${eq.status}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell className={`font-medium ${conditionClass(eq.condition)}`}>
+                    <TableCell
+                      className={`font-medium ${conditionClass(eq.condition)}`}
+                    >
                       {t(`condition_${eq.condition}`)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <IconDotsVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -549,9 +544,8 @@ export default function EquipmentPage() {
               <span>
                 {tCommon("showing")}{" "}
                 {equipment.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
-                {tCommon("to")}{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
-                {meta.total}
+                {tCommon("to")} {Math.min(meta.page * meta.limit, meta.total)}{" "}
+                {tCommon("of")} {meta.total}
               </span>
             </div>
             {meta.totalPages > 1 && (
@@ -566,7 +560,8 @@ export default function EquipmentPage() {
                   {tCommon("previous")}
                 </Button>
                 <span className="text-sm">
-                  {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                  {tCommon("page")} {meta.page} {tCommon("of")}{" "}
+                  {meta.totalPages}
                 </span>
                 <Button
                   variant="outline"

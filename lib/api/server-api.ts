@@ -1,3 +1,4 @@
+"use server";
 import { cookies } from "next/headers";
 
 const BASE_URL = "http://localhost:8001/api";

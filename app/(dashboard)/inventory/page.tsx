@@ -63,12 +63,8 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function InventoryDashboardPage() {
-  const {
-    getReportSummary,
-    getLowStock,
-    getMovementStats,
-    getByWarehouse,
-  } = useInventory();
+  const { getReportSummary, getLowStock, getMovementStats, getByWarehouse } =
+    useInventory();
   const t = useTranslations("inventory");
   const tCommon = useTranslations("common");
 
@@ -133,10 +129,14 @@ export default function InventoryDashboardPage() {
                 <IconPackage className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("totalItems")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? <Skeleton className="h-6 w-12" /> : summary?.itemCount ?? 0}
+                <p className="text-sm text-muted-foreground">
+                  {t("totalItems")}
                 </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (summary?.itemCount ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -146,10 +146,14 @@ export default function InventoryDashboardPage() {
                 <IconBuildingWarehouse className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("warehouses")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? <Skeleton className="h-6 w-12" /> : summary?.warehouseCount ?? 0}
+                <p className="text-sm text-muted-foreground">
+                  {t("warehouses")}
                 </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (summary?.warehouseCount ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -159,10 +163,14 @@ export default function InventoryDashboardPage() {
                 <IconTruck className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("suppliers")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? <Skeleton className="h-6 w-12" /> : summary?.supplierCount ?? 0}
+                <p className="text-sm text-muted-foreground">
+                  {t("suppliers")}
                 </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (summary?.supplierCount ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -172,10 +180,14 @@ export default function InventoryDashboardPage() {
                 <IconChartBar className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("totalQuantity")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? <Skeleton className="h-6 w-12" /> : summary?.totalQuantity ?? 0}
+                <p className="text-sm text-muted-foreground">
+                  {t("totalQuantity")}
                 </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (summary?.totalQuantity ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -185,10 +197,14 @@ export default function InventoryDashboardPage() {
                 <IconAlertTriangle className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("lowStockAlert")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? <Skeleton className="h-6 w-12" /> : summary?.lowStockCount ?? 0}
+                <p className="text-sm text-muted-foreground">
+                  {t("lowStockAlert")}
                 </p>
+                {loading ? (
+                  <Skeleton className="h-6 w-12" />
+                ) : (
+                  (summary?.lowStockCount ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -212,7 +228,9 @@ export default function InventoryDashboardPage() {
                   className="mx-auto aspect-square h-[260px]"
                 >
                   <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="type" />} />
+                    <ChartTooltip
+                      content={<ChartTooltipContent nameKey="type" />}
+                    />
                     <Pie
                       data={movementChartData}
                       dataKey="count"
@@ -226,7 +244,9 @@ export default function InventoryDashboardPage() {
                         <Cell key={idx} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <ChartLegend content={<ChartLegendContent nameKey="type" />} />
+                    <ChartLegend
+                      content={<ChartLegendContent nameKey="type" />}
+                    />
                   </PieChart>
                 </ChartContainer>
               )}
@@ -292,14 +312,18 @@ export default function InventoryDashboardPage() {
                     <TableHead className="px-4 py-2">{t("itemName")}</TableHead>
                     <TableHead className="px-4 py-2">{t("sku")}</TableHead>
                     <TableHead className="px-4 py-2">{t("category")}</TableHead>
-                    <TableHead className="px-4 py-2">{t("totalStock")}</TableHead>
+                    <TableHead className="px-4 py-2">
+                      {t("totalStock")}
+                    </TableHead>
                     <TableHead className="px-4 py-2">{t("minStock")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {lowStock.map((item: any) => (
                     <TableRow key={item.id}>
-                      <TableCell className="px-4 py-2 font-medium">{item.name}</TableCell>
+                      <TableCell className="px-4 py-2 font-medium">
+                        {item.name}
+                      </TableCell>
                       <TableCell className="px-4 py-2 text-muted-foreground">
                         {item.sku || "—"}
                       </TableCell>
@@ -309,7 +333,9 @@ export default function InventoryDashboardPage() {
                       <TableCell className="px-4 py-2 font-semibold text-destructive">
                         {item.totalStock}
                       </TableCell>
-                      <TableCell className="px-4 py-2">{item.minStock}</TableCell>
+                      <TableCell className="px-4 py-2">
+                        {item.minStock}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

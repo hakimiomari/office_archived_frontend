@@ -14,10 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -262,13 +259,11 @@ export default function EmployeesPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("total")}</p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.totalEmployees ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.totalEmployees ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -278,16 +273,12 @@ export default function EmployeesPage() {
                 <IconUserCheck className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("active")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.activeEmployees ?? 0
-                  )}
-                </p>
+                <p className="text-sm text-muted-foreground">{t("active")}</p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.activeEmployees ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -297,16 +288,12 @@ export default function EmployeesPage() {
                 <IconUserOff className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("onLeave")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.onLeave ?? 0
-                  )}
-                </p>
+                <p className="text-sm text-muted-foreground">{t("onLeave")}</p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.onLeave ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -319,13 +306,11 @@ export default function EmployeesPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("departments")}
                 </p>
-                <p className="text-2xl font-bold">
-                  {loading ? (
-                    <Skeleton className="h-7 w-16" />
-                  ) : (
-                    summary?.totalDepartments ?? 0
-                  )}
-                </p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  (summary?.totalDepartments ?? 0)
+                )}
               </div>
             </CardContent>
           </Card>
@@ -418,7 +403,9 @@ export default function EmployeesPage() {
                 employees.map((emp, idx) => (
                   <TableRow key={emp.id}>
                     <TableCell>
-                      {((meta?.page || 1) - 1) * (meta?.limit || limit) + idx + 1}
+                      {((meta?.page || 1) - 1) * (meta?.limit || limit) +
+                        idx +
+                        1}
                     </TableCell>
                     <TableCell className="font-medium">
                       {emp.firstName} {emp.lastName}
@@ -441,7 +428,11 @@ export default function EmployeesPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <IconDotsVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -496,9 +487,8 @@ export default function EmployeesPage() {
               <span>
                 {tCommon("showing")}{" "}
                 {employees.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
-                {tCommon("to")}{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
-                {meta.total}
+                {tCommon("to")} {Math.min(meta.page * meta.limit, meta.total)}{" "}
+                {tCommon("of")} {meta.total}
               </span>
             </div>
             {meta.totalPages > 1 && (
@@ -513,7 +503,8 @@ export default function EmployeesPage() {
                   {tCommon("previous")}
                 </Button>
                 <span className="text-sm">
-                  {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                  {tCommon("page")} {meta.page} {tCommon("of")}{" "}
+                  {meta.totalPages}
                 </span>
                 <Button
                   variant="outline"
