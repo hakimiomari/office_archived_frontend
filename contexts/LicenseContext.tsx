@@ -2,14 +2,34 @@
 
 import { createContext, useContext, useState } from "react";
 
+export type LicenseTypeValue =
+  | "TRADE"
+  | "IMPORT"
+  | "EXPORT"
+  | "INDUSTRIAL"
+  | "PROFESSIONAL";
+
+export type LicenseStatusValue =
+  | "ACTIVE"
+  | "EXPIRED"
+  | "PENDING"
+  | "SUSPENDED"
+  | "CANCELLED";
+
+export type ContractTypeValue = "SMALL_SCALE" | "LARGE_SCALE";
+
+export type ContractStatusValue =
+  | "ACTIVE"
+  | "EXPIRED"
+  | "TERMINATED"
+  | "PENDING";
+
 export type LicenseType = {
   id: string;
-  licenseNumber: string;
-  companyName: string;
-  licenseType: "SMALL" | "LARGE";
+  licenseType: LicenseTypeValue;
+  status: LicenseStatusValue;
   issueDate: string;
   expiryDate: string;
-  status: "ACTIVE" | "EXPIRED" | "SUSPENDED";
   province: string;
   district: string;
   createdBy: string;
@@ -20,12 +40,22 @@ export type LicenseType = {
 
 export type ContractType = {
   id: string;
+  companyId: string;
   licenseId: string;
-  fileName: string;
-  fileUrl: string;
-  fileType: string;
-  uploadedBy: string;
-  uploadedAt: string;
+  contractType: ContractTypeValue;
+  status: ContractStatusValue;
+  contractNumber: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  company?: {
+    id: string;
+    licenseNumber: string;
+    TIN: string;
+    address: string;
+  };
+  license?: LicenseType;
 };
 
 export type LicenseMeta = {

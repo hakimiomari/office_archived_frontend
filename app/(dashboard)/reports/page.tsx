@@ -145,24 +145,6 @@ export default function ReportsPage() {
       enableHiding: false,
     },
     {
-      accessorKey: "licenseNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={tLicenses("licenseNumber")}
-        />
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("licenseNumber")}</span>
-      ),
-    },
-    {
-      accessorKey: "companyName",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("company")} />
-      ),
-    },
-    {
       accessorKey: "licenseType",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={tLicenses("type")} />
@@ -353,12 +335,13 @@ export default function ReportsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">{t("allTypes")}</SelectItem>
-                    <SelectItem value="SMALL">
-                      {tLicenses("smallScale")}
-                    </SelectItem>
-                    <SelectItem value="LARGE">
-                      {tLicenses("largeScale")}
-                    </SelectItem>
+                    {["TRADE", "IMPORT", "EXPORT", "INDUSTRIAL", "PROFESSIONAL"].map(
+                      (lt) => (
+                        <SelectItem key={lt} value={lt}>
+                          {lt}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -373,27 +356,19 @@ export default function ReportsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">{t("allStatuses")}</SelectItem>
-                    <SelectItem value="ACTIVE">
-                      {tLicenses("active")}
-                    </SelectItem>
-                    <SelectItem value="EXPIRED">
-                      {tLicenses("expired")}
-                    </SelectItem>
-                    <SelectItem value="SUSPENDED">
-                      {tLicenses("suspended")}
-                    </SelectItem>
+                    {[
+                      "ACTIVE",
+                      "EXPIRED",
+                      "PENDING",
+                      "SUSPENDED",
+                      "CANCELLED",
+                    ].map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("companyName")}</Label>
-                <Input
-                  placeholder={t("searchCompany")}
-                  value={filters.companyName || ""}
-                  onChange={(e) =>
-                    handleFilterChange("companyName", e.target.value)
-                  }
-                />
               </div>
               <div className="space-y-2">
                 <Label>{t("province")}</Label>

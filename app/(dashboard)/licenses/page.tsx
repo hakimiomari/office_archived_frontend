@@ -64,24 +64,35 @@ import { useTranslations } from "next-intl";
 import { ProvinceSelect } from "@/components/province-select";
 import { provinceKey } from "@/lib/constants/provinces";
 
+const LICENSE_TYPES = [
+  "TRADE",
+  "IMPORT",
+  "EXPORT",
+  "INDUSTRIAL",
+  "PROFESSIONAL",
+] as const;
+const LICENSE_STATUSES = [
+  "ACTIVE",
+  "EXPIRED",
+  "PENDING",
+  "SUSPENDED",
+  "CANCELLED",
+] as const;
+
 type LicenseFormData = {
-  licenseNumber: string;
-  companyName: string;
-  licenseType: "SMALL" | "LARGE";
+  licenseType: (typeof LICENSE_TYPES)[number];
+  status: (typeof LICENSE_STATUSES)[number];
   issueDate: string;
   expiryDate: string;
-  status: "ACTIVE" | "EXPIRED" | "SUSPENDED";
   province: string;
   district: string;
 };
 
 const emptyForm: LicenseFormData = {
-  licenseNumber: "",
-  companyName: "",
-  licenseType: "SMALL",
+  licenseType: "TRADE",
+  status: "ACTIVE",
   issueDate: "",
   expiryDate: "",
-  status: "ACTIVE",
   province: "",
   district: "",
 };
@@ -146,8 +157,6 @@ export default function LicensesPage() {
     if (lic) {
       setEditingLicense(lic);
       setForm({
-        licenseNumber: lic.licenseNumber,
-        companyName: lic.companyName,
         licenseType: lic.licenseType,
         issueDate: new Date(lic.issueDate).toISOString().split("T")[0],
         expiryDate: new Date(lic.expiryDate).toISOString().split("T")[0],
@@ -196,21 +205,6 @@ export default function LicensesPage() {
         ((meta?.page || 1) - 1) * (meta?.limit || 10) + row.index + 1,
       enableSorting: false,
       enableHiding: false,
-    },
-    {
-      accessorKey: "licenseNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("licenseNumber")} />
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("licenseNumber")}</span>
-      ),
-    },
-    {
-      accessorKey: "companyName",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("company")} />
-      ),
     },
     {
       accessorKey: "licenseType",
@@ -478,40 +472,25 @@ export default function LicensesPage() {
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">{t("licenseNumber")}</Label>
-                <Input
-                  id="licenseNumber"
-                  value={form.licenseNumber}
-                  onChange={(e) => handleChange("licenseNumber", e.target.value)}
-                  placeholder={t("licenseNumberPlaceholder")}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyName">{t("company")}</Label>
-                <Input
-                  id="companyName"
-                  value={form.companyName}
-                  onChange={(e) => handleChange("companyName", e.target.value)}
-                  placeholder={t("companyNamePlaceholder")}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
                 <Label>{t("licenseType")}</Label>
                 <Select
                   value={form.licenseType}
-                  onValueChange={(v) => handleChange("licenseType", v)}
+                  onValueChange={(v) =>
+                    handleChange(
+                      "licenseType",
+                      v as (typeof LICENSE_TYPES)[number],
+                    )
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SMALL">{t("smallScale")}</SelectItem>
-                    <SelectItem value="LARGE">{t("largeScale")}</SelectItem>
+                    {LICENSE_TYPES.map((lt) => (
+                      <SelectItem key={lt} value={lt}>
+                        {lt}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -519,15 +498,22 @@ export default function LicensesPage() {
                 <Label>{tCommon("status")}</Label>
                 <Select
                   value={form.status}
-                  onValueChange={(v) => handleChange("status", v)}
+                  onValueChange={(v) =>
+                    handleChange(
+                      "status",
+                      v as (typeof LICENSE_STATUSES)[number],
+                    )
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ACTIVE">{t("active")}</SelectItem>
-                    <SelectItem value="EXPIRED">{t("expired")}</SelectItem>
-                    <SelectItem value="SUSPENDED">{t("suspended")}</SelectItem>
+                    {LICENSE_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

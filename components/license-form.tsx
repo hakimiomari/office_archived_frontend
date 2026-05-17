@@ -17,17 +17,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LicenseType } from "@/contexts/LicenseContext";
+import {
+  LicenseType,
+  LicenseTypeValue,
+  LicenseStatusValue,
+} from "@/contexts/LicenseContext";
 import { useTranslations } from "next-intl";
 import { ProvinceSelect } from "@/components/province-select";
 
+const LICENSE_TYPES: LicenseTypeValue[] = [
+  "TRADE",
+  "IMPORT",
+  "EXPORT",
+  "INDUSTRIAL",
+  "PROFESSIONAL",
+];
+
+const LICENSE_STATUSES: LicenseStatusValue[] = [
+  "ACTIVE",
+  "EXPIRED",
+  "PENDING",
+  "SUSPENDED",
+  "CANCELLED",
+];
+
 type LicenseFormData = {
-  licenseNumber: string;
-  companyName: string;
-  licenseType: "SMALL" | "LARGE";
+  licenseType: LicenseTypeValue;
+  status: LicenseStatusValue;
   issueDate: string;
   expiryDate: string;
-  status: "ACTIVE" | "EXPIRED" | "SUSPENDED";
   province: string;
   district: string;
 };
@@ -48,16 +66,14 @@ export function LicenseForm({
   const t = useTranslations("licenses");
   const tCommon = useTranslations("common");
   const [form, setForm] = useState<LicenseFormData>({
-    licenseNumber: initialData?.licenseNumber || "",
-    companyName: initialData?.companyName || "",
-    licenseType: initialData?.licenseType || "SMALL",
+    licenseType: initialData?.licenseType || "TRADE",
+    status: initialData?.status || "ACTIVE",
     issueDate: initialData
       ? new Date(initialData.issueDate).toISOString().split("T")[0]
       : "",
     expiryDate: initialData
       ? new Date(initialData.expiryDate).toISOString().split("T")[0]
       : "",
-    status: initialData?.status || "ACTIVE",
     province: initialData?.province || "",
     district: initialData?.district || "",
   });
@@ -80,42 +96,22 @@ export function LicenseForm({
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="licenseNumber">{t("licenseNumber")}</Label>
-              <Input
-                id="licenseNumber"
-                value={form.licenseNumber}
-                onChange={(e) => handleChange("licenseNumber", e.target.value)}
-                placeholder={t("licenseNumberPlaceholder")}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="companyName">{t("company")}</Label>
-              <Input
-                id="companyName"
-                value={form.companyName}
-                onChange={(e) => handleChange("companyName", e.target.value)}
-                placeholder={t("companyNamePlaceholder")}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-2">
               <Label>{t("licenseType")}</Label>
               <Select
                 value={form.licenseType}
                 onValueChange={(v) =>
-                  handleChange("licenseType", v as "SMALL" | "LARGE")
+                  handleChange("licenseType", v as LicenseTypeValue)
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SMALL">{t("smallScale")}</SelectItem>
-                  <SelectItem value="LARGE">{t("largeScale")}</SelectItem>
+                  {LICENSE_TYPES.map((lt) => (
+                    <SelectItem key={lt} value={lt}>
+                      {lt}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -123,15 +119,19 @@ export function LicenseForm({
               <Label>{tCommon("status")}</Label>
               <Select
                 value={form.status}
-                onValueChange={(v) => handleChange("status", v)}
+                onValueChange={(v) =>
+                  handleChange("status", v as LicenseStatusValue)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">{t("active")}</SelectItem>
-                  <SelectItem value="EXPIRED">{t("expired")}</SelectItem>
-                  <SelectItem value="SUSPENDED">{t("suspended")}</SelectItem>
+                  {LICENSE_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

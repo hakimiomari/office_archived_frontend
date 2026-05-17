@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLicenses } from "@/config/license/license";
 import { LicenseType, ContractType } from "@/contexts/LicenseContext";
@@ -24,9 +24,7 @@ import {
 import {
   IconEdit,
   IconArrowLeft,
-  IconUpload,
   IconTrash,
-  IconFile,
 } from "@tabler/icons-react";
 import { PermissionGate } from "@/components/permission-gate";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,8 +34,7 @@ import { provinceKey } from "@/lib/constants/provinces";
 
 export default function LicenseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { getLicense, uploadContract, getContracts, deleteContract } =
-    useLicenses();
+  const { getLicense, getContracts, deleteContract } = useLicenses();
   const { changeRoute } = nextRoute();
   const t = useTranslations("licenses");
   const tCommon = useTranslations("common");
@@ -53,8 +50,6 @@ export default function LicenseDetailPage() {
   const [license, setLicense] = useState<LicenseType | null>(null);
   const [contracts, setContracts] = useState<ContractType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Delete confirm state
   const [deleteContractId, setDeleteContractId] = useState<string | null>(null);
@@ -75,23 +70,10 @@ export default function LicenseDetailPage() {
     fetchData();
   }, [id]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const result = await uploadContract(id, file);
-    if (result) {
-      const updated = await getContracts(id);
-      setContracts(updated || []);
-    }
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const handleDeleteContract = async () => {
     if (!deleteContractId) return;
     setDeleting(true);
-    const success = await deleteContract(id, deleteContractId);
+    const success = await deleteContract(deleteContractId);
     setDeleting(false);
     setDeleteContractId(null);
     if (success) {
@@ -195,7 +177,7 @@ export default function LicenseDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            {license.licenseNumber}
+            <span className="font-mono text-base">{license.id}</span>
             <Badge variant={statusColor(license.status)}>
               {license.status}
             </Badge>
@@ -204,10 +186,6 @@ export default function LicenseDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <p className="text-sm text-muted-foreground">{t("company")}</p>
-              <p className="font-medium">{license.companyName}</p>
-            </div>
             <div>
               <p className="text-sm text-muted-foreground">{t("province")}</p>
               <p className="font-medium">{translateProvince(license.province)}</p>
@@ -242,24 +220,6 @@ export default function LicenseDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{t("contracts")}</CardTitle>
-            <PermissionGate permission="contract.upload">
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleUpload}
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                >
-                  <IconUpload className="me-2 h-4 w-4" />
-                  {uploading ? t("uploadingContract") : t("uploadContract")}
-                </Button>
-              </div>
-            </PermissionGate>
           </div>
         </CardHeader>
         <CardContent>
@@ -272,9 +232,12 @@ export default function LicenseDetailPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="px-4 py-2">#</TableHead>
-                  <TableHead className="px-4 py-2">{t("fileName")}</TableHead>
-                  <TableHead className="px-4 py-2">{t("fileType")}</TableHead>
-                  <TableHead className="px-4 py-2">{t("uploadedAt")}</TableHead>
+                  <TableHead className="px-4 py-2">{t("company")}</TableHead>
+                  <TableHead className="px-4 py-2">{t("type")}</TableHead>
+                  <TableHead className="px-4 py-2">{tCommon("status")}</TableHead>
+                  <TableHead className="px-4 py-2">#</TableHead>
+                  <TableHead className="px-4 py-2">{t("startDate")}</TableHead>
+                  <TableHead className="px-4 py-2">{t("endDate")}</TableHead>
                   <TableHead className="px-4 py-2">{tCommon("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -282,32 +245,41 @@ export default function LicenseDetailPage() {
                 {contracts.map((contract, index) => (
                   <TableRow key={contract.id}>
                     <TableCell className="px-4 py-2">{index + 1}</TableCell>
-                    <TableCell className="px-4 py-2">
-                      <a
-                        href={contract.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-blue-600 hover:underline"
-                      >
-                        <IconFile className="h-4 w-4" />
-                        {contract.fileName}
-                      </a>
+                    <TableCell className="px-4 py-2 font-mono text-xs">
+                      {contract.company?.licenseNumber ?? contract.companyId}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {contract.fileType}
+                      <Badge variant="outline">{contract.contractType}</Badge>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {new Date(contract.uploadedAt).toLocaleDateString()}
+                      <Badge variant={statusColor(contract.status)}>
+                        {contract.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-600"
-                        onClick={() => setDeleteContractId(contract.id)}
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </Button>
+                      {contract.contractNumber ?? "—"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {contract.startDate
+                        ? new Date(contract.startDate).toLocaleDateString()
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {contract.endDate
+                        ? new Date(contract.endDate).toLocaleDateString()
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <PermissionGate permission="contract.delete">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600"
+                          onClick={() => setDeleteContractId(contract.id)}
+                        >
+                          <IconTrash className="h-4 w-4" />
+                        </Button>
+                      </PermissionGate>
                     </TableCell>
                   </TableRow>
                 ))}
