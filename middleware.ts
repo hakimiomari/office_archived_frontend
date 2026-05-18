@@ -21,6 +21,8 @@ export const config = {
     "/vehicles",
     "/licenses",
     "/licenses/:path*",
+    "/companies",
+    "/companies/:path*",
     "/reports",
     "/users/:path*",
     "/roles",

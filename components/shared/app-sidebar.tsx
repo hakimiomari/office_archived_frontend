@@ -76,6 +76,12 @@ const getAllNavItems = (t: (key: string) => string) => [
     ],
   },
   {
+    title: "Companies",
+    url: "/companies",
+    icon: IconBuilding,
+    requiredPermissions: ["company.read", "company.create"],
+  },
+  {
     title: t("tenders"),
     url: "/tenders",
     icon: IconGavel,
