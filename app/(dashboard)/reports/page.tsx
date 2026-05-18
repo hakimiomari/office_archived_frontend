@@ -38,8 +38,8 @@ import {
 } from "@tabler/icons-react";
 import { LicenseStatusChart } from "@/components/reports/license-status-chart";
 import { LicenseTypeChart } from "@/components/reports/license-type-chart";
-import { ProvinceChart } from "@/components/reports/province-chart";
 import { MonthlyTrendChart } from "@/components/reports/monthly-trend-chart";
+import { YearlyTrendChart } from "@/components/reports/yearly-trend-chart";
 import { PermissionGate } from "@/components/permission-gate";
 import { RouteGuard } from "@/components/route-guard";
 import {
@@ -53,18 +53,21 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
-import { useTranslations } from "next-intl";
-import { ProvinceSelect } from "@/components/province-select";
-import { provinceKey } from "@/lib/constants/provinces";
 
 type ChartData = {
-  byProvince: { province: string; count: number }[];
+  byMineral: { mineral: string; count: number }[];
   byType: { type: string; count: number }[];
   byStatus: { status: string; count: number }[];
   monthlyTrend: {
     month: string;
-    small: number;
-    large: number;
+    issued: number;
+    expiring: number;
+    total: number;
+  }[];
+  yearlyTrend: {
+    year: string;
+    issued: number;
+    expiring: number;
     total: number;
   }[];
 } | null;
@@ -75,7 +78,7 @@ const statusColor = (status: string) => {
       return "default";
     case "EXPIRED":
       return "destructive";
-    case "SUSPENDED":
+    case "TERMINATED":
       return "secondary";
     default:
       return "outline";
@@ -86,17 +89,12 @@ export default function ReportsPage() {
   const { getLicenseReport, exportReport, getChartData } = useReports();
   const { licenses, meta, aggregations, loading } = useLicense();
   const [chartData, setChartData] = useState<ChartData>(null);
-  const t = useTranslations("reports");
-  const tLicenses = useTranslations("licenses");
-  const tCommon = useTranslations("common");
-  const tProvinces = useTranslations("provinces");
 
   const [filters, setFilters] = useState<ReportFilters>({
     page: 1,
     limit: 10,
   });
 
-  // Table state
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -108,6 +106,7 @@ export default function ReportsPage() {
   useEffect(() => {
     getLicenseReport(filters);
     fetchChartData(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.page]);
 
   const handleFilterChange = (key: keyof ReportFilters, value: string) => {
@@ -131,9 +130,8 @@ export default function ReportsPage() {
     fetchChartData(reset);
   };
 
-  const getStatusCount = (status: string) => {
-    return aggregations?.byStatus.find((s) => s.status === status)?.count || 0;
-  };
+  const getStatusCount = (status: string) =>
+    aggregations?.byStatus.find((s) => s.status === status)?.count || 0;
 
   const columns: ColumnDef<LicenseType>[] = [
     {
@@ -145,9 +143,33 @@ export default function ReportsPage() {
       enableHiding: false,
     },
     {
+      id: "company",
+      accessorFn: (l) => l.company?.name ?? l.companyId,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Company" />
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {row.original.company?.name ?? row.original.companyId}
+        </span>
+      ),
+    },
+    {
+      id: "mineral",
+      accessorFn: (l) => l.mineralType?.name ?? l.mieralTypeId,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Mineral" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.mineralType?.name ?? "—"}
+        </Badge>
+      ),
+    },
+    {
       accessorKey: "licenseType",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("type")} />
+        <DataTableColumnHeader column={column} title="Type" />
       ),
       cell: ({ row }) => (
         <Badge variant="outline">{row.getValue("licenseType")}</Badge>
@@ -156,7 +178,7 @@ export default function ReportsPage() {
     {
       accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tCommon("status")} />
+        <DataTableColumnHeader column={column} title="Status" />
       ),
       cell: ({ row }) => (
         <Badge variant={statusColor(row.getValue("status"))}>
@@ -165,29 +187,15 @@ export default function ReportsPage() {
       ),
     },
     {
-      accessorKey: "province",
+      accessorKey: "mineAddress",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("province")} />
-      ),
-      cell: ({ row }) => {
-        const provinceValue = row.getValue("province") as string;
-        try {
-          return tProvinces(provinceKey(provinceValue) as any);
-        } catch {
-          return provinceValue;
-        }
-      },
-    },
-    {
-      accessorKey: "district",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("district")} />
+        <DataTableColumnHeader column={column} title="Mine Address" />
       ),
     },
     {
       accessorKey: "issueDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={tLicenses("issueDate")} />
+        <DataTableColumnHeader column={column} title="Issue Date" />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("issueDate")).toLocaleDateString(),
@@ -195,10 +203,7 @@ export default function ReportsPage() {
     {
       accessorKey: "expiryDate",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={tLicenses("expiryDate")}
-        />
+        <DataTableColumnHeader column={column} title="Expiry Date" />
       ),
       cell: ({ row }) =>
         new Date(row.getValue("expiryDate")).toLocaleDateString(),
@@ -220,7 +225,7 @@ export default function ReportsPage() {
     <RouteGuard permission="report.view">
       <div className="flex flex-col gap-6 p-4 md:p-6">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <h1 className="text-2xl font-bold">License Reports</h1>
           {meta && (
             <Badge variant="default" className="text-sm">
               {meta.total}
@@ -237,9 +242,11 @@ export default function ReportsPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">
-                  {t("totalLicenses")}
+                  Total Licenses
                 </p>
-                {aggregations?.totalLicenses || 0}
+                <p className="text-xl font-bold">
+                  {aggregations?.totalLicenses || 0}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -249,10 +256,10 @@ export default function ReportsPage() {
                 <IconCheck className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("activeLicenses")}
+                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-xl font-bold">
+                  {getStatusCount("ACTIVE")}
                 </p>
-                {getStatusCount("ACTIVE")}
               </div>
             </CardContent>
           </Card>
@@ -262,10 +269,10 @@ export default function ReportsPage() {
                 <IconAlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("expiredLicenses")}
+                <p className="text-sm text-muted-foreground">Expired</p>
+                <p className="text-xl font-bold">
+                  {getStatusCount("EXPIRED")}
                 </p>
-                {getStatusCount("EXPIRED")}
               </div>
             </CardContent>
           </Card>
@@ -275,10 +282,10 @@ export default function ReportsPage() {
                 <IconBan className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  {t("suspendedLicenses")}
+                <p className="text-sm text-muted-foreground">Terminated</p>
+                <p className="text-xl font-bold">
+                  {getStatusCount("TERMINATED")}
                 </p>
-                {getStatusCount("SUSPENDED")}
               </div>
             </CardContent>
           </Card>
@@ -290,10 +297,34 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <LicenseStatusChart data={chartData.byStatus} />
               <LicenseTypeChart data={chartData.byType} />
-              <ProvinceChart data={chartData.byProvince} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>By Mineral</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {chartData.byMineral.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No data
+                    </p>
+                  ) : (
+                    chartData.byMineral.map((m) => (
+                      <div
+                        key={m.mineral}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span>{m.mineral}</span>
+                        <Badge variant="outline">{m.count}</Badge>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
             </div>
             {chartData.monthlyTrend.length > 0 && (
               <MonthlyTrendChart data={chartData.monthlyTrend} />
+            )}
+            {chartData.yearlyTrend.length > 0 && (
+              <YearlyTrendChart data={chartData.yearlyTrend} />
             )}
           </>
         )}
@@ -303,13 +334,13 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <IconFilter className="h-5 w-5" />
-              {t("filters")}
+              Filters
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               <div className="space-y-2">
-                <Label>{t("fromDate")}</Label>
+                <Label>From Date</Label>
                 <Input
                   type="date"
                   value={filters.from || ""}
@@ -317,7 +348,7 @@ export default function ReportsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t("toDate")}</Label>
+                <Label>To Date</Label>
                 <Input
                   type="date"
                   value={filters.to || ""}
@@ -325,65 +356,60 @@ export default function ReportsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t("licenseType")}</Label>
+                <Label>License Type</Label>
                 <Select
                   value={filters.licenseType || "ALL"}
                   onValueChange={(v) => handleFilterChange("licenseType", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("allTypes")} />
+                    <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">{t("allTypes")}</SelectItem>
-                    {["TRADE", "IMPORT", "EXPORT", "INDUSTRIAL", "PROFESSIONAL"].map(
-                      (lt) => (
-                        <SelectItem key={lt} value={lt}>
-                          {lt}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("status")}</Label>
-                <Select
-                  value={filters.status || "ALL"}
-                  onValueChange={(v) => handleFilterChange("status", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allStatuses")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">{t("allStatuses")}</SelectItem>
-                    {[
-                      "ACTIVE",
-                      "EXPIRED",
-                      "PENDING",
-                      "SUSPENDED",
-                      "CANCELLED",
-                    ].map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
+                    <SelectItem value="ALL">All types</SelectItem>
+                    {["SMALL_SCALE", "LARGE_SCALE"].map((lt) => (
+                      <SelectItem key={lt} value={lt}>
+                        {lt}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>{t("province")}</Label>
-                <ProvinceSelect
-                  value={filters.province || ""}
-                  onValueChange={(v) => handleFilterChange("province", v)}
-                  includeAll
-                  allLabel={tCommon("all")}
+                <Label>Status</Label>
+                <Select
+                  value={filters.status || "ALL"}
+                  onValueChange={(v) => handleFilterChange("status", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All statuses</SelectItem>
+                    {["ACTIVE", "EXPIRED", "TERMINATED", "PENDING"].map(
+                      (s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Mine Address</Label>
+                <Input
+                  value={filters.mineAddress || ""}
+                  onChange={(e) =>
+                    handleFilterChange("mineAddress", e.target.value)
+                  }
+                  placeholder="Filter by mine address"
                 />
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2">
-              <Button onClick={applyFilters}>{t("applyFilters")}</Button>
+              <Button onClick={applyFilters}>Apply Filters</Button>
               <Button variant="outline" onClick={resetFilters}>
-                {tCommon("reset")}
+                Reset
               </Button>
             </div>
           </CardContent>
@@ -394,7 +420,7 @@ export default function ReportsPage() {
           <PermissionGate permission="report.export">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-muted-foreground">
-                {t("export")}:
+                Export:
               </span>
               <Button
                 variant="outline"
@@ -437,7 +463,7 @@ export default function ReportsPage() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   ))}
@@ -461,7 +487,7 @@ export default function ReportsPage() {
                     colSpan={table.getVisibleFlatColumns().length}
                     className="h-24 text-center"
                   >
-                    {t("noReportResults")}
+                    No results
                   </TableCell>
                 </TableRow>
               ) : (
@@ -471,7 +497,7 @@ export default function ReportsPage() {
                       <TableCell key={cell.id} className="px-4 py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}
@@ -487,14 +513,13 @@ export default function ReportsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                {tCommon("showing")}{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
-                {tCommon("to")} {Math.min(meta.page * meta.limit, meta.total)}{" "}
-                {tCommon("of")} {meta.total}
+                Showing{" "}
+                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
+                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">
-                  | {tCommon("rowsPerPage")}:
+                  | Rows per page:
                 </span>
                 <Select
                   value={`${filters.limit || 10}`}
@@ -513,7 +538,7 @@ export default function ReportsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent side="top">
-                    {[10, 20, 50, 100, 500, 1000].map((size) => (
+                    {[10, 20, 50, 100, 500].map((size) => (
                       <SelectItem key={size} value={`${size}`}>
                         {size}
                       </SelectItem>
@@ -535,10 +560,10 @@ export default function ReportsPage() {
                 }
               >
                 <IconChevronLeft className="h-4 w-4" />
-                {tCommon("previous")}
+                Previous
               </Button>
               <span className="text-sm">
-                {tCommon("page")} {meta.page} {tCommon("of")} {meta.totalPages}
+                Page {meta.page} of {meta.totalPages}
               </span>
               <Button
                 variant="outline"
@@ -551,7 +576,7 @@ export default function ReportsPage() {
                   }))
                 }
               >
-                {tCommon("next")}
+                Next
                 <IconChevronRight className="h-4 w-4" />
               </Button>
             </div>

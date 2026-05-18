@@ -28,6 +28,7 @@ import {
   IconTool,
   IconUserCheck,
   IconBuilding,
+  IconDiamond,
   IconUsersGroup,
 } from "@tabler/icons-react";
 
@@ -80,6 +81,18 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/companies",
     icon: IconBuilding,
     requiredPermissions: ["company.read", "company.create"],
+  },
+  {
+    title: "Contracts",
+    url: "/contracts",
+    icon: IconFileText,
+    requiredPermissions: ["contract.read", "contract.create"],
+  },
+  {
+    title: "Mineral Types",
+    url: "/mineral-types",
+    icon: IconDiamond,
+    requiredPermissions: ["mineraltype.read", "mineraltype.create"],
   },
   {
     title: t("tenders"),

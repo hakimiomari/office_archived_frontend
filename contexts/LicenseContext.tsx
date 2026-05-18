@@ -2,21 +2,13 @@
 
 import { createContext, useContext, useState } from "react";
 
-export type LicenseTypeValue =
-  | "TRADE"
-  | "IMPORT"
-  | "EXPORT"
-  | "INDUSTRIAL"
-  | "PROFESSIONAL";
+export type LicenseTypeValue = "SMALL_SCALE" | "LARGE_SCALE";
 
 export type LicenseStatusValue =
   | "ACTIVE"
   | "EXPIRED"
-  | "PENDING"
-  | "SUSPENDED"
-  | "CANCELLED";
-
-export type ContractTypeValue = "SMALL_SCALE" | "LARGE_SCALE";
+  | "TERMINATED"
+  | "PENDING";
 
 export type ContractStatusValue =
   | "ACTIVE"
@@ -24,38 +16,56 @@ export type ContractStatusValue =
   | "TERMINATED"
   | "PENDING";
 
+export type MineralCategoryValue = "METALLIC" | "NONMETALLIC";
+
+export type MineralType = {
+  id: string;
+  name: string;
+  mineralCategory: MineralCategoryValue;
+};
+
+export type CompanyRef = {
+  id: string;
+  name: string;
+  licenseNumber: string;
+  TIN: string;
+  address: string;
+};
+
 export type LicenseType = {
   id: string;
+  companyId: string;
+  mieralTypeId: string;
   licenseType: LicenseTypeValue;
   status: LicenseStatusValue;
   issueDate: string;
   expiryDate: string;
-  province: string;
-  district: string;
-  createdBy: string;
+  mineAddress: string;
+  createdBy: number | null;
+  updatedBy: number | null;
+  deletedBy: number | null;
   createdAt: string;
   updatedAt: string;
-  contracts?: ContractType[];
+  company?: CompanyRef;
+  mineralType?: MineralType;
 };
 
 export type ContractType = {
   id: string;
-  companyId: string;
-  licenseId: string;
-  contractType: ContractTypeValue;
+  companyName: string;
   status: ContractStatusValue;
-  contractNumber: string | null;
-  startDate: string | null;
-  endDate: string | null;
+  mieralTypeId: string;
+  registrationNumber: string | null;
+  price: string;
+  mineAddress: string;
+  issueDate: string;
+  expiryDate: string;
+  createdBy: number | null;
+  updatedBy: number | null;
+  deletedBy: number | null;
   createdAt: string;
   updatedAt: string;
-  company?: {
-    id: string;
-    licenseNumber: string;
-    TIN: string;
-    address: string;
-  };
-  license?: LicenseType;
+  mineralType?: MineralType;
 };
 
 export type LicenseMeta = {

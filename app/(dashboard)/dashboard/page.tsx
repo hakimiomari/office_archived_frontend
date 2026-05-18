@@ -61,11 +61,18 @@ import {
 import { useTranslations } from "next-intl";
 import { useUser } from "@/contexts/UserContext";
 import { nextRoute } from "@/lib/route";
+import { MonthlyTrendChart } from "@/components/reports/monthly-trend-chart";
 
 type LicenseStats = {
   totalLicenses: number;
   byStatus: { status: string; count: number }[];
   byType: { type: string; count: number }[];
+  monthlyTrend: {
+    month: string;
+    issued: number;
+    expiring: number;
+    total: number;
+  }[];
 };
 
 type TenderSummary = {
@@ -85,7 +92,8 @@ const CONTRACT_COLORS: Record<string, string> = {
 const LICENSE_COLORS: Record<string, string> = {
   ACTIVE: "hsl(142, 71%, 45%)",
   EXPIRED: "hsl(0, 70%, 55%)",
-  SUSPENDED: "hsl(45, 93%, 47%)",
+  TERMINATED: "hsl(0, 0%, 45%)",
+  PENDING: "hsl(45, 93%, 47%)",
 };
 
 export default function DashboardPage() {
@@ -128,6 +136,7 @@ export default function DashboardPage() {
         totalLicenses,
         byStatus: data.byStatus ?? [],
         byType: data.byType ?? [],
+        monthlyTrend: data.monthlyTrend ?? [],
       };
     } catch {
       return null;
@@ -201,9 +210,10 @@ export default function DashboardPage() {
     })) ?? [];
 
   const licenseChartConfig: ChartConfig = {
-    ACTIVE: { label: tLic("active"), color: LICENSE_COLORS.ACTIVE },
-    EXPIRED: { label: tLic("expired"), color: LICENSE_COLORS.EXPIRED },
-    SUSPENDED: { label: tLic("suspended"), color: LICENSE_COLORS.SUSPENDED },
+    ACTIVE: { label: "Active", color: LICENSE_COLORS.ACTIVE },
+    EXPIRED: { label: "Expired", color: LICENSE_COLORS.EXPIRED },
+    TERMINATED: { label: "Terminated", color: LICENSE_COLORS.TERMINATED },
+    PENDING: { label: "Pending", color: LICENSE_COLORS.PENDING },
   };
 
   const revenueChartConfig: ChartConfig = {
@@ -672,6 +682,13 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* License issued vs expiring monthly trend */}
+      {!loading &&
+        licenseStats &&
+        licenseStats.monthlyTrend.length > 0 && (
+          <MonthlyTrendChart data={licenseStats.monthlyTrend} />
+        )}
 
       {/* Recent travels */}
       <Card>

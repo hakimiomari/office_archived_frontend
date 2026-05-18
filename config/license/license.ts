@@ -86,84 +86,11 @@ export const useLicenses = () => {
     }
   };
 
-  // Contracts are now structured records linking a Company to a License
-  // (no more file uploads). CRUD against /contracts.
-  const getContracts = async (licenseId: string) => {
-    try {
-      const response = await api.get(
-        `contracts?licenseId=${licenseId}&limit=200`,
-      );
-      return response.data?.data ?? [];
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to fetch contracts"
-      );
-      return [];
-    }
-  };
-
-  const createContract = async (data: {
-    companyId: string;
-    licenseId: string;
-    contractType: string;
-    status: string;
-    contractNumber?: string;
-    startDate?: string;
-    endDate?: string;
-  }) => {
-    try {
-      const response = await api.post("contracts", data);
-      if (response.status === 201) {
-        toast.success("Contract created successfully");
-        return response.data;
-      }
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to create contract"
-      );
-      return null;
-    }
-  };
-
-  const updateContract = async (contractId: string, data: any) => {
-    try {
-      const response = await api.patch(`contracts/${contractId}`, data);
-      if (response.status === 200) {
-        toast.success("Contract updated successfully");
-        return response.data;
-      }
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update contract"
-      );
-      return null;
-    }
-  };
-
-  const deleteContract = async (contractId: string) => {
-    try {
-      const response = await api.delete(`contracts/${contractId}`);
-      if (response.status === 200) {
-        toast.success("Contract deleted successfully");
-        return true;
-      }
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to delete contract"
-      );
-      return false;
-    }
-  };
-
   return {
     getLicenses,
     getLicense,
     createLicense,
     updateLicense,
     deleteLicense,
-    getContracts,
-    createContract,
-    updateContract,
-    deleteContract,
   };
 };

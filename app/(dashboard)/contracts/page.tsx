@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useLicenses } from "@/config/license/license";
-import { useLicense, LicenseType } from "@/contexts/LicenseContext";
-import { nextRoute } from "@/lib/route";
+import {
+  useContracts,
+  ContractMeta,
+} from "@/config/contract/contract";
+import { useMineralTypes } from "@/config/mineral/mineral";
+import { ContractType, MineralType } from "@/contexts/LicenseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -14,8 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -38,7 +42,6 @@ import {
 import {
   IconPlus,
   IconDotsVertical,
-  IconEye,
   IconEdit,
   IconTrash,
   IconChevronLeft,
@@ -48,7 +51,6 @@ import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { LicenseForm, LicenseFormData } from "@/components/license-form";
 import {
   useReactTable,
   getCoreRowModel,
@@ -60,6 +62,35 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+
+const CONTRACT_STATUSES = [
+  "ACTIVE",
+  "EXPIRED",
+  "TERMINATED",
+  "PENDING",
+] as const;
+
+type ContractFormData = {
+  companyName: string;
+  mineralTypeId: string;
+  status: (typeof CONTRACT_STATUSES)[number];
+  registrationNumber: string;
+  price: string;
+  mineAddress: string;
+  issueDate: string;
+  expiryDate: string;
+};
+
+const emptyForm: ContractFormData = {
+  companyName: "",
+  mineralTypeId: "",
+  status: "ACTIVE",
+  registrationNumber: "",
+  price: "",
+  mineAddress: "",
+  issueDate: "",
+  expiryDate: "",
+};
 
 const statusColor = (status: string) => {
   switch (status) {
@@ -74,79 +105,111 @@ const statusColor = (status: string) => {
   }
 };
 
-export default function LicensesPage() {
-  const {
-    getLicenses,
-    getLicense,
-    createLicense,
-    updateLicense,
-    deleteLicense,
-  } = useLicenses();
-  const { licenses, meta, loading } = useLicense();
-  const { changeRoute } = nextRoute();
+export default function ContractsPage() {
+  const { getContracts, createContract, updateContract, deleteContract } =
+    useContracts();
+  const { getMineralTypes } = useMineralTypes();
   const { can } = usePermission();
 
+  const [contracts, setContracts] = useState<ContractType[]>([]);
+  const [meta, setMeta] = useState<ContractMeta | null>(null);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  const [minerals, setMinerals] = useState<MineralType[]>([]);
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingLicense, setEditingLicense] = useState<LicenseType | null>(
-    null
-  );
+  const [editing, setEditing] = useState<ContractType | null>(null);
+  const [form, setForm] = useState<ContractFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const load = async (p = page, l = limit, s = search) => {
+    setLoading(true);
+    const { data, meta } = await getContracts(p, l, s);
+    setContracts(data);
+    setMeta(meta);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    getLicenses(page, limit, search);
+    load(page, limit, search);
+    getMineralTypes(1, 500).then(({ data }) => setMinerals(data));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit]);
 
   const handleSearch = () => {
     setPage(1);
-    getLicenses(1, limit, search);
+    load(1, limit, search);
   };
 
   const openCreate = () => {
-    setEditingLicense(null);
+    setEditing(null);
+    setForm(emptyForm);
     setDialogOpen(true);
   };
 
-  const openEdit = async (id: string) => {
-    const lic = await getLicense(id);
-    if (lic) {
-      setEditingLicense(lic);
-      setDialogOpen(true);
-    }
+  const openEdit = (c: ContractType) => {
+    setEditing(c);
+    setForm({
+      companyName: c.companyName,
+      mineralTypeId: c.mieralTypeId,
+      status: c.status as (typeof CONTRACT_STATUSES)[number],
+      registrationNumber: c.registrationNumber ?? "",
+      price: c.price ?? "",
+      mineAddress: c.mineAddress ?? "",
+      issueDate: c.issueDate
+        ? new Date(c.issueDate).toISOString().split("T")[0]
+        : "",
+      expiryDate: c.expiryDate
+        ? new Date(c.expiryDate).toISOString().split("T")[0]
+        : "",
+    });
+    setDialogOpen(true);
   };
 
-  const handleSubmit = async (data: LicenseFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSaving(true);
-    const result = editingLicense
-      ? await updateLicense(editingLicense.id, data)
-      : await createLicense(data);
+    const payload: any = {
+      companyName: form.companyName,
+      mineralTypeId: form.mineralTypeId,
+      status: form.status,
+      price: form.price,
+      mineAddress: form.mineAddress,
+      issueDate: new Date(form.issueDate).toISOString(),
+      expiryDate: new Date(form.expiryDate).toISOString(),
+    };
+    if (form.registrationNumber)
+      payload.registrationNumber = form.registrationNumber;
+
+    const result = editing
+      ? await updateContract(editing.id, payload)
+      : await createContract(payload);
     setSaving(false);
     if (result) {
       setDialogOpen(false);
-      getLicenses(page, limit, search);
+      load(page, limit, search);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
-    const success = await deleteLicense(deleteId);
+    const success = await deleteContract(deleteId);
     setDeleting(false);
     setDeleteId(null);
-    if (success) getLicenses(page, limit, search);
+    if (success) load(page, limit, search);
   };
 
-  const columns: ColumnDef<LicenseType>[] = [
+  const columns: ColumnDef<ContractType>[] = [
     {
       id: "index",
       header: "#",
@@ -156,20 +219,17 @@ export default function LicensesPage() {
       enableHiding: false,
     },
     {
-      id: "company",
-      accessorFn: (l) => l.company?.name ?? l.companyId,
+      accessorKey: "companyName",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Company" />
       ),
       cell: ({ row }) => (
-        <span className="font-medium">
-          {row.original.company?.name ?? row.original.companyId}
-        </span>
+        <span className="font-medium">{row.getValue("companyName")}</span>
       ),
     },
     {
       id: "mineral",
-      accessorFn: (l) => l.mineralType?.name ?? l.mieralTypeId,
+      accessorFn: (c) => c.mineralType?.name ?? c.mieralTypeId,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Mineral" />
       ),
@@ -177,15 +237,6 @@ export default function LicensesPage() {
         <Badge variant="outline">
           {row.original.mineralType?.name ?? "—"}
         </Badge>
-      ),
-    },
-    {
-      accessorKey: "licenseType",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Type" />
-      ),
-      cell: ({ row }) => (
-        <Badge variant="outline">{row.getValue("licenseType")}</Badge>
       ),
     },
     {
@@ -200,10 +251,24 @@ export default function LicensesPage() {
       ),
     },
     {
+      accessorKey: "price",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Price" />
+      ),
+      cell: ({ row }) => row.original.price ?? "—",
+    },
+    {
       accessorKey: "mineAddress",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Mine Address" />
       ),
+    },
+    {
+      accessorKey: "registrationNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Registration #" />
+      ),
+      cell: ({ row }) => row.original.registrationNumber ?? "—",
     },
     {
       accessorKey: "issueDate",
@@ -227,7 +292,7 @@ export default function LicensesPage() {
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {
-        const lic = row.original;
+        const c = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -236,21 +301,15 @@ export default function LicensesPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => changeRoute(`/licenses/${lic.id}`)}
-              >
-                <IconEye className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
-              {can("license.update") && (
-                <DropdownMenuItem onClick={() => openEdit(lic.id)}>
+              {can("contract.update") && (
+                <DropdownMenuItem onClick={() => openEdit(c)}>
                   <IconEdit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
               )}
-              {can("license.delete") && (
+              {can("contract.delete") && (
                 <DropdownMenuItem
-                  onClick={() => setDeleteId(lic.id)}
+                  onClick={() => setDeleteId(c.id)}
                   className="text-red-600"
                 >
                   <IconTrash className="mr-2 h-4 w-4" />
@@ -265,7 +324,7 @@ export default function LicensesPage() {
   ];
 
   const table = useReactTable({
-    data: licenses,
+    data: contracts,
     columns,
     state: { sorting, columnVisibility },
     onSortingChange: setSorting,
@@ -276,21 +335,21 @@ export default function LicensesPage() {
   });
 
   return (
-    <RouteGuard permission="license.read">
+    <RouteGuard permission="contract.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Mining Licenses</h1>
+            <h1 className="text-2xl font-bold">Contracts</h1>
             {meta && (
               <Badge variant="default" className="text-sm">
                 {meta.total}
               </Badge>
             )}
           </div>
-          <PermissionGate permission="license.create">
+          <PermissionGate permission="contract.create">
             <Button onClick={openCreate}>
               <IconPlus className="mr-2 h-4 w-4" />
-              New License
+              New Contract
             </Button>
           </PermissionGate>
         </div>
@@ -298,7 +357,7 @@ export default function LicensesPage() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Input
-              placeholder="Search by company, mineral or address..."
+              placeholder="Search by company, registration # or mineral..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -346,7 +405,7 @@ export default function LicensesPage() {
                     colSpan={table.getVisibleFlatColumns().length}
                     className="h-24 text-center"
                   >
-                    No licenses found
+                    No contracts found
                   </TableCell>
                 </TableRow>
               ) : (
@@ -427,27 +486,171 @@ export default function LicensesPage() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingLicense ? "Edit License" : "Create License"}
+              {editing ? "Edit Contract" : "New Contract"}
             </DialogTitle>
           </DialogHeader>
-          <LicenseForm
-            key={editingLicense?.id ?? "new"}
-            title=""
-            initialData={editingLicense ?? undefined}
-            onSubmit={handleSubmit}
-            loading={saving}
-          />
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input
+                id="companyName"
+                value={form.companyName}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, companyName: e.target.value }))
+                }
+                placeholder="Acme Trading Co."
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Mineral Type</Label>
+                <Select
+                  value={form.mineralTypeId}
+                  onValueChange={(v) =>
+                    setForm((p) => ({ ...p, mineralTypeId: v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a mineral" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minerals.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name} ({m.mineralCategory})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      status: v as (typeof CONTRACT_STATUSES)[number],
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONTRACT_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, price: e.target.value }))
+                  }
+                  placeholder="50000"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="registrationNumber">
+                  Registration Number
+                </Label>
+                <Input
+                  id="registrationNumber"
+                  value={form.registrationNumber}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      registrationNumber: e.target.value,
+                    }))
+                  }
+                  placeholder="REG-2026-001 (optional)"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mineAddress">Mine Address</Label>
+              <Input
+                id="mineAddress"
+                value={form.mineAddress}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, mineAddress: e.target.value }))
+                }
+                placeholder="Kabul, District 1"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="issueDate">Issue Date</Label>
+                <Input
+                  id="issueDate"
+                  type="date"
+                  value={form.issueDate}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, issueDate: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Input
+                  id="expiryDate"
+                  type="date"
+                  value={form.expiryDate}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, expiryDate: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving || !form.mineralTypeId}
+              >
+                {saving
+                  ? "Saving..."
+                  : editing
+                    ? "Update Contract"
+                    : "Create Contract"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete License"
-        description="This will permanently delete this license. This action cannot be undone."
+        title="Delete Contract"
+        description="This will permanently delete this contract. This action cannot be undone."
         onConfirm={handleDelete}
         loading={deleting}
       />

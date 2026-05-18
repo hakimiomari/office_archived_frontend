@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 export type Owner = {
   id: string;
   name: string;
+  position: string;
   shareAmount: string | number;
   companyId: string;
   createdAt: string;
@@ -12,14 +13,18 @@ export type Owner = {
 
 export type Company = {
   id: string;
+  name: string;
   licenseNumber: string;
   TIN: string;
   address: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  deletedBy?: number | null;
   owners?: Owner[];
-  contracts?: any[];
-  _count?: { contracts: number };
+  miningLicense?: any[];
+  _count?: { miningLicense: number };
 };
 
 export type CompanyMeta = {
@@ -64,6 +69,7 @@ export const useCompanies = () => {
   };
 
   const createCompany = async (data: {
+    name: string;
     licenseNumber: string;
     TIN: string;
     address: string;
@@ -116,7 +122,7 @@ export const useCompanies = () => {
 
   const addOwner = async (
     companyId: string,
-    data: { name: string; shareAmount: number }
+    data: { name: string; position: string; shareAmount: number }
   ) => {
     try {
       const response = await api.post(`companies/${companyId}/owners`, data);
@@ -133,7 +139,7 @@ export const useCompanies = () => {
   const updateOwner = async (
     companyId: string,
     ownerId: string,
-    data: { name?: string; shareAmount?: number }
+    data: { name?: string; position?: string; shareAmount?: number }
   ) => {
     try {
       const response = await api.patch(

@@ -51,7 +51,11 @@ export default function CompanyDetailPage() {
   // Owner dialog state
   const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
-  const [ownerForm, setOwnerForm] = useState({ name: "", shareAmount: "" });
+  const [ownerForm, setOwnerForm] = useState({
+    name: "",
+    position: "",
+    shareAmount: "",
+  });
   const [savingOwner, setSavingOwner] = useState(false);
 
   // Delete owner state
@@ -72,7 +76,7 @@ export default function CompanyDetailPage() {
 
   const openAddOwner = () => {
     setEditingOwner(null);
-    setOwnerForm({ name: "", shareAmount: "" });
+    setOwnerForm({ name: "", position: "", shareAmount: "" });
     setOwnerDialogOpen(true);
   };
 
@@ -80,6 +84,7 @@ export default function CompanyDetailPage() {
     setEditingOwner(owner);
     setOwnerForm({
       name: owner.name,
+      position: owner.position,
       shareAmount: String(owner.shareAmount),
     });
     setOwnerDialogOpen(true);
@@ -90,6 +95,7 @@ export default function CompanyDetailPage() {
     setSavingOwner(true);
     const payload = {
       name: ownerForm.name,
+      position: ownerForm.position,
       shareAmount: Number(ownerForm.shareAmount),
     };
     const result = editingOwner
@@ -166,14 +172,19 @@ export default function CompanyDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <span className="font-mono text-base">
+            <span className="text-base">{company.name}</span>
+            <Badge variant="outline" className="font-mono">
               {company.licenseNumber}
-            </span>
+            </Badge>
             <Badge variant="outline">TIN: {company.TIN}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Name</p>
+              <p className="font-medium">{company.name}</p>
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">License Number</p>
               <p className="font-medium">{company.licenseNumber}</p>
@@ -193,8 +204,10 @@ export default function CompanyDetailPage() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Contracts</p>
-              <p className="font-medium">{company.contracts?.length ?? 0}</p>
+              <p className="text-sm text-muted-foreground">Licenses</p>
+              <p className="font-medium">
+                {company.miningLicense?.length ?? 0}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -228,6 +241,7 @@ export default function CompanyDetailPage() {
                 <TableRow>
                   <TableHead className="px-4 py-2">#</TableHead>
                   <TableHead className="px-4 py-2">Name</TableHead>
+                  <TableHead className="px-4 py-2">Position</TableHead>
                   <TableHead className="px-4 py-2">Share Amount</TableHead>
                   <TableHead className="px-4 py-2">Actions</TableHead>
                 </TableRow>
@@ -237,6 +251,7 @@ export default function CompanyDetailPage() {
                   <TableRow key={owner.id}>
                     <TableCell className="px-4 py-2">{index + 1}</TableCell>
                     <TableCell className="px-4 py-2">{owner.name}</TableCell>
+                    <TableCell className="px-4 py-2">{owner.position}</TableCell>
                     <TableCell className="px-4 py-2">
                       {String(owner.shareAmount)}
                     </TableCell>
@@ -289,6 +304,18 @@ export default function CompanyDetailPage() {
                   setOwnerForm((p) => ({ ...p, name: e.target.value }))
                 }
                 placeholder="Ahmad Khan"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ownerPosition">Position</Label>
+              <Input
+                id="ownerPosition"
+                value={ownerForm.position}
+                onChange={(e) =>
+                  setOwnerForm((p) => ({ ...p, position: e.target.value }))
+                }
+                placeholder="Director"
                 required
               />
             </div>

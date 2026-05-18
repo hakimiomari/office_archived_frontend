@@ -16,57 +16,56 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-import { useTranslations } from "next-intl";
 
 interface MonthlyTrendChartProps {
-  data: { month: string; small: number; large: number; total: number }[];
+  data: {
+    month: string;
+    issued: number;
+    expiring: number;
+    total: number;
+  }[];
 }
 
+const chartConfig: ChartConfig = {
+  issued: { label: "Issued", color: "hsl(142, 71%, 45%)" },
+  expiring: { label: "Expiring", color: "hsl(0, 70%, 55%)" },
+};
+
 export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
-  const t = useTranslations("reports");
-
-  const chartConfig: ChartConfig = {
-    small: {
-      label: t("smallScaleLabel"),
-      color: "hsl(221, 83%, 53%)",
-    },
-    large: {
-      label: t("largeScaleLabel"),
-      color: "hsl(262, 83%, 58%)",
-    },
-  };
-
   return (
     <Card className="col-span-full">
       <CardHeader className="pb-2">
-        <CardTitle>{t("monthlyChartTitle")}</CardTitle>
-        <CardDescription>{t("monthlyChartDescription")}</CardDescription>
+        <CardTitle>Monthly Trend</CardTitle>
+        <CardDescription>
+          Licenses issued (by issue date) vs expiring (by expiry date) per
+          month
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
           <AreaChart data={data}>
             <defs>
-              <linearGradient id="fillSmall" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillIssued" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-small)"
+                  stopColor="var(--color-issued)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-small)"
+                  stopColor="var(--color-issued)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id="fillLarge" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillExpiring" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-large)"
+                  stopColor="var(--color-expiring)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-large)"
+                  stopColor="var(--color-expiring)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -103,18 +102,16 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
               }
             />
             <Area
-              dataKey="small"
+              dataKey="issued"
               type="monotone"
-              fill="url(#fillSmall)"
-              stroke="var(--color-small)"
-              stackId="a"
+              fill="url(#fillIssued)"
+              stroke="var(--color-issued)"
             />
             <Area
-              dataKey="large"
+              dataKey="expiring"
               type="monotone"
-              fill="url(#fillLarge)"
-              stroke="var(--color-large)"
-              stackId="a"
+              fill="url(#fillExpiring)"
+              stroke="var(--color-expiring)"
             />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>

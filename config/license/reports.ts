@@ -5,14 +5,9 @@ import toast from "react-hot-toast";
 export type ReportFilters = {
   from?: string;
   to?: string;
-  licenseType?:
-    | "TRADE"
-    | "IMPORT"
-    | "EXPORT"
-    | "INDUSTRIAL"
-    | "PROFESSIONAL";
-  status?: "ACTIVE" | "EXPIRED" | "PENDING" | "SUSPENDED" | "CANCELLED";
-  province?: string;
+  licenseType?: "SMALL_SCALE" | "LARGE_SCALE";
+  status?: "ACTIVE" | "EXPIRED" | "TERMINATED" | "PENDING";
+  mineAddress?: string;
   page?: number;
   limit?: number;
 };

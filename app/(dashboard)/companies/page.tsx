@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useCompanies, Company, CompanyMeta } from "@/config/company/company";
 import { nextRoute } from "@/lib/route";
 import { Button } from "@/components/ui/button";
@@ -48,14 +48,27 @@ import { PermissionGate } from "@/components/permission-gate";
 import { usePermission } from "@/hooks/use-permission";
 import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
+import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 
 type CompanyFormData = {
+  name: string;
   licenseNumber: string;
   TIN: string;
   address: string;
 };
 
 const emptyForm: CompanyFormData = {
+  name: "",
   licenseNumber: "",
   TIN: "",
   address: "",
@@ -79,6 +92,9 @@ export default function CompaniesPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
   const [form, setForm] = useState<CompanyFormData>(emptyForm);
@@ -87,17 +103,13 @@ export default function CompaniesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(
-    async (p = page, l = limit, s = search) => {
-      setLoading(true);
-      const { data, meta } = await getCompanies(p, l, s);
-      setCompanies(data);
-      setMeta(meta);
-      setLoading(false);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [page, limit]
-  );
+  const load = async (p = page, l = limit, s = search) => {
+    setLoading(true);
+    const { data, meta } = await getCompanies(p, l, s);
+    setCompanies(data);
+    setMeta(meta);
+    setLoading(false);
+  };
 
   useEffect(() => {
     load(page, limit, search);
@@ -120,6 +132,7 @@ export default function CompaniesPage() {
     if (c) {
       setEditing(c);
       setForm({
+        name: c.name,
         licenseNumber: c.licenseNumber,
         TIN: c.TIN,
         address: c.address,
@@ -154,6 +167,122 @@ export default function CompaniesPage() {
     if (success) load(page, limit, search);
   };
 
+  const columns: ColumnDef<Company>[] = [
+    {
+      id: "index",
+      header: "#",
+      cell: ({ row }) =>
+        ((meta?.page || 1) - 1) * (meta?.limit || 10) + row.index + 1,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Name" />
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.getValue("name")}</span>
+      ),
+    },
+    {
+      accessorKey: "licenseNumber",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="License Number" />
+      ),
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">
+          {row.getValue("licenseNumber")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "TIN",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="TIN" />
+      ),
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{row.getValue("TIN")}</span>
+      ),
+    },
+    {
+      accessorKey: "address",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Address" />
+      ),
+    },
+    {
+      id: "owners",
+      header: "Owners",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Badge variant="outline">{row.original.owners?.length ?? 0}</Badge>
+      ),
+    },
+    {
+      id: "licenses",
+      header: "Licenses",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original._count?.miningLicense ?? 0}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      enableHiding: false,
+      cell: ({ row }) => {
+        const c = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <IconDotsVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => changeRoute(`/companies/${c.id}`)}
+              >
+                <IconEye className="mr-2 h-4 w-4" />
+                View / Owners
+              </DropdownMenuItem>
+              {can("company.update") && (
+                <DropdownMenuItem onClick={() => openEdit(c.id)}>
+                  <IconEdit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {can("company.delete") && (
+                <DropdownMenuItem
+                  onClick={() => setDeleteId(c.id)}
+                  className="text-red-600"
+                >
+                  <IconTrash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: companies,
+    columns,
+    state: { sorting, columnVisibility },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+  });
+
   return (
     <RouteGuard permission="company.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
@@ -174,114 +303,71 @@ export default function CompaniesPage() {
           </PermissionGate>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search by license number, TIN or address..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="max-w-md"
-          />
-          <Button variant="outline" onClick={handleSearch}>
-            Search
-          </Button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Search by name, license number, TIN or address..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="max-w-md"
+            />
+            <Button variant="outline" onClick={handleSearch}>
+              Search
+            </Button>
+          </div>
+          <DataTableViewOptions table={table} />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="px-4 py-2">#</TableHead>
-                <TableHead className="px-4 py-2">License Number</TableHead>
-                <TableHead className="px-4 py-2">TIN</TableHead>
-                <TableHead className="px-4 py-2">Address</TableHead>
-                <TableHead className="px-4 py-2">Owners</TableHead>
-                <TableHead className="px-4 py-2">Contracts</TableHead>
-                <TableHead className="px-4 py-2">Actions</TableHead>
-              </TableRow>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="px-4 py-2">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
-                    {Array.from({ length: 7 }).map((_, j) => (
-                      <TableCell key={j} className="px-4 py-3">
+                    {table.getVisibleFlatColumns().map((col) => (
+                      <TableCell key={col.id} className="px-4 py-3">
                         <Skeleton className="h-4 w-full max-w-[120px]" />
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
-              ) : companies.length === 0 ? (
+              ) : table.getRowModel().rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell
+                    colSpan={table.getVisibleFlatColumns().length}
+                    className="h-24 text-center"
+                  >
                     No companies found
                   </TableCell>
                 </TableRow>
               ) : (
-                companies.map((c, index) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="px-4 py-2">
-                      {((meta?.page || 1) - 1) * (meta?.limit || 10) +
-                        index +
-                        1}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 font-mono text-xs">
-                      {c.licenseNumber}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 font-mono text-xs">
-                      {c.TIN}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">{c.address}</TableCell>
-                    <TableCell className="px-4 py-2">
-                      <Badge variant="outline">
-                        {c.owners?.length ?? 0}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <Badge variant="outline">
-                        {c._count?.contracts ?? 0}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <IconDotsVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              changeRoute(`/companies/${c.id}`)
-                            }
-                          >
-                            <IconEye className="mr-2 h-4 w-4" />
-                            View / Owners
-                          </DropdownMenuItem>
-                          {can("company.update") && (
-                            <DropdownMenuItem
-                              onClick={() => openEdit(c.id)}
-                            >
-                              <IconEdit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                          )}
-                          {can("company.delete") && (
-                            <DropdownMenuItem
-                              onClick={() => setDeleteId(c.id)}
-                              className="text-red-600"
-                            >
-                              <IconTrash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-2">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               )}
@@ -357,6 +443,16 @@ export default function CompaniesPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="space-y-2">
+              <Label htmlFor="name">Company Name</Label>
+              <Input
+                id="name"
+                value={form.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                placeholder="Acme Trading Co."
+                required
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="licenseNumber">License Number</Label>
               <Input
                 id="licenseNumber"
@@ -412,7 +508,7 @@ export default function CompaniesPage() {
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
         title="Delete Company"
-        description="This will permanently delete the company along with its owners and contracts. This action cannot be undone."
+        description="This will permanently delete the company along with its owners and licenses. This action cannot be undone."
         onConfirm={handleDelete}
         loading={deleting}
       />
