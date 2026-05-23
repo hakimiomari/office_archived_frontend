@@ -49,6 +49,14 @@ export const useContracts = () => {
     mineralTypeId: string;
     registrationNumber?: string;
     price: string;
+    priceCurrency?: string;
+    royalty?: number;
+    jobـopportunities?: number;
+    social_service_price?: number;
+    social_service_currency?: string;
+    area?: number;
+    unit?: string;
+    mineAddress: string;
     issueDate: string;
     expiryDate: string;
   }) => {

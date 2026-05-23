@@ -16,6 +16,10 @@ export type ContractStatusValue =
   | "TERMINATED"
   | "PENDING";
 
+export type UnitValue = "Kilometre" | "Metre" | "Hectares";
+
+export type CurrencyValue = "AFN" | "USD";
+
 export type MineralCategoryValue = "METALLIC" | "NONMETALLIC";
 
 export type MineralType = {
@@ -57,6 +61,13 @@ export type ContractType = {
   mieralTypeId: string;
   registrationNumber: string | null;
   price: string;
+  priceCurrency: CurrencyValue | null;
+  royalty: number | null;
+  jobـopportunities: number | null;
+  social_service_price: number | null;
+  social_service_currency: CurrencyValue | null;
+  area: number | null;
+  unit: UnitValue | null;
   mineAddress: string;
   issueDate: string;
   expiryDate: string;

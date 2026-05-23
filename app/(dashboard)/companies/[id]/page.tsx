@@ -320,12 +320,13 @@ export default function CompanyDetailPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="shareAmount">Share Amount</Label>
+              <Label htmlFor="shareAmount">Share Amount (0–100)</Label>
               <Input
                 id="shareAmount"
                 type="number"
                 step="0.01"
                 min="0"
+                max="100"
                 value={ownerForm.shareAmount}
                 onChange={(e) =>
                   setOwnerForm((p) => ({

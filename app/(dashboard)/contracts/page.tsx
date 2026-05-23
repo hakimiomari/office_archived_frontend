@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  useContracts,
-  ContractMeta,
-} from "@/config/contract/contract";
+import { useContracts, ContractMeta } from "@/config/contract/contract";
 import { useMineralTypes } from "@/config/mineral/mineral";
 import { ContractType, MineralType } from "@/contexts/LicenseContext";
 import { Button } from "@/components/ui/button";
@@ -70,12 +67,26 @@ const CONTRACT_STATUSES = [
   "PENDING",
 ] as const;
 
+const UNITS = ["Kilometre", "Metre", "Hectares"] as const;
+type UnitValue = (typeof UNITS)[number];
+
+const CURRENCIES = ["AFN", "USD"] as const;
+type CurrencyValue = (typeof CURRENCIES)[number];
+const currencyLabel = (c: string) => (c === "USD" ? "$" : c);
+
 type ContractFormData = {
   companyName: string;
   mineralTypeId: string;
   status: (typeof CONTRACT_STATUSES)[number];
   registrationNumber: string;
   price: string;
+  priceCurrency: CurrencyValue;
+  royalty: string;
+  jobـopportunities: string;
+  social_service_price: string;
+  social_service_currency: CurrencyValue;
+  area: string;
+  unit: UnitValue;
   mineAddress: string;
   issueDate: string;
   expiryDate: string;
@@ -87,6 +98,13 @@ const emptyForm: ContractFormData = {
   status: "ACTIVE",
   registrationNumber: "",
   price: "",
+  priceCurrency: "AFN",
+  royalty: "",
+  jobـopportunities: "",
+  social_service_price: "",
+  social_service_currency: "AFN",
+  area: "",
+  unit: "Kilometre",
   mineAddress: "",
   issueDate: "",
   expiryDate: "",
@@ -164,6 +182,16 @@ export default function ContractsPage() {
       status: c.status as (typeof CONTRACT_STATUSES)[number],
       registrationNumber: c.registrationNumber ?? "",
       price: c.price ?? "",
+      priceCurrency: (c.priceCurrency as CurrencyValue) ?? "AFN",
+      royalty: c.royalty != null ? String(c.royalty) : "",
+      jobـopportunities:
+        c.jobـopportunities != null ? String(c.jobـopportunities) : "",
+      social_service_price:
+        c.social_service_price != null ? String(c.social_service_price) : "",
+      social_service_currency:
+        (c.social_service_currency as CurrencyValue) ?? "AFN",
+      area: c.area != null ? String(c.area) : "",
+      unit: (c.unit as UnitValue) ?? "Kilometre",
       mineAddress: c.mineAddress ?? "",
       issueDate: c.issueDate
         ? new Date(c.issueDate).toISOString().split("T")[0]
@@ -183,12 +211,22 @@ export default function ContractsPage() {
       mineralTypeId: form.mineralTypeId,
       status: form.status,
       price: form.price,
+      priceCurrency: form.priceCurrency,
       mineAddress: form.mineAddress,
       issueDate: new Date(form.issueDate).toISOString(),
       expiryDate: new Date(form.expiryDate).toISOString(),
     };
     if (form.registrationNumber)
       payload.registrationNumber = form.registrationNumber;
+    if (form.royalty !== "") payload.royalty = Number(form.royalty);
+    if (form.jobـopportunities !== "")
+      payload.jobـopportunities = Number(form.jobـopportunities);
+    if (form.social_service_price !== "")
+      payload.social_service_price = Number(form.social_service_price);
+    if (form.social_service_currency)
+      payload.social_service_currency = form.social_service_currency;
+    if (form.area !== "") payload.area = Number(form.area);
+    if (form.unit) payload.unit = form.unit;
 
     const result = editing
       ? await updateContract(editing.id, payload)
@@ -234,9 +272,7 @@ export default function ContractsPage() {
         <DataTableColumnHeader column={column} title="Mineral" />
       ),
       cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.mineralType?.name ?? "—"}
-        </Badge>
+        <Badge variant="outline">{row.original.mineralType?.name ?? "—"}</Badge>
       ),
     },
     {
@@ -255,7 +291,50 @@ export default function ContractsPage() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Price" />
       ),
-      cell: ({ row }) => row.original.price ?? "—",
+      cell: ({ row }) =>
+        row.original.price
+          ? `${row.original.price} ${currencyLabel(
+              row.original.priceCurrency ?? "AFN",
+            )}`
+          : "—",
+    },
+    {
+      accessorKey: "royalty",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Royalty" />
+      ),
+      cell: ({ row }) => row.original.royalty ?? "—",
+    },
+    {
+      accessorKey: "jobـopportunities",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Job Opportunities" />
+      ),
+      cell: ({ row }) => row.original.jobـopportunities ?? "—",
+    },
+    {
+      accessorKey: "social_service_price",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Social Service" />
+      ),
+      cell: ({ row }) =>
+        row.original.social_service_price != null
+          ? `${row.original.social_service_price} ${currencyLabel(
+              row.original.social_service_currency ?? "AFN",
+            )}`
+          : "—",
+    },
+    {
+      id: "area",
+      accessorFn: (c) =>
+        c.area != null ? `${c.area} ${c.unit ?? ""}`.trim() : "",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Area" />
+      ),
+      cell: ({ row }) =>
+        row.original.area != null
+          ? `${row.original.area} ${row.original.unit ?? ""}`.trim()
+          : "—",
     },
     {
       accessorKey: "mineAddress",
@@ -381,7 +460,7 @@ export default function ContractsPage() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
@@ -415,7 +494,7 @@ export default function ContractsPage() {
                       <TableCell key={cell.id} className="px-4 py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -430,9 +509,9 @@ export default function ContractsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">
-                Showing{" "}
-                {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0} to{" "}
-                {Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
+                Showing {meta.total > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
+                to {Math.min(meta.page * meta.limit, meta.total)} of{" "}
+                {meta.total}
               </p>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-muted-foreground">
@@ -555,20 +634,41 @@ export default function ContractsPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="price">Price</Label>
-                <Input
-                  id="price"
-                  value={form.price}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, price: e.target.value }))
-                  }
-                  placeholder="50000"
-                  required
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="price"
+                    value={form.price}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, price: e.target.value }))
+                    }
+                    placeholder="50000"
+                    required
+                    className="flex-1"
+                  />
+                  <Select
+                    value={form.priceCurrency}
+                    onValueChange={(v) =>
+                      setForm((p) => ({
+                        ...p,
+                        priceCurrency: v as CurrencyValue,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-[90px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {currencyLabel(c)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="registrationNumber">
-                  Registration Number
-                </Label>
+                <Label htmlFor="registrationNumber">Registration Number</Label>
                 <Input
                   id="registrationNumber"
                   value={form.registrationNumber}
@@ -580,6 +680,118 @@ export default function ContractsPage() {
                   }
                   placeholder="REG-2026-001 (optional)"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="royalty">Royalty (0–100)</Label>
+                <Input
+                  id="royalty"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={form.royalty}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, royalty: e.target.value }))
+                  }
+                  placeholder="(optional)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="jobـopportunities">Job Opportunities</Label>
+                <Input
+                  id="jobـopportunities"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.jobـopportunities}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      jobـopportunities: e.target.value,
+                    }))
+                  }
+                  placeholder="(optional)"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="social_service_price">
+                  Social Service Price
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="social_service_price"
+                    value={form.social_service_price}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        social_service_price: e.target.value,
+                      }))
+                    }
+                    placeholder="(optional)"
+                    className="flex-1"
+                  />
+
+                  <Select
+                    value={form.social_service_currency}
+                    onValueChange={(v) =>
+                      setForm((p) => ({
+                        ...p,
+                        social_service_currency: v as CurrencyValue,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-[90px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {currencyLabel(c)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="area">Area</Label>
+                <Input
+                  id="area"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.area}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, area: e.target.value }))
+                  }
+                  placeholder="(optional)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Unit</Label>
+                <Select
+                  value={form.unit}
+                  onValueChange={(v) =>
+                    setForm((p) => ({ ...p, unit: v as UnitValue }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNITS.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -631,10 +843,7 @@ export default function ContractsPage() {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={saving || !form.mineralTypeId}
-              >
+              <Button type="submit" disabled={saving || !form.mineralTypeId}>
                 {saving
                   ? "Saving..."
                   : editing
