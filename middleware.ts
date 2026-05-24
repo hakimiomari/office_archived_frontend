@@ -27,6 +27,8 @@ export const config = {
     "/contracts/:path*",
     "/mineral-types",
     "/mineral-types/:path*",
+    "/auctions",
+    "/auctions/:path*",
     "/reports",
     "/users/:path*",
     "/roles",

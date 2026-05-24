@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useExecutive, DashboardData } from "@/config/executive/executive";
-import { useTenders } from "@/config/tender/tender";
+import { useAuctions, AuctionSummary } from "@/config/auction/auction";
 import { useEmployees, EmployeeSummary } from "@/config/employees/employees";
 import { useEquipment, EquipmentSummary } from "@/config/equipment/equipment";
 import api from "@/lib/api/axios";
@@ -28,8 +28,8 @@ import {
   IconTrendingUp,
   IconTrendingDown,
   IconFileText,
-  IconPlane,
   IconGavel,
+  IconPlane,
   IconAlertTriangle,
   IconBuildingWarehouse,
   IconChartBar,
@@ -75,14 +75,6 @@ type LicenseStats = {
   }[];
 };
 
-type TenderSummary = {
-  total: number;
-  open: number;
-  closed: number;
-  closingSoon: number;
-  highPriority: number;
-};
-
 const CONTRACT_COLORS: Record<string, string> = {
   active: "hsl(142, 71%, 45%)",
   suspended: "hsl(45, 93%, 47%)",
@@ -98,7 +90,7 @@ const LICENSE_COLORS: Record<string, string> = {
 
 export default function DashboardPage() {
   const { getDashboard, getRevenueTrend } = useExecutive();
-  const { getReportSummary: getTenderSummary } = useTenders();
+  const { getAuctionSummary } = useAuctions();
   const { getSummary: getEmployeeSummary } = useEmployees();
   const { getSummary: getEquipmentSummary } = useEquipment();
   const { user } = useUser();
@@ -108,7 +100,6 @@ export default function DashboardPage() {
   const tCommon = useTranslations("common");
   const tExec = useTranslations("executive");
   const tLic = useTranslations("licenses");
-  const tTenders = useTranslations("tenders");
   const tEmp = useTranslations("employees");
   const tEquip = useTranslations("equipment");
 
@@ -117,10 +108,10 @@ export default function DashboardPage() {
   const [revenueTrend, setRevenueTrend] = useState<
     { year: number; revenue: number; expenses: number }[]
   >([]);
-  const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(
+  const [licenseStats, setLicenseStats] = useState<LicenseStats | null>(null);
+  const [auctionSummary, setAuctionSummary] = useState<AuctionSummary | null>(
     null,
   );
-  const [licenseStats, setLicenseStats] = useState<LicenseStats | null>(null);
   const [empSummary, setEmpSummary] = useState<EmployeeSummary | null>(null);
   const [equipSummary, setEquipSummary] = useState<EquipmentSummary | null>(
     null,
@@ -146,18 +137,18 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [execData, rt, ts, ls, emp, equip] = await Promise.all([
+      const [execData, rt, ls, auct, emp, equip] = await Promise.all([
         getDashboard(),
         getRevenueTrend(),
-        getTenderSummary(),
         fetchLicenseStats(),
+        getAuctionSummary(),
         getEmployeeSummary(),
         getEquipmentSummary(),
       ]);
       setExec(execData);
       setRevenueTrend(rt);
-      setTenderSummary(ts);
       setLicenseStats(ls);
+      setAuctionSummary(auct);
       setEmpSummary(emp);
       setEquipSummary(equip);
       setLoading(false);
@@ -330,26 +321,63 @@ export default function DashboardPage() {
         </Card>
         <Card
           className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/tenders")}
+          onClick={() => changeRoute("/auctions")}
         >
           <CardContent className="flex items-center gap-4 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
               <IconGavel className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">
-                {tTenders("title")}
-              </p>
+              <p className="text-sm text-muted-foreground">Auctions</p>
               {loading ? (
                 <Skeleton className="h-6 w-12" />
               ) : (
-                (tenderSummary?.total ?? 0)
-              )}
-              {tenderSummary && tenderSummary.closingSoon > 0 && (
-                <p className="text-xs text-orange-600">
-                  {tenderSummary.closingSoon}{" "}
-                  {tTenders("closingSoon").toLowerCase()}
+                <p className="text-xl font-bold">
+                  {auctionSummary?.total ?? 0}
                 </p>
+              )}
+              {auctionSummary && auctionSummary.byMineral.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Top: {auctionSummary.byMineral[0].mineral} (
+                  {auctionSummary.byMineral[0].count})
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-start gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+              <IconCoin className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-muted-foreground">Auction Totals</p>
+              {loading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : !auctionSummary ||
+                auctionSummary.totalsByCurrency.length === 0 ? (
+                <p className="text-xl font-bold">—</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {auctionSummary.totalsByCurrency.map((t) => {
+                    const r = auctionSummary.royaltyByCurrency.find(
+                      (x) => x.currency === t.currency,
+                    );
+                    const sym = t.currency === "USD" ? "$" : t.currency;
+                    return (
+                      <div key={t.currency} className="text-sm">
+                        <span className="font-semibold">
+                          {fmt(t.total)} {sym}
+                        </span>
+                        {r && r.royalty > 0 && (
+                          <span className="ml-2 text-xs text-emerald-600">
+                            royalty {fmt(r.royalty)} {sym}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </CardContent>

@@ -20,6 +20,20 @@ export type UnitValue = "Kilometre" | "Metre" | "Hectares";
 
 export type CurrencyValue = "AFN" | "USD";
 
+export type MassUnitValue = "Gram" | "Kilogram" | "Carat";
+
+export type AuctionType = {
+  id: string;
+  mieralTypeId: string;
+  round: string | null;
+  mass: string;
+  unit: MassUnitValue;
+  unitPrice: string;
+  priceCurrency: CurrencyValue;
+  royalty: number | null;
+  mineralType?: MineralType;
+};
+
 export type MineralCategoryValue = "METALLIC" | "NONMETALLIC";
 
 export type MineralType = {
@@ -114,8 +128,9 @@ export const LicenseProvider = ({
 }) => {
   const [licenses, setLicenses] = useState<LicenseType[]>([]);
   const [meta, setMeta] = useState<LicenseMeta | null>(null);
-  const [aggregations, setAggregations] =
-    useState<LicenseAggregations | null>(null);
+  const [aggregations, setAggregations] = useState<LicenseAggregations | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
 
   return (

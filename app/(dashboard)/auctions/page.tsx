@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useContracts, ContractMeta } from "@/config/contract/contract";
+import { useAuctions, AuctionMeta } from "@/config/auction/auction";
 import { useMineralTypes } from "@/config/mineral/mineral";
-import { ContractType, MineralType } from "@/contexts/LicenseContext";
+import { AuctionType, MineralType } from "@/contexts/LicenseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,112 +60,83 @@ import {
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 
-const CONTRACT_STATUSES = [
-  "ACTIVE",
-  "EXPIRED",
-  "TERMINATED",
-  "PENDING",
-] as const;
-
-const UNITS = ["Kilometre", "Metre", "Hectares"] as const;
-type UnitValue = (typeof UNITS)[number];
+const MASS_UNITS = ["Gram", "Kilogram", "Carat"] as const;
+type MassUnitValue = (typeof MASS_UNITS)[number];
 
 const CURRENCIES = ["AFN", "USD"] as const;
 type CurrencyValue = (typeof CURRENCIES)[number];
 const currencyLabel = (c: string) => (c === "USD" ? "$" : c);
 
-type ContractFormData = {
-  companyName: string;
+type AuctionFormData = {
   mineralTypeId: string;
-  status: (typeof CONTRACT_STATUSES)[number];
-  registrationNumber: string;
-  price: string;
+  round: string;
+  mass: string;
+  unit: MassUnitValue;
+  unitPrice: string;
   priceCurrency: CurrencyValue;
   royalty: string;
-  jobـopportunities: string;
-  social_service_price: string;
-  social_service_currency: CurrencyValue;
-  area: string;
-  unit: UnitValue;
-  mineAddress: string;
-  issueDate: string;
-  expiryDate: string;
 };
 
-const emptyForm: ContractFormData = {
-  companyName: "",
+const emptyForm: AuctionFormData = {
   mineralTypeId: "",
-  status: "ACTIVE",
-  registrationNumber: "",
-  price: "",
+  round: "",
+  mass: "",
+  unit: "Gram",
+  unitPrice: "",
   priceCurrency: "AFN",
   royalty: "",
-  jobـopportunities: "",
-  social_service_price: "",
-  social_service_currency: "AFN",
-  area: "",
-  unit: "Kilometre",
-  mineAddress: "",
-  issueDate: "",
-  expiryDate: "",
 };
 
-const statusColor = (status: string) => {
-  switch (status) {
-    case "ACTIVE":
-      return "default";
-    case "EXPIRED":
-      return "destructive";
-    case "TERMINATED":
-      return "secondary";
-    default:
-      return "outline";
-  }
-};
-
-export default function ContractsPage() {
-  const { getContracts, createContract, updateContract, deleteContract } =
-    useContracts();
+export default function AuctionsPage() {
+  const { getAuctions, createAuction, updateAuction, deleteAuction } =
+    useAuctions();
   const { getMineralTypes } = useMineralTypes();
   const { can } = usePermission();
 
-  const [contracts, setContracts] = useState<ContractType[]>([]);
-  const [meta, setMeta] = useState<ContractMeta | null>(null);
+  const [auctions, setAuctions] = useState<AuctionType[]>([]);
+  const [meta, setMeta] = useState<AuctionMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [mineralFilter, setMineralFilter] = useState<string>("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
   const [minerals, setMinerals] = useState<MineralType[]>([]);
+  const ALL_MINERALS = "__all__";
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<ContractType | null>(null);
-  const [form, setForm] = useState<ContractFormData>(emptyForm);
+  const [editing, setEditing] = useState<AuctionType | null>(null);
+  const [form, setForm] = useState<AuctionFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = async (p = page, l = limit, s = search) => {
+  const load = async (
+    p = page,
+    l = limit,
+    s = search,
+    m = mineralFilter,
+  ) => {
     setLoading(true);
-    const { data, meta } = await getContracts(p, l, s);
-    setContracts(data);
+    const { data, meta } = await getAuctions(p, l, s, m || undefined);
+    setAuctions(data);
     setMeta(meta);
     setLoading(false);
   };
 
   useEffect(() => {
-    load(page, limit, search);
+    load(page, limit, search, mineralFilter);
     getMineralTypes(1, 500).then(({ data }) => setMinerals(data));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit]);
+  }, [page, limit, mineralFilter]);
 
   const handleSearch = () => {
     setPage(1);
-    load(1, limit, search);
+    load(1, limit, search, mineralFilter);
   };
 
   const openCreate = () => {
@@ -174,31 +145,16 @@ export default function ContractsPage() {
     setDialogOpen(true);
   };
 
-  const openEdit = (c: ContractType) => {
-    setEditing(c);
+  const openEdit = (a: AuctionType) => {
+    setEditing(a);
     setForm({
-      companyName: c.companyName,
-      mineralTypeId: c.mieralTypeId,
-      status: c.status as (typeof CONTRACT_STATUSES)[number],
-      registrationNumber: c.registrationNumber ?? "",
-      price: c.price ?? "",
-      priceCurrency: (c.priceCurrency as CurrencyValue) ?? "AFN",
-      royalty: c.royalty != null ? String(c.royalty) : "",
-      jobـopportunities:
-        c.jobـopportunities != null ? String(c.jobـopportunities) : "",
-      social_service_price:
-        c.social_service_price != null ? String(c.social_service_price) : "",
-      social_service_currency:
-        (c.social_service_currency as CurrencyValue) ?? "AFN",
-      area: c.area != null ? String(c.area) : "",
-      unit: (c.unit as UnitValue) ?? "Kilometre",
-      mineAddress: c.mineAddress ?? "",
-      issueDate: c.issueDate
-        ? new Date(c.issueDate).toISOString().split("T")[0]
-        : "",
-      expiryDate: c.expiryDate
-        ? new Date(c.expiryDate).toISOString().split("T")[0]
-        : "",
+      mineralTypeId: a.mieralTypeId,
+      round: a.round ?? "",
+      mass: a.mass ?? "",
+      unit: (a.unit as MassUnitValue) ?? "Gram",
+      unitPrice: a.unitPrice ?? "",
+      priceCurrency: (a.priceCurrency as CurrencyValue) ?? "AFN",
+      royalty: a.royalty != null ? String(a.royalty) : "",
     });
     setDialogOpen(true);
   };
@@ -207,30 +163,18 @@ export default function ContractsPage() {
     e.preventDefault();
     setSaving(true);
     const payload: any = {
-      companyName: form.companyName,
       mineralTypeId: form.mineralTypeId,
-      status: form.status,
-      price: form.price,
+      mass: form.mass,
+      unit: form.unit,
+      unitPrice: form.unitPrice,
       priceCurrency: form.priceCurrency,
-      mineAddress: form.mineAddress,
-      issueDate: new Date(form.issueDate).toISOString(),
-      expiryDate: new Date(form.expiryDate).toISOString(),
     };
-    if (form.registrationNumber)
-      payload.registrationNumber = form.registrationNumber;
+    if (form.round) payload.round = form.round;
     if (form.royalty !== "") payload.royalty = Number(form.royalty);
-    if (form.jobـopportunities !== "")
-      payload.jobـopportunities = Number(form.jobـopportunities);
-    if (form.social_service_price !== "")
-      payload.social_service_price = Number(form.social_service_price);
-    if (form.social_service_currency)
-      payload.social_service_currency = form.social_service_currency;
-    if (form.area !== "") payload.area = Number(form.area);
-    if (form.unit) payload.unit = form.unit;
 
     const result = editing
-      ? await updateContract(editing.id, payload)
-      : await createContract(payload);
+      ? await updateAuction(editing.id, payload)
+      : await createAuction(payload);
     setSaving(false);
     if (result) {
       setDialogOpen(false);
@@ -241,13 +185,17 @@ export default function ContractsPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
-    const success = await deleteContract(deleteId);
+    const success = await deleteAuction(deleteId);
     setDeleting(false);
     setDeleteId(null);
     if (success) load(page, limit, search);
   };
 
-  const columns: ColumnDef<ContractType>[] = [
+  const totalPrice = (mass: number, price: number) => {
+    return mass * price;
+  };
+
+  const columns: ColumnDef<AuctionType>[] = [
     {
       id: "index",
       header: "#",
@@ -257,17 +205,8 @@ export default function ContractsPage() {
       enableHiding: false,
     },
     {
-      accessorKey: "companyName",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Company" />
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("companyName")}</span>
-      ),
-    },
-    {
       id: "mineral",
-      accessorFn: (c) => c.mineralType?.name ?? c.mieralTypeId,
+      accessorFn: (a) => a.mineralType?.name ?? a.mieralTypeId,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Mineral" />
       ),
@@ -276,94 +215,50 @@ export default function ContractsPage() {
       ),
     },
     {
-      accessorKey: "status",
+      accessorKey: "round",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader column={column} title="Round" />
       ),
-      cell: ({ row }) => (
-        <Badge variant={statusColor(row.getValue("status"))}>
-          {row.getValue("status")}
-        </Badge>
-      ),
+      cell: ({ row }) => row.original.round ?? "—",
     },
     {
-      accessorKey: "price",
+      id: "mass",
+      accessorFn: (a) => `${a.mass} ${a.unit}`,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Price" />
+        <DataTableColumnHeader column={column} title="Mass" />
+      ),
+      cell: ({ row }) => `${row.original.mass} ${row.original.unit}`.trim(),
+    },
+    {
+      id: "unitPrice",
+      accessorFn: (a) => `${a.unitPrice} ${currencyLabel(a.priceCurrency)}`,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Unit Price" />
       ),
       cell: ({ row }) =>
-        row.original.price
-          ? `${row.original.price} ${currencyLabel(
-              row.original.priceCurrency ?? "AFN",
-            )}`
-          : "—",
+        `${row.original.unitPrice} ${currencyLabel(
+          row.original.priceCurrency,
+        )}`,
+    },
+    {
+      id: "totalPrice",
+      accessorFn: (a) =>
+        `${totalPrice(Number(a.mass), Number(a.unitPrice))} ${currencyLabel(a.priceCurrency)}`,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Total Price" />
+      ),
+      cell: ({ row }) =>
+        `${totalPrice(Number(row.original.mass), Number(row.original.unitPrice))} ${currencyLabel(
+          row.original.priceCurrency,
+        )}`,
     },
     {
       accessorKey: "royalty",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Royalty" />
       ),
-      cell: ({ row }) => row.original.royalty ?? "—",
-    },
-    {
-      accessorKey: "jobـopportunities",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Job Opportunities" />
-      ),
-      cell: ({ row }) => row.original.jobـopportunities ?? "—",
-    },
-    {
-      accessorKey: "social_service_price",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Social Service" />
-      ),
       cell: ({ row }) =>
-        row.original.social_service_price != null
-          ? `${row.original.social_service_price} ${currencyLabel(
-              row.original.social_service_currency ?? "AFN",
-            )}`
-          : "—",
-    },
-    {
-      id: "area",
-      accessorFn: (c) =>
-        c.area != null ? `${c.area} ${c.unit ?? ""}`.trim() : "",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Area" />
-      ),
-      cell: ({ row }) =>
-        row.original.area != null
-          ? `${row.original.area} ${row.original.unit ?? ""}`.trim()
-          : "—",
-    },
-    {
-      accessorKey: "mineAddress",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Mine Address" />
-      ),
-    },
-    {
-      accessorKey: "registrationNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Registration #" />
-      ),
-      cell: ({ row }) => row.original.registrationNumber ?? "—",
-    },
-    {
-      accessorKey: "issueDate",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Issue Date" />
-      ),
-      cell: ({ row }) =>
-        new Date(row.getValue("issueDate")).toLocaleDateString(),
-    },
-    {
-      accessorKey: "expiryDate",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Expiry Date" />
-      ),
-      cell: ({ row }) =>
-        new Date(row.getValue("expiryDate")).toLocaleDateString(),
+        row.original.royalty != null ? `${row.original.royalty}%` : "—",
     },
     {
       id: "actions",
@@ -371,7 +266,7 @@ export default function ContractsPage() {
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {
-        const c = row.original;
+        const a = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -380,15 +275,15 @@ export default function ContractsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {can("contract.update") && (
-                <DropdownMenuItem onClick={() => openEdit(c)}>
+              {can("auction.update") && (
+                <DropdownMenuItem onClick={() => openEdit(a)}>
                   <IconEdit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
               )}
-              {can("contract.delete") && (
+              {can("auction.delete") && (
                 <DropdownMenuItem
-                  onClick={() => setDeleteId(c.id)}
+                  onClick={() => setDeleteId(a.id)}
                   className="text-red-600"
                 >
                   <IconTrash className="mr-2 h-4 w-4" />
@@ -403,7 +298,7 @@ export default function ContractsPage() {
   ];
 
   const table = useReactTable({
-    data: contracts,
+    data: auctions,
     columns,
     state: { sorting, columnVisibility },
     onSortingChange: setSorting,
@@ -414,37 +309,68 @@ export default function ContractsPage() {
   });
 
   return (
-    <RouteGuard permission="contract.read">
+    <RouteGuard permission="auction.read">
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Contracts</h1>
+            <h1 className="text-2xl font-bold">Auctions</h1>
             {meta && (
               <Badge variant="default" className="text-sm">
                 {meta.total}
               </Badge>
             )}
           </div>
-          <PermissionGate permission="contract.create">
+          <PermissionGate permission="auction.create">
             <Button onClick={openCreate}>
               <IconPlus className="mr-2 h-4 w-4" />
-              New Contract
+              New Auction
             </Button>
           </PermissionGate>
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2">
             <Input
-              placeholder="Search by company, registration # or mineral..."
+              placeholder="Search by round or mineral..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="max-w-md"
+              className="w-72"
             />
             <Button variant="outline" onClick={handleSearch}>
               Search
             </Button>
+            <Select
+              value={mineralFilter || ALL_MINERALS}
+              onValueChange={(v) => {
+                setMineralFilter(v === ALL_MINERALS ? "" : v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="All minerals" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_MINERALS}>All minerals</SelectItem>
+                {minerals.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {mineralFilter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setMineralFilter("");
+                  setPage(1);
+                }}
+              >
+                Clear
+              </Button>
+            )}
           </div>
           <DataTableViewOptions table={table} />
         </div>
@@ -484,7 +410,7 @@ export default function ContractsPage() {
                     colSpan={table.getVisibleFlatColumns().length}
                     className="h-24 text-center"
                   >
-                    No contracts found
+                    No auctions found
                   </TableCell>
                 </TableRow>
               ) : (
@@ -568,23 +494,10 @@ export default function ContractsPage() {
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editing ? "Edit Contract" : "New Contract"}
+              {editing ? "Edit Auction" : "New Auction"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                id="companyName"
-                value={form.companyName}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, companyName: e.target.value }))
-                }
-                placeholder="Acme Trading Co."
-                required
-              />
-            </div>
-
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Mineral Type</Label>
@@ -607,23 +520,44 @@ export default function ContractsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label htmlFor="round">Round</Label>
+                <Input
+                  id="round"
+                  value={form.round}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, round: e.target.value }))
+                  }
+                  placeholder="Round 1 (optional)"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mass">Mass</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="mass"
+                  value={form.mass}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, mass: e.target.value }))
+                  }
+                  placeholder="100"
+                  required
+                  className="flex-1"
+                />
                 <Select
-                  value={form.status}
+                  value={form.unit}
                   onValueChange={(v) =>
-                    setForm((p) => ({
-                      ...p,
-                      status: v as (typeof CONTRACT_STATUSES)[number],
-                    }))
+                    setForm((p) => ({ ...p, unit: v as MassUnitValue }))
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-[110px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CONTRACT_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
+                    {MASS_UNITS.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -633,18 +567,15 @@ export default function ContractsPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="unitPrice">Unit Price</Label>
                 <div className="flex gap-2">
                   <Input
-                    id="price"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.price}
+                    id="unitPrice"
+                    value={form.unitPrice}
                     onChange={(e) =>
-                      setForm((p) => ({ ...p, price: e.target.value }))
+                      setForm((p) => ({ ...p, unitPrice: e.target.value }))
                     }
-                    placeholder="50000"
+                    placeholder="500"
                     required
                     className="flex-1"
                   />
@@ -670,175 +601,38 @@ export default function ContractsPage() {
                   </Select>
                 </div>
               </div>
+
+              {/* <div className="space-y-2">
+                
+              </div> */}
+
               <div className="space-y-2">
-                <Label htmlFor="registrationNumber">Registration Number</Label>
+                <Label htmlFor="unitPrice">Total Price</Label>
                 <Input
-                  id="registrationNumber"
-                  value={form.registrationNumber}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      registrationNumber: e.target.value,
-                    }))
-                  }
-                  placeholder="REG-2026-001 (optional)"
+                  id="unitPrice"
+                  value={totalPrice(Number(form.mass), Number(form.unitPrice))}
+                  disabled
+                  placeholder="500"
+                  required
+                  className="flex-1"
                 />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="royalty">Royalty (0–100)</Label>
-                <Input
-                  id="royalty"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={form.royalty}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, royalty: e.target.value }))
-                  }
-                  placeholder="(optional)"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="jobـopportunities">Job Opportunities</Label>
-                <Input
-                  id="jobـopportunities"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.jobـopportunities}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      jobـopportunities: e.target.value,
-                    }))
-                  }
-                  placeholder="(optional)"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="social_service_price">
-                  Social Service Price
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="social_service_price"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.social_service_price}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        social_service_price: e.target.value,
-                      }))
-                    }
-                    placeholder="(optional)"
-                    className="flex-1"
-                  />
-
-                  <Select
-                    value={form.social_service_currency}
-                    onValueChange={(v) =>
-                      setForm((p) => ({
-                        ...p,
-                        social_service_currency: v as CurrencyValue,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="w-[90px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {currencyLabel(c)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="area">Area</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="area"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.area}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, area: e.target.value }))
-                    }
-                    placeholder="(optional)"
-                  />
-
-                  <Select
-                    value={form.unit}
-                    onValueChange={(v) =>
-                      setForm((p) => ({ ...p, unit: v as UnitValue }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {UNITS.map((u) => (
-                        <SelectItem key={u} value={u}>
-                          {u}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mineAddress">Mine Address</Label>
+              <Label htmlFor="royalty">Royalty (0–100)</Label>
               <Input
-                id="mineAddress"
-                value={form.mineAddress}
+                id="royalty"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value={form.royalty}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, mineAddress: e.target.value }))
+                  setForm((p) => ({ ...p, royalty: e.target.value }))
                 }
-                placeholder="Kabul, District 1"
-                required
+                placeholder="(optional)"
               />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="issueDate">Issue Date</Label>
-                <Input
-                  id="issueDate"
-                  type="date"
-                  value={form.issueDate}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, issueDate: e.target.value }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input
-                  id="expiryDate"
-                  type="date"
-                  value={form.expiryDate}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, expiryDate: e.target.value }))
-                  }
-                  required
-                />
-              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -853,8 +647,8 @@ export default function ContractsPage() {
                 {saving
                   ? "Saving..."
                   : editing
-                    ? "Update Contract"
-                    : "Create Contract"}
+                    ? "Update Auction"
+                    : "Create Auction"}
               </Button>
             </div>
           </form>
@@ -864,8 +658,8 @@ export default function ContractsPage() {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Contract"
-        description="This will permanently delete this contract. This action cannot be undone."
+        title="Delete Auction"
+        description="This will permanently delete this auction. This action cannot be undone."
         onConfirm={handleDelete}
         loading={deleting}
       />

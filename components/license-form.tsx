@@ -104,11 +104,11 @@ export function LicenseForm({
                 onValueChange={(v) => handleChange("companyId", v)}
               >
                 <SelectTrigger>
-                  <SelectValue>
+                  <SelectValue placeholder="Select a company">
                     {truncateText(
                       companies.find((c) => c.id === form.companyId)?.name ??
                         "Select a company",
-                      20,
+                      18,
                     )}
                   </SelectValue>
                 </SelectTrigger>

@@ -95,16 +95,10 @@ const getAllNavItems = (t: (key: string) => string) => [
     requiredPermissions: ["mineraltype.read", "mineraltype.create"],
   },
   {
-    title: t("tenders"),
-    url: "/tenders",
+    title: "Auctions",
+    url: "/auctions",
     icon: IconGavel,
-    requiredPermissions: ["tender.read", "tender.create"],
-  },
-  {
-    title: t("tenderReports"),
-    url: "/tender-reports",
-    icon: IconChartBar,
-    requiredPermissions: ["tender.read"],
+    requiredPermissions: ["auction.read", "auction.create"],
   },
   {
     title: t("executive"),
