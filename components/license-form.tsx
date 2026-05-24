@@ -11,12 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   LicenseType,
   LicenseTypeValue,
@@ -25,6 +20,7 @@ import {
 import { useCompanies, Company } from "@/config/company/company";
 import { useMineralTypes } from "@/config/mineral/mineral";
 import { MineralType } from "@/contexts/LicenseContext";
+import { truncateText } from "@/config/utils";
 
 const LICENSE_TYPES: LicenseTypeValue[] = ["SMALL_SCALE", "LARGE_SCALE"];
 
@@ -100,7 +96,7 @@ export function LicenseForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 justify-end gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Company</Label>
               <Select
@@ -108,53 +104,18 @@ export function LicenseForm({
                 onValueChange={(v) => handleChange("companyId", v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a company" />
+                  <SelectValue>
+                    {truncateText(
+                      companies.find((c) => c.id === form.companyId)?.name ??
+                        "Select a company",
+                      20,
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {companies.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.name} — {c.licenseNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Mineral Type</Label>
-              <Select
-                value={form.mineralTypeId}
-                onValueChange={(v) => handleChange("mineralTypeId", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a mineral type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {minerals.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name} ({m.mineralCategory})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>License Type</Label>
-              <Select
-                value={form.licenseType}
-                onValueChange={(v) =>
-                  handleChange("licenseType", v as LicenseTypeValue)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LICENSE_TYPES.map((lt) => (
-                    <SelectItem key={lt} value={lt}>
-                      {lt}
+                      {c.name} - {c.licenseNumber}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -181,6 +142,49 @@ export function LicenseForm({
               </Select>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Mineral Type</Label>
+              <Select
+                value={form.mineralTypeId}
+                onValueChange={(v) => handleChange("mineralTypeId", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a mineral type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {minerals.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name} ({m.mineralCategory})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>License Type</Label>
+              <Select
+                value={form.licenseType}
+                onValueChange={(v) =>
+                  handleChange("licenseType", v as LicenseTypeValue)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LICENSE_TYPES.map((lt) => (
+                    <SelectItem key={lt} value={lt}>
+                      {lt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2"></div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
