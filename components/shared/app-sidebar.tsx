@@ -99,6 +99,18 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/auctions",
     icon: IconGavel,
     requiredPermissions: ["auction.read", "auction.create"],
+    items: [
+      {
+        title: "All Auctions",
+        url: "/auctions",
+        icon: IconGavel,
+      },
+      {
+        title: "Auction Reports",
+        url: "/auction-reports",
+        icon: IconReport,
+      },
+    ],
   },
   {
     title: t("executive"),
