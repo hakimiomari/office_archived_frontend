@@ -22,6 +22,11 @@ export type CurrencyValue = "AFN" | "USD";
 
 export type MassUnitValue = "Gram" | "Kilogram" | "Carat";
 
+export type ProvinceRef = {
+  id: number;
+  name: string | null;
+};
+
 export type AuctionType = {
   id: string;
   mieralTypeId: string;
@@ -31,7 +36,10 @@ export type AuctionType = {
   unitPrice: string;
   priceCurrency: CurrencyValue;
   royalty: number | null;
+  auctionDate: string;
+  provinceId: number | null;
   mineralType?: MineralType;
+  province?: ProvinceRef | null;
 };
 
 export type MineralCategoryValue = "METALLIC" | "NONMETALLIC";

@@ -21,7 +21,8 @@ export const useAuctions = () => {
     page = 1,
     limit = 10,
     search?: string,
-    mineralTypeId?: string
+    mineralTypeId?: string,
+    provinceId?: number
   ): Promise<{ data: AuctionType[]; meta: AuctionMeta | null }> => {
     try {
       const params = new URLSearchParams();
@@ -29,6 +30,7 @@ export const useAuctions = () => {
       params.append("limit", String(limit));
       if (search) params.append("search", search);
       if (mineralTypeId) params.append("mineralTypeId", mineralTypeId);
+      if (provinceId) params.append("provinceId", String(provinceId));
       const response = await api.get(`auctions?${params.toString()}`);
       return { data: response.data.data, meta: response.data.meta };
     } catch (error: any) {
@@ -59,6 +61,8 @@ export const useAuctions = () => {
     unitPrice: string;
     priceCurrency?: string;
     royalty?: number;
+    auctionDate: string;
+    provinceId?: number;
   }) => {
     try {
       const response = await api.post("auctions", data);

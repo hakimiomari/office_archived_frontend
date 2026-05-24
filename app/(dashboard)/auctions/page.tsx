@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useAuctions, AuctionMeta } from "@/config/auction/auction";
 import { useMineralTypes } from "@/config/mineral/mineral";
-import { AuctionType, MineralType } from "@/contexts/LicenseContext";
+import { useProvinces } from "@/config/province/province";
+import {
+  AuctionType,
+  MineralType,
+  ProvinceRef,
+} from "@/contexts/LicenseContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +64,7 @@ import {
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-table-components/data-table-column-header";
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
+import { truncateText } from "@/config/utils";
 
 const MASS_UNITS = ["Gram", "Kilogram", "Carat"] as const;
 type MassUnitValue = (typeof MASS_UNITS)[number];
@@ -75,6 +81,8 @@ type AuctionFormData = {
   unitPrice: string;
   priceCurrency: CurrencyValue;
   royalty: string;
+  auctionDate: string;
+  provinceId: string;
 };
 
 const emptyForm: AuctionFormData = {
@@ -85,12 +93,15 @@ const emptyForm: AuctionFormData = {
   unitPrice: "",
   priceCurrency: "AFN",
   royalty: "",
+  auctionDate: "",
+  provinceId: "",
 };
 
 export default function AuctionsPage() {
   const { getAuctions, createAuction, updateAuction, deleteAuction } =
     useAuctions();
   const { getMineralTypes } = useMineralTypes();
+  const { getProvinces } = useProvinces();
   const { can } = usePermission();
 
   const [auctions, setAuctions] = useState<AuctionType[]>([]);
@@ -98,11 +109,14 @@ export default function AuctionsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [mineralFilter, setMineralFilter] = useState<string>("");
+  const [provinceFilter, setProvinceFilter] = useState<string>("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
   const [minerals, setMinerals] = useState<MineralType[]>([]);
+  const [provinces, setProvinces] = useState<ProvinceRef[]>([]);
   const ALL_MINERALS = "__all__";
+  const ALL_PROVINCES = "__all__";
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -120,24 +134,43 @@ export default function AuctionsPage() {
     l = limit,
     s = search,
     m = mineralFilter,
+    pv = provinceFilter,
   ) => {
     setLoading(true);
-    const { data, meta } = await getAuctions(p, l, s, m || undefined);
+    const { data, meta } = await getAuctions(
+      p,
+      l,
+      s,
+      m || undefined,
+      pv ? Number(pv) : undefined,
+    );
     setAuctions(data);
     setMeta(meta);
     setLoading(false);
   };
 
+  // Mount: load reference data (minerals + provinces) once.
   useEffect(() => {
-    load(page, limit, search, mineralFilter);
     getMineralTypes(1, 500).then(({ data }) => setMinerals(data));
+    getProvinces().then(setProvinces);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, mineralFilter]);
+  }, []);
 
-  const handleSearch = () => {
+  // Reset to page 1 whenever the search term or filters change.
+  useEffect(() => {
     setPage(1);
-    load(1, limit, search, mineralFilter);
-  };
+  }, [search, mineralFilter, provinceFilter]);
+
+  // Debounced data fetch — re-runs on any of page/limit/search/filter change.
+  // The 300ms timeout avoids one request per keystroke while still being
+  // snappy. The cleanup cancels in-flight timeouts when the user keeps typing.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      load(page, limit, search, mineralFilter, provinceFilter);
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit, search, mineralFilter, provinceFilter]);
 
   const openCreate = () => {
     setEditing(null);
@@ -155,6 +188,10 @@ export default function AuctionsPage() {
       unitPrice: a.unitPrice ?? "",
       priceCurrency: (a.priceCurrency as CurrencyValue) ?? "AFN",
       royalty: a.royalty != null ? String(a.royalty) : "",
+      auctionDate: a.auctionDate
+        ? new Date(a.auctionDate).toISOString().split("T")[0]
+        : "",
+      provinceId: a.provinceId != null ? String(a.provinceId) : "",
     });
     setDialogOpen(true);
   };
@@ -168,9 +205,11 @@ export default function AuctionsPage() {
       unit: form.unit,
       unitPrice: form.unitPrice,
       priceCurrency: form.priceCurrency,
+      auctionDate: new Date(form.auctionDate).toISOString(),
     };
     if (form.round) payload.round = form.round;
     if (form.royalty !== "") payload.royalty = Number(form.royalty);
+    if (form.provinceId) payload.provinceId = Number(form.provinceId);
 
     const result = editing
       ? await updateAuction(editing.id, payload)
@@ -261,6 +300,24 @@ export default function AuctionsPage() {
         row.original.royalty != null ? `${row.original.royalty}%` : "—",
     },
     {
+      accessorKey: "auctionDate",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Auction Date" />
+      ),
+      cell: ({ row }) =>
+        row.original.auctionDate
+          ? new Date(row.original.auctionDate).toLocaleDateString()
+          : "—",
+    },
+    {
+      id: "province",
+      accessorFn: (a) => a.province?.name ?? "",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Province" />
+      ),
+      cell: ({ row }) => row.original.province?.name ?? "—",
+    },
+    {
       id: "actions",
       header: "Actions",
       enableSorting: false,
@@ -334,12 +391,8 @@ export default function AuctionsPage() {
               placeholder="Search by round or mineral..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="w-72"
             />
-            <Button variant="outline" onClick={handleSearch}>
-              Search
-            </Button>
             <Select
               value={mineralFilter || ALL_MINERALS}
               onValueChange={(v) => {
@@ -359,12 +412,32 @@ export default function AuctionsPage() {
                 ))}
               </SelectContent>
             </Select>
-            {mineralFilter && (
+            <Select
+              value={provinceFilter || ALL_PROVINCES}
+              onValueChange={(v) => {
+                setProvinceFilter(v === ALL_PROVINCES ? "" : v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="All provinces" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_PROVINCES}>All provinces</SelectItem>
+                {provinces.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.name ?? `#${p.id}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(mineralFilter || provinceFilter) && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setMineralFilter("");
+                  setProvinceFilter("");
                   setPage(1);
                 }}
               >
@@ -508,7 +581,19 @@ export default function AuctionsPage() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a mineral" />
+                    <SelectValue placeholder="Select a mineral">
+                      {(() => {
+                        const mineral = minerals.find(
+                          (c) => c.id === form.mineralTypeId,
+                        );
+                        return mineral
+                          ? truncateText(
+                              `${mineral.name} (${mineral.mineralCategory})`,
+                              18,
+                            )
+                          : "";
+                      })()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {minerals.map((m) => (
@@ -602,10 +687,6 @@ export default function AuctionsPage() {
                 </div>
               </div>
 
-              {/* <div className="space-y-2">
-                
-              </div> */}
-
               <div className="space-y-2">
                 <Label htmlFor="unitPrice">Total Price</Label>
                 <Input
@@ -619,20 +700,61 @@ export default function AuctionsPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="royalty">Royalty (0–100)</Label>
-              <Input
-                id="royalty"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={form.royalty}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, royalty: e.target.value }))
-                }
-                placeholder="(optional)"
-              />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="royalty">Royalty (0–100)</Label>
+                <Input
+                  id="royalty"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={form.royalty}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, royalty: e.target.value }))
+                  }
+                  placeholder="(optional)"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="auctionDate">Auction Date</Label>
+                <Input
+                  id="auctionDate"
+                  type="date"
+                  value={form.auctionDate}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, auctionDate: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Province</Label>
+                <Select
+                  value={form.provinceId || ALL_PROVINCES}
+                  onValueChange={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      provinceId: v === ALL_PROVINCES ? "" : v,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a province (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_PROVINCES}>— None —</SelectItem>
+                    {provinces.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.name ?? `#${p.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -643,7 +765,10 @@ export default function AuctionsPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving || !form.mineralTypeId}>
+              <Button
+                type="submit"
+                disabled={saving || !form.mineralTypeId || !form.auctionDate}
+              >
                 {saving
                   ? "Saving..."
                   : editing
