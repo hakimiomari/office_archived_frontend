@@ -7,9 +7,7 @@ export type UserType = {
   email: string;
   profile_picture: string | null;
   googleId: string | null;
-  userRole?: "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
-  companyId?: number | null;
-  company?: { id: number; name: string } | null;
+  userRole?: "ADMIN" | "USER";
   created_at: string;
   updated_at: string;
   roles: { id: number; name: string }[];
@@ -53,10 +51,8 @@ export const useUsers = () => {
     email: string;
     password: string;
     role: number;
-    /** Tenancy role; SUPER_ADMIN can set this. */
-    userRole?: "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
-    /** Required for non-SUPER_ADMIN users. */
-    companyId?: number | null;
+    /** App role: ADMIN (full system) or USER (limited by permissions). */
+    userRole?: "ADMIN" | "USER";
   }) => {
     try {
       const response = await api.post("user/create", data);

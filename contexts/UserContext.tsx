@@ -4,7 +4,7 @@ import api from "../lib/api/axios";
 import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-export type UserRoleName = "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
+export type UserRoleName = "ADMIN" | "USER";
 
 type User = {
   id: string;
@@ -13,8 +13,6 @@ type User = {
   avatar: string;
   profile_picture?: string;
   userRole?: UserRoleName;
-  companyId?: number | null;
-  company?: { id: number; name: string; slug: string | null } | null;
   roles?: { id: number; name: string; permissions?: { id: number; name: string }[] }[];
 };
 

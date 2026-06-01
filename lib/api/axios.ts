@@ -1,5 +1,4 @@
 import axios from "axios";
-import { readTenantFilterFromStorage } from "@/contexts/TenantFilterContext";
 
 const api = axios.create({
   baseURL: "http://localhost:8001/api/",
@@ -15,20 +14,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    // SUPER_ADMIN company filter: when the picker is set, scope every
-    // read/write to that company via the X-Tenant-Company-Id header. The
-    // backend ignores the header for non-SUPER_ADMIN users (it's a hint,
-    // not a permission), so it's safe to send unconditionally.
-    const filterCompanyId = readTenantFilterFromStorage();
-    if (filterCompanyId != null) {
-      config.headers["X-Tenant-Company-Id"] = String(filterCompanyId);
-    }
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // response interceptor for 401 responses

@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { useUsers, UserType } from "@/config/users/users";
 import { useRoles, RoleType } from "@/config/users/roles";
-import { useCompanies, Company } from "@/api/hooks/use-companies";
-import { useUser } from "@/contexts/UserContext";
-import { useTenantFilter } from "@/contexts/TenantFilterContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type UserRoleValue = "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
+type UserRoleValue = "ADMIN" | "USER";
 
 type Props = {
   /** Pass for edit mode; omit (or pass null/undefined) for create mode. */
@@ -31,66 +27,34 @@ type Props = {
 };
 
 /**
- * Reusable user form with full tenancy controls.
+ * Single-tenant user form.
  *
- * Create mode (no editingUser):
- *   - Name, email, password, permission role (admin/manager/viewer),
- *     plus tenancy assignment (userRole + companyId).
- *   - SUPER_ADMINs can pick any tenancy role and any company; tenant admins
- *     are locked to "Company user" + their own company.
+ * Create mode (no editingUser): name, email, password, permission role
+ * (admin/manager/viewer), plus the app-level role (ADMIN/USER).
  *
- * Edit mode (editingUser passed):
- *   - Name + email + permission roles (multi-select via checkboxes).
- *   - Tenancy isn't editable here — keeps the surface focused. Promoting /
- *     demoting / moving a user can be added later if needed.
+ * Edit mode (editingUser passed): name + email + permission roles
+ * (multi-select via checkboxes).
  */
 export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
   const { createUser, updateUser, getUser } = useUsers();
   const { getRoles } = useRoles();
-  const { list: listCompanies } = useCompanies();
-  const { user } = useUser();
-  const { filterCompanyId, filterCompanyName } = useTenantFilter();
-  const isSuper = user?.userRole === "SUPER_ADMIN";
-  // SUPER_ADMIN scoped into a tenant via the sidebar picker. When this
-  // is true, user creation is locked to that one tenant — picking a
-  // different company would silently violate the "you are acting as
-  // this company" expectation from the sidebar banner.
-  const isScopedSuper = isSuper && filterCompanyId != null;
 
   const [allRoles, setAllRoles] = useState<RoleType[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "" as string,           // create: single role id (string)
-    roleIds: [] as number[],      // edit: multiple role ids
-    userRole: "COMPANY_USER" as UserRoleValue,
-    // Pre-fill the company picker with the active SUPER_ADMIN scope when
-    // there is one — keeps the form consistent with the sidebar banner.
-    companyId: filterCompanyId != null ? String(filterCompanyId) : "",
+    role: "" as string, // create: single role id (string)
+    roleIds: [] as number[], // edit: multiple role ids
+    userRole: "USER" as UserRoleValue,
   });
 
-  // Load roles + companies once.
   useEffect(() => {
     getRoles().then(setAllRoles);
-    listCompanies({ limit: 200 }).then((r) => setCompanies(r.data));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // If the SUPER_ADMIN changes the sidebar scope while this form is
-  // open, sync the company picker. Also force the tenancy role away
-  // from SUPER_ADMIN — you can't create a global super admin while
-  // currently impersonating a tenant.
-  useEffect(() => {
-    if (!isScopedSuper) return;
-    setForm((p) => ({
-      ...p,
-      companyId: String(filterCompanyId),
-      userRole: p.userRole === "SUPER_ADMIN" ? "COMPANY_USER" : p.userRole,
-    }));
-  }, [filterCompanyId, isScopedSuper]);
 
   // When editing, hydrate the form from the full user record.
   useEffect(() => {
@@ -108,6 +72,7 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingUser]);
 
   const toggleRole = (roleId: number) => {
@@ -130,36 +95,12 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
         roleIds: form.roleIds,
       });
     } else {
-      // Create mode — derive userRole + companyId.
-      const userRole: UserRoleValue = isSuper
-        ? form.userRole
-        : "COMPANY_USER";
-      const companyId =
-        userRole === "SUPER_ADMIN"
-          ? null
-          : isSuper
-            ? form.companyId
-              ? Number(form.companyId)
-              : null
-            : (user?.companyId ?? null);
-
-      if (userRole !== "SUPER_ADMIN" && companyId == null) {
-        setSaving(false);
-        toast.error(
-          isSuper
-            ? "Please pick a company for this user."
-            : "No company is associated with your account.",
-        );
-        return;
-      }
-
       result = await createUser({
         name: form.name,
         email: form.email,
         password: form.password,
         role: parseInt(form.role) || 0,
-        userRole,
-        companyId,
+        userRole: form.userRole,
       });
     }
     setSaving(false);
@@ -209,7 +150,7 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>Permission role</Label>
             <Select
               value={form.role}
               onValueChange={(v) => setForm((p) => ({ ...p, role: v }))}
@@ -253,145 +194,25 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
         </div>
       )}
 
-      {/* Tenancy section — only shown in create mode. Always visible so the
-          company dropdown is never hidden; non-SUPER_ADMINs see a
-          locked-down view. */}
+      {/* App-level role (create only). ADMIN = full system; USER = limited
+          by permission gating. */}
       {!editingUser && (
-        <div className="rounded-md border-2 border-blue-500/40 bg-blue-500/5 p-3 space-y-3">
-          <div className="text-sm font-semibold text-blue-700 dark:text-blue-400">
-            Tenancy assignment
-            <span className="ms-2 text-xs font-normal text-muted-foreground">
-              (
-              {isScopedSuper
-                ? `you are scoped into ${filterCompanyName ?? `Company #${filterCompanyId}`} — locked to this company`
-                : isSuper
-                  ? "you are super admin — pick any role + company"
-                  : `locked to your company${user?.company?.name ? ` (${user.company.name})` : ""}`}
-              )
-            </span>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Tenancy role</Label>
-              <Select
-                value={form.userRole}
-                onValueChange={(v) =>
-                  setForm((p) => ({
-                    ...p,
-                    userRole: v as UserRoleValue,
-                    companyId:
-                      v === "SUPER_ADMIN"
-                        ? ""
-                        : isScopedSuper
-                          ? String(filterCompanyId)
-                          : p.companyId,
-                  }))
-                }
-                disabled={!isSuper}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Only offer "Super admin (no company)" when the caller
-                      is unscoped — when scoped into a tenant, creating a
-                      tenant-less super admin would contradict the
-                      "acting as <company>" sidebar banner. */}
-                  {isSuper && !isScopedSuper && (
-                    <SelectItem value="SUPER_ADMIN">
-                      Super admin (no company)
-                    </SelectItem>
-                  )}
-                  <SelectItem value="COMPANY_ADMIN">Company admin</SelectItem>
-                  <SelectItem value="COMPANY_USER">Company user</SelectItem>
-                </SelectContent>
-              </Select>
-              {!isSuper && (
-                <p className="text-xs text-muted-foreground">
-                  Locked to "Company user" — only super admins can grant
-                  other roles.
-                </p>
-              )}
-              {isScopedSuper && (
-                <p className="text-xs text-muted-foreground">
-                  Unscope from the sidebar picker to create a super admin.
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>
-                Company
-                {form.userRole !== "SUPER_ADMIN" && (
-                  <span className="text-red-600 ms-1">*</span>
-                )}
-              </Label>
-              {isScopedSuper ? (
-                // SUPER_ADMIN scoped into a tenant — picker is locked to
-                // the scoped company. Show it as a disabled text input
-                // so it's visually clear it can't be changed without
-                // leaving scope.
-                <>
-                  <Input
-                    value={
-                      filterCompanyName ??
-                      companies.find((c) => c.id === filterCompanyId)?.name ??
-                      `Company #${filterCompanyId}`
-                    }
-                    disabled
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Locked to the company you&apos;re scoped into. Switch
-                    back to "All companies" in the sidebar to assign a
-                    user to a different tenant.
-                  </p>
-                </>
-              ) : isSuper ? (
-                <>
-                  <Select
-                    value={form.companyId}
-                    onValueChange={(v) =>
-                      setForm((p) => ({ ...p, companyId: v }))
-                    }
-                    disabled={form.userRole === "SUPER_ADMIN"}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          form.userRole === "SUPER_ADMIN"
-                            ? "—"
-                            : companies.length === 0
-                              ? "No companies — create one first"
-                              : "Select a company"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.userRole !== "SUPER_ADMIN" &&
-                    companies.length === 0 && (
-                      <p className="text-xs text-red-600">
-                        Create at least one company before creating company
-                        users.
-                      </p>
-                    )}
-                </>
-              ) : (
-                <Input
-                  value={
-                    user?.company?.name ??
-                    `Company #${user?.companyId ?? "?"}`
-                  }
-                  disabled
-                />
-              )}
-            </div>
-          </div>
+        <div className="space-y-2">
+          <Label>App role</Label>
+          <Select
+            value={form.userRole}
+            onValueChange={(v) =>
+              setForm((p) => ({ ...p, userRole: v as UserRoleValue }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="USER">User</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       )}
 
@@ -401,17 +222,7 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
             Cancel
           </Button>
         )}
-        <Button
-          type="submit"
-          disabled={
-            saving ||
-            // SUPER_ADMIN creating a non-super user must pick a company.
-            (!editingUser &&
-              isSuper &&
-              form.userRole !== "SUPER_ADMIN" &&
-              !form.companyId)
-          }
-        >
+        <Button type="submit" disabled={saving}>
           {saving
             ? "Saving..."
             : editingUser

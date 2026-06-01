@@ -5,7 +5,6 @@ import { AppSidebar } from "@/components/shared/app-sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { LicenseProvider } from "@/contexts/LicenseContext";
-import { TenantFilterProvider } from "@/contexts/TenantFilterContext";
 import { useUser } from "@/contexts/UserContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useTranslations } from "next-intl";
@@ -42,7 +41,6 @@ export default function DashboardGroupLayout({ children }: Props) {
   }
 
   return (
-    <TenantFilterProvider>
     <LicenseProvider>
       <SidebarProvider
         key={locale}
@@ -64,6 +62,5 @@ export default function DashboardGroupLayout({ children }: Props) {
         </SidebarInset>
       </SidebarProvider>
     </LicenseProvider>
-    </TenantFilterProvider>
   );
 }
