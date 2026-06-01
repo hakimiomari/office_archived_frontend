@@ -48,6 +48,9 @@ import { RouteGuard } from "@/components/route-guard";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useTranslations } from "next-intl";
 import { nextRoute } from "@/lib/route";
+import { useUser } from "@/contexts/UserContext";
+import { useTenantFilter } from "@/contexts/TenantFilterContext";
+import { useCompanies, Company } from "@/api/hooks/use-companies";
 
 type FormData = {
   name: string;
@@ -56,6 +59,8 @@ type FormData = {
   address: string;
   creditLimit: string;
   notes: string;
+  /** SUPER_ADMIN only — empty for non-super-admin users. */
+  companyId: string;
 };
 
 const emptyForm: FormData = {
@@ -65,6 +70,7 @@ const emptyForm: FormData = {
   address: "",
   creditLimit: "0",
   notes: "",
+  companyId: "",
 };
 
 export default function CustomersPage() {
@@ -78,6 +84,16 @@ export default function CustomersPage() {
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
   const { changeRoute } = nextRoute();
+
+  // SUPER_ADMIN-only company picker. When acting as super-admin, the form
+  // shows a Company Select; the chosen company is sent in the payload so
+  // the backend creates the customer under that tenant. Non-super-admin
+  // users never see the picker — their tenant comes from the JWT.
+  const { user } = useUser();
+  const isSuperAdmin = user?.userRole === "SUPER_ADMIN";
+  const { filterCompanyId } = useTenantFilter();
+  const { list: listCompanies } = useCompanies();
+  const [companies, setCompanies] = useState<Company[]>([]);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -110,9 +126,27 @@ export default function CustomersPage() {
     fetch();
   }, [page, limit]);
 
+  // Load companies once when the page mounts AS super-admin. Cheap (single
+  // call), and a SUPER_ADMIN listing customers always needs this dropdown
+  // for the create dialog.
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    listCompanies({ page: 1, limit: 1000 }).then((res) =>
+      setCompanies(res.data),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuperAdmin]);
+
   const openCreate = () => {
     setEditing(null);
-    setForm(emptyForm);
+    // For a SUPER_ADMIN already scoped via the CompanySwitcher, preselect
+    // that company in the form so the typical "scope then create" flow
+    // doesn't require an extra click.
+    setForm({
+      ...emptyForm,
+      companyId:
+        isSuperAdmin && filterCompanyId != null ? String(filterCompanyId) : "",
+    });
     setDialogOpen(true);
   };
 
@@ -125,6 +159,9 @@ export default function CustomersPage() {
       address: c.address ?? "",
       creditLimit: String(c.creditLimit),
       notes: c.notes ?? "",
+      // companyId is immutable post-create; field is unused in edit but
+      // must satisfy the FormData shape.
+      companyId: "",
     });
     setDialogOpen(true);
   };
@@ -132,7 +169,7 @@ export default function CustomersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: form.name,
       phone: form.phone || undefined,
       email: form.email || undefined,
@@ -140,6 +177,10 @@ export default function CustomersPage() {
       creditLimit: Number(form.creditLimit) || 0,
       notes: form.notes || undefined,
     };
+    // SUPER_ADMIN target company — backend ignores this for any other role.
+    if (!editing && isSuperAdmin && form.companyId) {
+      payload.companyId = Number(form.companyId);
+    }
     const result = editing
       ? await updateCustomer(editing.id, payload as any)
       : await createCustomer(payload as any);
@@ -347,6 +388,28 @@ export default function CustomersPage() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-4">
+            {/* SUPER_ADMIN: choose the tenant this customer belongs to.
+                Only shown on create — companyId is immutable after that. */}
+            {isSuperAdmin && !editing && (
+              <div className="space-y-2">
+                <Label>Company</Label>
+                <Select
+                  value={form.companyId}
+                  onValueChange={(v) => setForm({ ...form, companyId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="cname">{tCommon("name")}</Label>
               <Input
@@ -414,7 +477,13 @@ export default function CustomersPage() {
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={saving}>
+              <Button
+                type="submit"
+                disabled={
+                  saving ||
+                  (!editing && isSuperAdmin && !form.companyId)
+                }
+              >
                 {saving ? tCommon("saving") : tCommon("save")}
               </Button>
             </div>
