@@ -3,14 +3,6 @@ import toast from "react-hot-toast";
 
 // ============================ Types ============================
 
-export type ItemCategory =
-  | "OFFICE_SUPPLIES"
-  | "IT_EQUIPMENT"
-  | "PROJECT_MATERIALS"
-  | "CONSUMABLES"
-  | "ASSETS"
-  | "OTHER";
-
 export type StockMovementType = "IN" | "OUT" | "TRANSFER" | "ADJUSTMENT";
 
 export type StockMovementReference =
@@ -43,8 +35,6 @@ export type Item = {
   id: number;
   name: string;
   sku: string | null;
-  category: ItemCategory;
-  categoryId: number | null;
   unit: string;
   description: string | null;
   minStock: number;
@@ -158,7 +148,6 @@ export const useInventory = () => {
     page?: number;
     limit?: number;
     search?: string;
-    category?: ItemCategory;
     lowStock?: boolean;
   } = {}): Promise<ListResponse<Item>> => {
     try {

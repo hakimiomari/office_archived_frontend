@@ -7,11 +7,9 @@ import {
   Item,
   InventoryStock,
   Warehouse,
-  ItemCategory,
 } from "@/config/inventory/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -55,9 +53,6 @@ export default function WarehouseDetailPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<ItemCategory | "ALL">(
-    "ALL",
-  );
   const [stockFilter, setStockFilter] = useState<"ALL" | "LOW" | "ZERO" | "OK">(
     "ALL",
   );
@@ -76,7 +71,6 @@ export default function WarehouseDetailPage() {
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      if (categoryFilter !== "ALL" && r.item.category !== categoryFilter) return false;
       if (stockFilter === "ZERO" && r.quantity > 0) return false;
       if (stockFilter === "LOW" && !(r.quantity > 0 && r.quantity < r.item.minStock)) return false;
       if (stockFilter === "OK" && r.quantity < r.item.minStock) return false;
@@ -90,7 +84,7 @@ export default function WarehouseDetailPage() {
       }
       return true;
     });
-  }, [rows, search, categoryFilter, stockFilter]);
+  }, [rows, search, stockFilter]);
 
   const totals = useMemo(() => {
     const totalQty = rows.reduce((s, r) => s + r.quantity, 0);
@@ -104,15 +98,6 @@ export default function WarehouseDetailPage() {
     const zeroCount = rows.filter((r) => r.quantity <= 0).length;
     return { totalQty, stockValue, lowCount, zeroCount };
   }, [rows]);
-
-  const categoryLabel: Record<ItemCategory, string> = {
-    OFFICE_SUPPLIES: t("categoryOfficeSupplies"),
-    IT_EQUIPMENT: t("categoryItEquipment"),
-    PROJECT_MATERIALS: t("categoryProjectMaterials"),
-    CONSUMABLES: t("categoryConsumables"),
-    ASSETS: t("categoryAssets"),
-    OTHER: t("categoryOther"),
-  };
 
   return (
     <RouteGuard permission="inventory.read">
@@ -181,31 +166,6 @@ export default function WarehouseDetailPage() {
           />
           <div className="flex items-center gap-2 flex-wrap">
             <Select
-              value={categoryFilter}
-              onValueChange={(v) => setCategoryFilter(v as any)}
-            >
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{t("allCategories")}</SelectItem>
-                <SelectItem value="OFFICE_SUPPLIES">
-                  {t("categoryOfficeSupplies")}
-                </SelectItem>
-                <SelectItem value="IT_EQUIPMENT">
-                  {t("categoryItEquipment")}
-                </SelectItem>
-                <SelectItem value="PROJECT_MATERIALS">
-                  {t("categoryProjectMaterials")}
-                </SelectItem>
-                <SelectItem value="CONSUMABLES">
-                  {t("categoryConsumables")}
-                </SelectItem>
-                <SelectItem value="ASSETS">{t("categoryAssets")}</SelectItem>
-                <SelectItem value="OTHER">{t("categoryOther")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
               value={stockFilter}
               onValueChange={(v) => setStockFilter(v as any)}
             >
@@ -230,7 +190,6 @@ export default function WarehouseDetailPage() {
                 <TableHead className="px-4 py-2">#</TableHead>
                 <TableHead className="px-4 py-2">{t("itemName")}</TableHead>
                 <TableHead className="px-4 py-2">{t("sku")}</TableHead>
-                <TableHead className="px-4 py-2">{t("category")}</TableHead>
                 <TableHead className="px-4 py-2">{t("unit")}</TableHead>
                 <TableHead className="px-4 py-2">{t("qtyHere")}</TableHead>
                 <TableHead className="px-4 py-2">{t("minStock")}</TableHead>
@@ -272,11 +231,6 @@ export default function WarehouseDetailPage() {
                       </TableCell>
                       <TableCell className="px-4 py-2 text-muted-foreground">
                         {r.item.sku || "—"}
-                      </TableCell>
-                      <TableCell className="px-4 py-2">
-                        <Badge variant="outline">
-                          {categoryLabel[r.item.category]}
-                        </Badge>
                       </TableCell>
                       <TableCell className="px-4 py-2">{r.item.unit}</TableCell>
                       <TableCell className="px-4 py-2">

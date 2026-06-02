@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import {
   useInventory,
   Item,
-  ItemCategory,
   Meta,
 } from "@/config/inventory/inventory";
-import { useCategories, Category } from "@/config/categories/categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,8 +56,6 @@ import { useTranslations } from "next-intl";
 type ItemFormData = {
   name: string;
   sku: string;
-  category: ItemCategory;
-  categoryId: string;
   unit: string;
   description: string;
   minStock: number;
@@ -74,8 +70,6 @@ type ItemFormData = {
 const emptyForm: ItemFormData = {
   name: "",
   sku: "",
-  category: "OTHER",
-  categoryId: "",
   unit: "pcs",
   description: "",
   minStock: 0,
@@ -89,7 +83,6 @@ const emptyForm: ItemFormData = {
 
 export default function InventoryItemsPage() {
   const { getItems, createItem, updateItem, deleteItem } = useInventory();
-  const { list: listCategories } = useCategories();
   const { can } = usePermission();
   const t = useTranslations("inventory");
   const tCommon = useTranslations("common");
@@ -100,10 +93,6 @@ export default function InventoryItemsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [categoryFilter, setCategoryFilter] = useState<ItemCategory | "ALL">(
-    "ALL",
-  );
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
@@ -119,7 +108,6 @@ export default function InventoryItemsPage() {
       page,
       limit,
       search: search || undefined,
-      category: categoryFilter !== "ALL" ? categoryFilter : undefined,
     });
     setItems(result.data);
     setMeta(result.meta);
@@ -128,11 +116,7 @@ export default function InventoryItemsPage() {
 
   useEffect(() => {
     fetchItems();
-  }, [page, limit, categoryFilter]);
-
-  useEffect(() => {
-    listCategories({ limit: 500 }).then((r) => setCategories(r.data));
-  }, []);
+  }, [page, limit]);
 
   const handleSearch = () => {
     setPage(1);
@@ -150,8 +134,6 @@ export default function InventoryItemsPage() {
     setForm({
       name: item.name,
       sku: item.sku ?? "",
-      category: item.category,
-      categoryId: item.categoryId != null ? String(item.categoryId) : "",
       unit: item.unit,
       description: item.description ?? "",
       minStock: item.minStock,
@@ -173,9 +155,6 @@ export default function InventoryItemsPage() {
     const payload: Partial<Item> = {
       name: form.name,
       sku: form.sku || undefined,
-      category: form.category,
-      categoryId:
-        form.categoryId === "" ? null : Number(form.categoryId),
       unit: form.unit || "pcs",
       description: form.description || undefined,
       minStock: Number(form.minStock) || 0,
@@ -206,15 +185,6 @@ export default function InventoryItemsPage() {
     setDeleting(false);
     setDeleteId(null);
     if (ok) fetchItems();
-  };
-
-  const categoryLabel: Record<ItemCategory, string> = {
-    OFFICE_SUPPLIES: t("categoryOfficeSupplies"),
-    IT_EQUIPMENT: t("categoryItEquipment"),
-    PROJECT_MATERIALS: t("categoryProjectMaterials"),
-    CONSUMABLES: t("categoryConsumables"),
-    ASSETS: t("categoryAssets"),
-    OTHER: t("categoryOther"),
   };
 
   return (
@@ -250,26 +220,6 @@ export default function InventoryItemsPage() {
               {tCommon("search")}
             </Button>
           </div>
-          <Select
-            value={categoryFilter}
-            onValueChange={(v) => {
-              setCategoryFilter(v as any);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={t("allCategories")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allCategories")}</SelectItem>
-              <SelectItem value="OFFICE_SUPPLIES">{t("categoryOfficeSupplies")}</SelectItem>
-              <SelectItem value="IT_EQUIPMENT">{t("categoryItEquipment")}</SelectItem>
-              <SelectItem value="PROJECT_MATERIALS">{t("categoryProjectMaterials")}</SelectItem>
-              <SelectItem value="CONSUMABLES">{t("categoryConsumables")}</SelectItem>
-              <SelectItem value="ASSETS">{t("categoryAssets")}</SelectItem>
-              <SelectItem value="OTHER">{t("categoryOther")}</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -279,7 +229,6 @@ export default function InventoryItemsPage() {
                 <TableHead className="px-4 py-2">#</TableHead>
                 <TableHead className="px-4 py-2">{t("itemName")}</TableHead>
                 <TableHead className="px-4 py-2">{t("sku")}</TableHead>
-                <TableHead className="px-4 py-2">{t("category")}</TableHead>
                 <TableHead className="px-4 py-2">{t("unit")}</TableHead>
                 <TableHead className="px-4 py-2">{t("totalStock")}</TableHead>
                 <TableHead className="px-4 py-2">{t("minStock")}</TableHead>
@@ -317,9 +266,6 @@ export default function InventoryItemsPage() {
                       </TableCell>
                       <TableCell className="px-4 py-2 text-muted-foreground">
                         {item.sku || "—"}
-                      </TableCell>
-                      <TableCell className="px-4 py-2">
-                        <Badge variant="outline">{categoryLabel[item.category]}</Badge>
                       </TableCell>
                       <TableCell className="px-4 py-2">{item.unit}</TableCell>
                       <TableCell className="px-4 py-2">
@@ -451,50 +397,6 @@ export default function InventoryItemsPage() {
                   value={form.sku}
                   onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>{t("category")}</Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(v) => setForm({ ...form, category: v as ItemCategory })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="OFFICE_SUPPLIES">{t("categoryOfficeSupplies")}</SelectItem>
-                    <SelectItem value="IT_EQUIPMENT">{t("categoryItEquipment")}</SelectItem>
-                    <SelectItem value="PROJECT_MATERIALS">{t("categoryProjectMaterials")}</SelectItem>
-                    <SelectItem value="CONSUMABLES">{t("categoryConsumables")}</SelectItem>
-                    <SelectItem value="ASSETS">{t("categoryAssets")}</SelectItem>
-                    <SelectItem value="OTHER">{t("categoryOther")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("subcategory")}</Label>
-                <Select
-                  value={form.categoryId === "" ? "NONE" : form.categoryId}
-                  onValueChange={(v) =>
-                    setForm({ ...form, categoryId: v === "NONE" ? "" : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="None" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">{tCommon("noneOption")}</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.parent ? `${c.parent.name} › ` : ""}
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 

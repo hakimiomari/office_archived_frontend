@@ -20,7 +20,6 @@ import {
   IconUserPlus,
   IconReportAnalytics,
   IconAlertTriangle,
-  IconCategory,
   IconClipboardList,
 } from "@tabler/icons-react";
 
@@ -86,11 +85,6 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("inventoryPurchases"),
         url: "/inventory/purchases",
         icon: IconShoppingCart,
-      },
-      {
-        title: t("inventoryCategories"),
-        url: "/inventory/categories",
-        icon: IconCategory,
       },
       {
         title: t("inventoryStockCounts"),
