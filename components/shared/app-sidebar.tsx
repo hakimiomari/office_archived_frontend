@@ -13,8 +13,6 @@ import {
   IconTruck,
   IconArrowsExchange,
   IconShoppingCart,
-  IconBuilding,
-  IconUsersGroup,
   IconReceipt,
   IconCash,
   IconUserPlus,
@@ -100,24 +98,6 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("inventoryAnalytics"),
         url: "/inventory/reports",
         icon: IconReportAnalytics,
-      },
-    ],
-  },
-  {
-    title: t("employees"),
-    url: "/employees",
-    icon: IconUsersGroup,
-    requiredPermissions: ["employee.read"],
-    items: [
-      {
-        title: t("employeesList"),
-        url: "/employees",
-        icon: IconUsersGroup,
-      },
-      {
-        title: t("departments"),
-        url: "/employees/departments",
-        icon: IconBuilding,
       },
     ],
   },

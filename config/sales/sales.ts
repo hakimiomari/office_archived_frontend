@@ -58,7 +58,6 @@ export type Payment = {
   paymentDate: string;
   referenceNo: string | null;
   notes: string | null;
-  employeeId: number | null;
   createdAt: string;
   sale?: Sale;
 };
@@ -68,7 +67,6 @@ export type Sale = {
   invoiceNo: string;
   customerId: number | null;
   warehouseId: number;
-  employeeId: number | null;
   subtotal: number;
   discount: number;
   tax: number;
@@ -159,7 +157,6 @@ type SaleLineInput = {
 export type CreateSaleInput = {
   customerId?: number;
   warehouseId: number;
-  employeeId?: number;
   items: SaleLineInput[];
   discount?: number;
   tax?: number;
@@ -427,7 +424,6 @@ export const useSales = () => {
     paymentDate?: string;
     referenceNo?: string;
     notes?: string;
-    employeeId?: number;
   }): Promise<Payment | null> => {
     try {
       const response = await api.post("sales/payments", data);

@@ -163,6 +163,19 @@ export default function StockCountsPage() {
   const onComplete = async (apply: boolean) => {
     if (!activeCount) return;
     setCompleting(true);
+    const lines = Object.entries(counts2)
+      .filter(([, v]) => v !== "")
+      .map(([itemId, v]) => ({
+        itemId: Number(itemId),
+        countedQty: Number(v),
+      }));
+    if (lines.length > 0) {
+      const submitted = await submit(activeCount.id, lines);
+      if (!submitted) {
+        setCompleting(false);
+        return;
+      }
+    }
     const updated = await complete(activeCount.id, apply);
     setCompleting(false);
     if (updated) {

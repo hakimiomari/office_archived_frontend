@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useEmployees, EmployeeSummary } from "@/config/employees/employees";
 import { useInventory } from "@/config/inventory/inventory";
 import {
   useSales,
@@ -27,8 +26,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  IconUsers,
-  IconBuilding,
   IconPackage,
   IconBuildingWarehouse,
   IconAlertTriangle,
@@ -46,17 +43,12 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
   XAxis,
   YAxis,
 } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
@@ -72,17 +64,7 @@ type InventorySummary = {
   lowStockCount: number;
 };
 
-const DEPT_COLORS = [
-  "hsl(221, 83%, 53%)",
-  "hsl(142, 71%, 45%)",
-  "hsl(45, 93%, 47%)",
-  "hsl(280, 65%, 55%)",
-  "hsl(0, 70%, 55%)",
-  "hsl(190, 80%, 50%)",
-];
-
 export default function DashboardPage() {
-  const { getSummary: getEmployeeSummary } = useEmployees();
   const { getReportSummary: getInventorySummary, getLowStock } = useInventory();
   const {
     getSummary: getSalesSummary,
@@ -94,12 +76,10 @@ export default function DashboardPage() {
 
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
-  const tEmp = useTranslations("employees");
   const tInv = useTranslations("inventory");
   const tSales = useTranslations("sales");
 
   const [loading, setLoading] = useState(true);
-  const [empSummary, setEmpSummary] = useState<EmployeeSummary | null>(null);
   const [invSummary, setInvSummary] = useState<InventorySummary | null>(null);
   const [lowStock, setLowStock] = useState<any[]>([]);
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
@@ -109,15 +89,13 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [emp, inv, low, ss, rep, od] = await Promise.all([
-        getEmployeeSummary(),
+      const [inv, low, ss, rep, od] = await Promise.all([
         getInventorySummary(),
         getLowStock(),
         getSalesSummary(),
         getSalesReport("monthly"),
         getOverdueSales(),
       ]);
-      setEmpSummary(emp);
       setInvSummary(inv);
       setLowStock(low ?? []);
       setSalesSummary(ss);
@@ -130,23 +108,6 @@ export default function DashboardPage() {
   const fmt = (v: number) => v.toLocaleString();
   const daysBetween = (a: Date, b: Date) =>
     Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-
-  // Department distribution pie chart
-  const deptChartData = (empSummary?.byDepartment ?? [])
-    .filter((d) => d.count > 0)
-    .map((d, i) => ({
-      name: d.departmentName,
-      value: d.count,
-      fill: DEPT_COLORS[i % DEPT_COLORS.length],
-    }));
-
-  const deptChartConfig: ChartConfig = deptChartData.reduce(
-    (acc, d) => ({
-      ...acc,
-      [d.name]: { label: d.name, color: d.fill },
-    }),
-    {} as ChartConfig,
-  );
 
   // Revenue trend from sales report
   const trendData = (salesReport?.revenueTrend ?? []).map((r) => ({
@@ -468,26 +429,6 @@ export default function DashboardPage() {
         </Card>
         <Card
           className="cursor-pointer hover:bg-accent/50 transition"
-          onClick={() => changeRoute("/employees")}
-        >
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <IconUsers className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{tEmp("total")}</p>
-              <div className="text-xl font-bold">
-                {loading ? (
-                  <Skeleton className="h-6 w-12" />
-                ) : (
-                  empSummary?.totalEmployees ?? 0
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer hover:bg-accent/50 transition"
           onClick={() => changeRoute("/inventory/items")}
         >
           <CardContent className="flex items-center gap-4 p-4">
@@ -601,8 +542,8 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Charts row: top products + dept distribution */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Top products */}
+      <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle>{tSales("topProducts")}</CardTitle>
@@ -637,45 +578,6 @@ export default function DashboardPage() {
                     radius={[0, 4, 4, 0]}
                   />
                 </BarChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>{tEmp("departments")}</CardTitle>
-            <CardDescription>{tEmp("total")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="mx-auto h-[260px] w-[260px] rounded-full" />
-            ) : deptChartData.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                {tEmp("noDepartments")}
-              </p>
-            ) : (
-              <ChartContainer
-                config={deptChartConfig}
-                className="mx-auto aspect-square h-[260px]"
-              >
-                <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                  <Pie
-                    data={deptChartData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
-                  >
-                    {deptChartData.map((entry, idx) => (
-                      <Cell key={idx} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-                </PieChart>
               </ChartContainer>
             )}
           </CardContent>
