@@ -738,7 +738,6 @@ export default function PurchasesPage() {
                       supplierId: payDialog.supplierId,
                       purchaseId: payDialog.id,
                       amount,
-                      method: "CASH",
                     });
                     setSavingPayment(false);
                     if (result) {

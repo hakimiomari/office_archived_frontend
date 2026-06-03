@@ -41,27 +41,5 @@ export const useAuth = () => {
       });
   };
 
-  // google login
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  const googleAuth = async (response: any) => {
-    setIsGoogleLoading(true);
-    try {
-      const res = await api.post(
-        "google-authentication/google-login",
-        { token: response.credential },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      await fetchProfile();
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Google sign in failed. Please try again."
-      );
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
-
-  return { login, logout, googleAuth, isLoading, isGoogleLoading };
+  return { login, logout, isLoading };
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSales, Sale, Customer, PaymentMethod } from "@/config/sales/sales";
+import { useSales, Sale, Customer } from "@/config/sales/sales";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +55,6 @@ export default function OverdueInvoicesPage() {
 
   const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [saving, setSaving] = useState(false);
 
   const fetch = async () => {
@@ -85,7 +84,6 @@ export default function OverdueInvoicesPage() {
   const openPayment = (sale: Sale) => {
     setPaymentSale(sale);
     setPaymentAmount(String(sale.remainingAmount));
-    setPaymentMethod("CASH");
   };
 
   const handlePayment = async () => {
@@ -96,7 +94,6 @@ export default function OverdueInvoicesPage() {
     const result = await createPayment({
       saleId: paymentSale.id,
       amount,
-      method: paymentMethod,
     });
     setSaving(false);
     if (result) {
@@ -352,26 +349,6 @@ export default function OverdueInvoicesPage() {
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("paymentMethod")}</Label>
-                <Select
-                  value={paymentMethod}
-                  onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-                    ).map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {t(`paymentMethod_${m}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button

@@ -199,19 +199,6 @@ export default function UsersPage() {
       },
     },
     {
-      id: "authMethod",
-      header: t("authMethod"),
-      enableSorting: false,
-      cell: ({ row }) => {
-        const user = row.original;
-        return (
-          <Badge variant={user.googleId ? "outline" : "default"}>
-            {user.googleId ? t("googleAuth") : t("emailAuth")}
-          </Badge>
-        );
-      },
-    },
-    {
       accessorKey: "created_at",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("createdAt")} />

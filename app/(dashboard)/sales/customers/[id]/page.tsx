@@ -402,7 +402,6 @@ export default function CustomerDetailPage({
                     <TableHead>{t("paymentDate")}</TableHead>
                     <TableHead>{t("invoiceNo")}</TableHead>
                     <TableHead>{t("amount")}</TableHead>
-                    <TableHead>{t("paymentMethod")}</TableHead>
                     <TableHead>{t("referenceNo")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -417,11 +416,6 @@ export default function CustomerDetailPage({
                       </TableCell>
                       <TableCell className="font-semibold text-green-600">
                         {fmt(p.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {t(`paymentMethod_${p.method}`)}
-                        </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {p.referenceNo || "—"}

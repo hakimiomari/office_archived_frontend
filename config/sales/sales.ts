@@ -2,12 +2,6 @@ import api from "@/lib/api/axios";
 import toast from "react-hot-toast";
 
 export type PaymentStatus = "PAID" | "PARTIAL" | "UNPAID";
-export type PaymentMethod =
-  | "CASH"
-  | "BANK"
-  | "MOBILE"
-  | "CREDIT"
-  | "OTHER";
 export type SaleStatus = "COMPLETED" | "CANCELLED";
 
 export type Customer = {
@@ -54,7 +48,6 @@ export type Payment = {
   id: number;
   saleId: number;
   amount: number;
-  method: PaymentMethod;
   paymentDate: string;
   referenceNo: string | null;
   notes: string | null;
@@ -74,7 +67,6 @@ export type Sale = {
   paidAmount: number;
   remainingAmount: number;
   paymentStatus: PaymentStatus;
-  paymentMethod: PaymentMethod;
   saleStatus: SaleStatus;
   saleDate: string;
   dueDate: string | null;
@@ -161,7 +153,6 @@ export type CreateSaleInput = {
   discount?: number;
   tax?: number;
   paidAmount?: number;
-  paymentMethod?: PaymentMethod;
   saleDate?: string;
   dueDate?: string;
   notes?: string;
@@ -395,7 +386,6 @@ export const useSales = () => {
       page?: number;
       limit?: number;
       saleId?: number;
-      method?: PaymentMethod;
       from?: string;
       to?: string;
     } = {},
@@ -420,7 +410,6 @@ export const useSales = () => {
   const createPayment = async (data: {
     saleId: number;
     amount: number;
-    method?: PaymentMethod;
     paymentDate?: string;
     referenceNo?: string;
     notes?: string;

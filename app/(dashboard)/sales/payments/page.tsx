@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   useSales,
   Payment,
-  PaymentMethod,
   Meta,
 } from "@/config/sales/sales";
 import { Button } from "@/components/ui/button";
@@ -55,9 +54,6 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [methodFilter, setMethodFilter] = useState<PaymentMethod | "ALL">(
-    "ALL",
-  );
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
@@ -69,7 +65,6 @@ export default function PaymentsPage() {
     const result = await getPayments({
       page,
       limit,
-      method: methodFilter !== "ALL" ? methodFilter : undefined,
       from: fromDate || undefined,
       to: toDate || undefined,
     });
@@ -80,7 +75,7 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     fetch();
-  }, [page, limit, methodFilter, fromDate, toDate]);
+  }, [page, limit, fromDate, toDate]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -145,27 +140,6 @@ export default function PaymentsPage() {
               {tCommon("reset")}
             </Button>
           )}
-          <Select
-            value={methodFilter}
-            onValueChange={(v) => {
-              setMethodFilter(v as any);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
-              {(
-                ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-              ).map((m) => (
-                <SelectItem key={m} value={m}>
-                  {t(`paymentMethod_${m}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -177,7 +151,6 @@ export default function PaymentsPage() {
                 <TableHead>{t("invoiceNo")}</TableHead>
                 <TableHead>{t("customer")}</TableHead>
                 <TableHead>{t("amount")}</TableHead>
-                <TableHead>{t("paymentMethod")}</TableHead>
                 <TableHead>{t("referenceNo")}</TableHead>
                 <TableHead>{tCommon("actions")}</TableHead>
               </TableRow>
@@ -186,7 +159,7 @@ export default function PaymentsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={`sk-${i}`}>
-                    {Array.from({ length: 8 }).map((_, j) => (
+                    {Array.from({ length: 7 }).map((_, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full max-w-[100px]" />
                       </TableCell>
@@ -195,7 +168,7 @@ export default function PaymentsPage() {
                 ))
               ) : payments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     {t("noPayments")}
                   </TableCell>
                 </TableRow>
@@ -216,11 +189,6 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell className="font-semibold text-green-600">
                       {p.amount.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {t(`paymentMethod_${p.method}`)}
-                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {p.referenceNo || "—"}

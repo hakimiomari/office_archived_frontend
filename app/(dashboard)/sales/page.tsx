@@ -7,7 +7,6 @@ import {
   Customer,
   SalesSummary,
   PaymentStatus,
-  PaymentMethod,
   Meta,
 } from "@/config/sales/sales";
 import { useInventory, Item, Warehouse } from "@/config/inventory/inventory";
@@ -81,7 +80,6 @@ type FormData = {
   discount: string;
   tax: string;
   paidAmount: string;
-  paymentMethod: PaymentMethod;
   saleDate: string;
   dueDate: string;
   notes: string;
@@ -101,7 +99,6 @@ const emptyForm: FormData = {
   discount: "0",
   tax: "0",
   paidAmount: "0",
-  paymentMethod: "CASH",
   saleDate: new Date().toISOString().slice(0, 10),
   dueDate: "",
   notes: "",
@@ -149,7 +146,6 @@ export default function SalesPage() {
   // Record payment dialog state
   const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [savingPayment, setSavingPayment] = useState(false);
 
   // Cancel / delete confirmation state
@@ -305,7 +301,6 @@ export default function SalesPage() {
       discount: Number(form.discount) || 0,
       tax: Number(form.tax) || 0,
       paidAmount: Number(form.paidAmount) || 0,
-      paymentMethod: form.paymentMethod,
       saleDate: form.saleDate,
       dueDate: form.dueDate || undefined,
       notes: form.notes || undefined,
@@ -321,7 +316,6 @@ export default function SalesPage() {
   const openPayment = (sale: Sale) => {
     setPaymentSale(sale);
     setPaymentAmount(String(sale.remainingAmount));
-    setPaymentMethod("CASH");
   };
 
   const handlePayment = async () => {
@@ -332,7 +326,6 @@ export default function SalesPage() {
     const result = await createPayment({
       saleId: paymentSale.id,
       amount,
-      method: paymentMethod,
     });
     setSavingPayment(false);
     if (result) {
@@ -958,28 +951,6 @@ export default function SalesPage() {
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t("paymentMethod")}</Label>
-                <Select
-                  value={form.paymentMethod}
-                  onValueChange={(v) =>
-                    setForm({ ...form, paymentMethod: v as PaymentMethod })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-                    ).map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {t(`paymentMethod_${m}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {/* Totals summary */}
@@ -1113,26 +1084,6 @@ export default function SalesPage() {
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("paymentMethod")}</Label>
-                <Select
-                  value={paymentMethod}
-                  onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-                    ).map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {t(`paymentMethod_${m}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button

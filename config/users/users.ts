@@ -6,7 +6,6 @@ export type UserType = {
   name: string;
   email: string;
   profile_picture: string | null;
-  googleId: string | null;
   userRole?: "ADMIN" | "USER";
   created_at: string;
   updated_at: string;

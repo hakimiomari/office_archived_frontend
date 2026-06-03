@@ -90,19 +90,11 @@ export type Purchase = {
   items?: PurchaseItem[];
 };
 
-export type SupplierPaymentMethod =
-  | "CASH"
-  | "BANK"
-  | "MOBILE"
-  | "CREDIT"
-  | "OTHER";
-
 export type SupplierPayment = {
   id: number;
   supplierId: number;
   purchaseId: number | null;
   amount: number;
-  method: SupplierPaymentMethod;
   paymentDate: string;
   referenceNo: string | null;
   notes: string | null;
@@ -496,7 +488,6 @@ export const useInventory = () => {
     supplierId: number;
     purchaseId?: number;
     amount: number;
-    method?: SupplierPaymentMethod;
     paymentDate?: string;
     referenceNo?: string;
     notes?: string;
