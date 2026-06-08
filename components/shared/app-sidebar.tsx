@@ -24,12 +24,8 @@ import {
   IconTrendingUp,
   IconFileText,
   IconPlane,
-  IconDeviceLaptop,
-  IconTool,
-  IconUserCheck,
   IconBuilding,
   IconDiamond,
-  IconUsersGroup,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -137,47 +133,6 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("executiveTravels"),
         url: "/executive/travels",
         icon: IconPlane,
-      },
-    ],
-  },
-  {
-    title: t("equipment"),
-    url: "/equipment",
-    icon: IconDeviceLaptop,
-    requiredPermissions: ["equipment.read"],
-    items: [
-      {
-        title: t("equipmentList"),
-        url: "/equipment",
-        icon: IconDeviceLaptop,
-      },
-      {
-        title: t("equipmentAssignments"),
-        url: "/equipment/assignments",
-        icon: IconUserCheck,
-      },
-      {
-        title: t("equipmentMaintenance"),
-        url: "/equipment/maintenance",
-        icon: IconTool,
-      },
-    ],
-  },
-  {
-    title: t("employees"),
-    url: "/employees",
-    icon: IconUsersGroup,
-    requiredPermissions: ["employee.read"],
-    items: [
-      {
-        title: t("employeesList"),
-        url: "/employees",
-        icon: IconUsersGroup,
-      },
-      {
-        title: t("departments"),
-        url: "/employees/departments",
-        icon: IconBuilding,
       },
     ],
   },

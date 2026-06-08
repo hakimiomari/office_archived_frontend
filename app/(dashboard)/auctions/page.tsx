@@ -66,7 +66,7 @@ import { DataTableColumnHeader } from "@/app/(dashboard)/office-archive/data-tab
 import { DataTableViewOptions } from "@/app/(dashboard)/office-archive/data-table-components/data-table-view-options";
 import { truncateText } from "@/config/utils";
 
-const MASS_UNITS = ["Gram", "Kilogram", "Carat"] as const;
+const MASS_UNITS = ["Gram", "Kilogram", "Carat", "Ton"] as const;
 type MassUnitValue = (typeof MASS_UNITS)[number];
 
 const CURRENCIES = ["AFN", "USD"] as const;
