@@ -7,13 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Table,
   TableBody,
@@ -252,24 +246,20 @@ export default function SuppliersPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{tCommon("rowsPerPage")}:</span>
-              <Select
+              <Combobox
                 value={String(limit)}
                 onValueChange={(v) => {
                   setLimit(Number(v));
                   setPage(1);
                 }}
-              >
-                <SelectTrigger className="h-8 w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[10, 20, 50, 100].map((s) => ({
+                  value: String(s),
+                  label: String(s),
+                }))}
+                triggerClassName="h-8 w-[80px]"
+                searchPlaceholder="Search..."
+                emptyMessage="No results found."
+              />
               <span>
                 {tCommon("showing")}{" "}
                 {suppliers.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}

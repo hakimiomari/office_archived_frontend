@@ -17,13 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -372,24 +366,20 @@ export default function UsersPage() {
                 <span className="text-sm text-muted-foreground">
                   | {tCommon("rowsPerPage")}:
                 </span>
-                <Select
+                <Combobox
                   value={`${limit}`}
                   onValueChange={(value) => {
                     setLimit(Number(value));
                     setPage(1);
                   }}
-                >
-                  <SelectTrigger className="h-8 w-[70px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {[10, 20, 50, 100, 500, 1000].map((size) => (
-                      <SelectItem key={size} value={`${size}`}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[10, 20, 50, 100, 500, 1000].map((size) => ({
+                    value: `${size}`,
+                    label: `${size}`,
+                  }))}
+                  triggerClassName="h-8 w-[70px]"
+                  searchPlaceholder="Search..."
+                  emptyMessage="No results found."
+                />
               </div>
             </div>
             <div className="flex items-center gap-2">

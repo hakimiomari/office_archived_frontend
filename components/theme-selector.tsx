@@ -2,16 +2,7 @@
 
 import { useThemeConfig } from "./active-theme";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useTranslations } from "next-intl";
 
 export function ThemeSelector() {
@@ -32,53 +23,34 @@ export function ThemeSelector() {
 
   const MONO_THEMES = [{ name: t("themeMono"), value: "mono-scaled" }];
 
+  const options = [
+    ...DEFAULT_THEMES.map((th) => ({
+      value: th.value,
+      label: `${t("default")} — ${th.name}`,
+    })),
+    ...SCALED_THEMES.map((th) => ({
+      value: th.value,
+      label: `${t("scaled")} — ${th.name}`,
+    })),
+    ...MONO_THEMES.map((th) => ({
+      value: th.value,
+      label: `${t("monospaced")} — ${th.name}`,
+    })),
+  ];
+
   return (
     <div className="flex items-center gap-2">
       <Label htmlFor="theme-selector" className="sr-only">
         {t("label")}
       </Label>
-      <Select value={activeTheme} onValueChange={setActiveTheme}>
-        <SelectTrigger
-          id="theme-selector"
-          size="sm"
-          className="justify-start *:data-[slot=select-value]:w-12"
-        >
-          <span className="text-muted-foreground hidden sm:block">
-            {t("selectTheme")}
-          </span>
-          <span className="text-muted-foreground block sm:hidden">
-            {t("label")}
-          </span>
-          <SelectValue placeholder={t("selectThemePlaceholder")} />
-        </SelectTrigger>
-        <SelectContent align="end">
-          <SelectGroup>
-            <SelectLabel>{t("default")}</SelectLabel>
-            {DEFAULT_THEMES.map((theme) => (
-              <SelectItem key={theme.value} value={theme.value}>
-                {theme.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <SelectSeparator />
-          <SelectGroup>
-            <SelectLabel>{t("scaled")}</SelectLabel>
-            {SCALED_THEMES.map((theme) => (
-              <SelectItem key={theme.value} value={theme.value}>
-                {theme.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <SelectGroup>
-            <SelectLabel>{t("monospaced")}</SelectLabel>
-            {MONO_THEMES.map((theme) => (
-              <SelectItem key={theme.value} value={theme.value}>
-                {theme.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      <Combobox
+        value={activeTheme}
+        onValueChange={setActiveTheme}
+        options={options}
+        placeholder={t("selectThemePlaceholder")}
+        searchPlaceholder={t("selectTheme")}
+        emptyMessage="No theme found."
+      />
     </div>
   );
 }

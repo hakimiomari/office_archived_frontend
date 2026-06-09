@@ -20,13 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -145,27 +139,23 @@ export default function PaymentsPage() {
               {tCommon("reset")}
             </Button>
           )}
-          <Select
+          <Combobox
             value={methodFilter}
             onValueChange={(v) => {
               setMethodFilter(v as any);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
-              {(
-                ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-              ).map((m) => (
-                <SelectItem key={m} value={m}>
-                  {t(`paymentMethod_${m}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "ALL", label: tCommon("all") },
+              ...(["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]).map((m) => ({
+                value: m,
+                label: t(`paymentMethod_${m}`),
+              })),
+            ]}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No method found."
+          />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -256,24 +246,20 @@ export default function PaymentsPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{tCommon("rowsPerPage")}:</span>
-              <Select
+              <Combobox
                 value={String(limit)}
                 onValueChange={(v) => {
                   setLimit(Number(v));
                   setPage(1);
                 }}
-              >
-                <SelectTrigger className="h-8 w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[10, 20, 50, 100].map((s) => ({
+                  value: String(s),
+                  label: String(s),
+                }))}
+                triggerClassName="h-8 w-[80px]"
+                searchPlaceholder="Search..."
+                emptyMessage="No size found."
+              />
               <span>
                 {tCommon("showing")}{" "}
                 {payments.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}

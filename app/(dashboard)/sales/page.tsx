@@ -25,13 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -484,27 +478,22 @@ export default function SalesPage() {
           <Button variant="outline" onClick={fetch}>
             {tCommon("search")}
           </Button>
-          <Select
+          <Combobox
             value={statusFilter}
             onValueChange={(v) => {
               setStatusFilter(v as any);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
-              <SelectItem value="PAID">{t("paymentStatus_PAID")}</SelectItem>
-              <SelectItem value="PARTIAL">
-                {t("paymentStatus_PARTIAL")}
-              </SelectItem>
-              <SelectItem value="UNPAID">
-                {t("paymentStatus_UNPAID")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "ALL", label: tCommon("all") },
+              { value: "PAID", label: t("paymentStatus_PAID") },
+              { value: "PARTIAL", label: t("paymentStatus_PARTIAL") },
+              { value: "UNPAID", label: t("paymentStatus_UNPAID") },
+            ]}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No status found."
+          />
           <div className="flex items-center gap-1">
             <Label className="text-xs text-muted-foreground">
               {t("from")}
@@ -687,24 +676,20 @@ export default function SalesPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{tCommon("rowsPerPage")}:</span>
-              <Select
+              <Combobox
                 value={String(limit)}
                 onValueChange={(v) => {
                   setLimit(Number(v));
                   setPage(1);
                 }}
-              >
-                <SelectTrigger className="h-8 w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[10, 20, 50, 100].map((s) => ({
+                  value: String(s),
+                  label: String(s),
+                }))}
+                triggerClassName="h-8 w-[80px]"
+                searchPlaceholder="Search..."
+                emptyMessage="No size found."
+              />
               <span>
                 {tCommon("showing")}{" "}
                 {sales.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
@@ -752,42 +737,36 @@ export default function SalesPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>{t("customer")}</Label>
-                <Select
-                  value={form.customerId}
+                <Combobox
+                  value={form.customerId || "NONE"}
                   onValueChange={(v) =>
                     setForm({ ...form, customerId: v === "NONE" ? "" : v })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectCustomer")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">—</SelectItem>
-                    {customers.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "NONE", label: "—" },
+                    ...customers.map((c) => ({
+                      value: String(c.id),
+                      label: c.name,
+                    })),
+                  ]}
+                  placeholder={t("selectCustomer")}
+                  searchPlaceholder="Search customers..."
+                  emptyMessage="No customer found."
+                />
               </div>
               <div className="space-y-2">
                 <Label>{t("warehouse")}</Label>
-                <Select
+                <Combobox
                   value={form.warehouseId}
                   onValueChange={(v) => setForm({ ...form, warehouseId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectWarehouse")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {warehouses.map((w) => (
-                      <SelectItem key={w.id} value={String(w.id)}>
-                        {w.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={warehouses.map((w) => ({
+                    value: String(w.id),
+                    label: w.name,
+                  }))}
+                  placeholder={t("selectWarehouse")}
+                  searchPlaceholder="Search warehouses..."
+                  emptyMessage="No warehouse found."
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sdate">{t("saleDate")}</Label>
@@ -846,22 +825,17 @@ export default function SalesPage() {
                   >
                     <div className="col-span-5 space-y-1">
                       <Label className="text-xs">{t("item")}</Label>
-                      <Select
+                      <Combobox
                         value={li.itemId}
                         onValueChange={(v) => updateLine(idx, "itemId", v)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("selectItem")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {items.map((i) => (
-                            <SelectItem key={i.id} value={String(i.id)}>
-                              {i.name}
-                              {i.sku ? ` (${i.sku})` : ""}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={items.map((i) => ({
+                          value: String(i.id),
+                          label: `${i.name}${i.sku ? ` (${i.sku})` : ""}`,
+                        }))}
+                        placeholder={t("selectItem")}
+                        searchPlaceholder="Search items..."
+                        emptyMessage="No item found."
+                      />
                     </div>
                     <div className="col-span-2 space-y-1">
                       <Label className="text-xs">{t("quantity")}</Label>
@@ -960,25 +934,18 @@ export default function SalesPage() {
               </div>
               <div className="space-y-2">
                 <Label>{t("paymentMethod")}</Label>
-                <Select
+                <Combobox
                   value={form.paymentMethod}
                   onValueChange={(v) =>
                     setForm({ ...form, paymentMethod: v as PaymentMethod })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-                    ).map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {t(`paymentMethod_${m}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={(["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]).map((m) => ({
+                    value: m,
+                    label: t(`paymentMethod_${m}`),
+                  }))}
+                  searchPlaceholder="Search..."
+                  emptyMessage="No method found."
+                />
               </div>
             </div>
 
@@ -1116,23 +1083,16 @@ export default function SalesPage() {
               </div>
               <div className="space-y-2">
                 <Label>{t("paymentMethod")}</Label>
-                <Select
+                <Combobox
                   value={paymentMethod}
                   onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-                    ).map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {t(`paymentMethod_${m}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={(["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]).map((m) => ({
+                    value: m,
+                    label: t(`paymentMethod_${m}`),
+                  }))}
+                  searchPlaceholder="Search..."
+                  emptyMessage="No method found."
+                />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button

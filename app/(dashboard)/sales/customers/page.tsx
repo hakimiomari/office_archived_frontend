@@ -15,13 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -325,24 +319,20 @@ export default function CustomersPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{tCommon("rowsPerPage")}:</span>
-              <Select
+              <Combobox
                 value={String(limit)}
                 onValueChange={(v) => {
                   setLimit(Number(v));
                   setPage(1);
                 }}
-              >
-                <SelectTrigger className="h-8 w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[10, 20, 50, 100].map((s) => ({
+                  value: String(s),
+                  label: String(s),
+                }))}
+                triggerClassName="h-8 w-[80px]"
+                searchPlaceholder="Search..."
+                emptyMessage="No size found."
+              />
               <span>
                 {tCommon("showing")}{" "}
                 {customers.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
@@ -393,21 +383,17 @@ export default function CustomersPage() {
             {isSuperAdmin && !editing && (
               <div className="space-y-2">
                 <Label>Company</Label>
-                <Select
+                <Combobox
                   value={form.companyId}
                   onValueChange={(v) => setForm({ ...form, companyId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={companies.map((c) => ({
+                    value: String(c.id),
+                    label: c.name,
+                  }))}
+                  placeholder="Select a company"
+                  searchPlaceholder="Search companies..."
+                  emptyMessage="No company found."
+                />
               </div>
             )}
             <div className="space-y-2">

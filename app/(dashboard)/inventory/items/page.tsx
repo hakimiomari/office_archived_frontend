@@ -21,13 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -250,26 +244,26 @@ export default function InventoryItemsPage() {
               {tCommon("search")}
             </Button>
           </div>
-          <Select
+          <Combobox
             value={categoryFilter}
             onValueChange={(v) => {
               setCategoryFilter(v as any);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={t("allCategories")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allCategories")}</SelectItem>
-              <SelectItem value="OFFICE_SUPPLIES">{t("categoryOfficeSupplies")}</SelectItem>
-              <SelectItem value="IT_EQUIPMENT">{t("categoryItEquipment")}</SelectItem>
-              <SelectItem value="PROJECT_MATERIALS">{t("categoryProjectMaterials")}</SelectItem>
-              <SelectItem value="CONSUMABLES">{t("categoryConsumables")}</SelectItem>
-              <SelectItem value="ASSETS">{t("categoryAssets")}</SelectItem>
-              <SelectItem value="OTHER">{t("categoryOther")}</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "ALL", label: t("allCategories") },
+              { value: "OFFICE_SUPPLIES", label: t("categoryOfficeSupplies") },
+              { value: "IT_EQUIPMENT", label: t("categoryItEquipment") },
+              { value: "PROJECT_MATERIALS", label: t("categoryProjectMaterials") },
+              { value: "CONSUMABLES", label: t("categoryConsumables") },
+              { value: "ASSETS", label: t("categoryAssets") },
+              { value: "OTHER", label: t("categoryOther") },
+            ]}
+            placeholder={t("allCategories")}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No category found."
+          />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -379,24 +373,20 @@ export default function InventoryItemsPage() {
                 {Math.min(meta.page * meta.limit, meta.total)} {tCommon("of")}{" "}
                 {meta.total}
               </p>
-              <Select
+              <Combobox
                 value={`${limit}`}
                 onValueChange={(v) => {
                   setLimit(Number(v));
                   setPage(1);
                 }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[10, 20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={`${s}`}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[10, 20, 50, 100].map((s) => ({
+                  value: `${s}`,
+                  label: `${s}`,
+                }))}
+                triggerClassName="h-8 w-[70px]"
+                searchPlaceholder="Search..."
+                emptyMessage="No size found."
+              />
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -457,44 +447,39 @@ export default function InventoryItemsPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("category")}</Label>
-                <Select
+                <Combobox
                   value={form.category}
                   onValueChange={(v) => setForm({ ...form, category: v as ItemCategory })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="OFFICE_SUPPLIES">{t("categoryOfficeSupplies")}</SelectItem>
-                    <SelectItem value="IT_EQUIPMENT">{t("categoryItEquipment")}</SelectItem>
-                    <SelectItem value="PROJECT_MATERIALS">{t("categoryProjectMaterials")}</SelectItem>
-                    <SelectItem value="CONSUMABLES">{t("categoryConsumables")}</SelectItem>
-                    <SelectItem value="ASSETS">{t("categoryAssets")}</SelectItem>
-                    <SelectItem value="OTHER">{t("categoryOther")}</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "OFFICE_SUPPLIES", label: t("categoryOfficeSupplies") },
+                    { value: "IT_EQUIPMENT", label: t("categoryItEquipment") },
+                    { value: "PROJECT_MATERIALS", label: t("categoryProjectMaterials") },
+                    { value: "CONSUMABLES", label: t("categoryConsumables") },
+                    { value: "ASSETS", label: t("categoryAssets") },
+                    { value: "OTHER", label: t("categoryOther") },
+                  ]}
+                  searchPlaceholder="Search..."
+                  emptyMessage="No category found."
+                />
               </div>
               <div className="space-y-2">
                 <Label>{t("subcategory")}</Label>
-                <Select
+                <Combobox
                   value={form.categoryId === "" ? "NONE" : form.categoryId}
                   onValueChange={(v) =>
                     setForm({ ...form, categoryId: v === "NONE" ? "" : v })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="None" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">{tCommon("noneOption")}</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.parent ? `${c.parent.name} › ` : ""}
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "NONE", label: tCommon("noneOption") },
+                    ...categories.map((c) => ({
+                      value: String(c.id),
+                      label: `${c.parent ? `${c.parent.name} › ` : ""}${c.name}`,
+                    })),
+                  ]}
+                  placeholder="None"
+                  searchPlaceholder="Search categories..."
+                  emptyMessage="No category found."
+                />
               </div>
             </div>
 

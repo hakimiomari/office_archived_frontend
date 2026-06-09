@@ -24,13 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Calendar } from "./ui/calendar";
 
 const months = [
@@ -583,85 +577,73 @@ export const CalendarDatePicker = React.forwardRef<
                 <div className="flex flex-col">
                   <div className="flex items-center gap-4">
                     <div className="flex gap-2 ml-3">
-                      <Select
+                      <Combobox
+                        value={
+                          monthFrom ? months[monthFrom.getMonth()] : undefined
+                        }
                         onValueChange={(value) => {
                           handleMonthChange(months.indexOf(value), "from");
                           setSelectedRange(null);
                         }}
-                        value={
-                          monthFrom ? months[monthFrom.getMonth()] : undefined
-                        }
-                      >
-                        <SelectTrigger className="w-[122px] focus:ring-0 focus:ring-offset-0 font-medium hover:bg-accent hover:text-accent-foreground">
-                          <SelectValue placeholder="Month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {months.map((month, idx) => (
-                            <SelectItem key={idx} value={month}>
-                              {month}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
+                        options={months.map((month) => ({
+                          value: month,
+                          label: month,
+                        }))}
+                        placeholder="Month"
+                        triggerClassName="w-[122px] font-medium"
+                        searchPlaceholder="Search months..."
+                        emptyMessage="No month found."
+                      />
+                      <Combobox
+                        value={yearFrom ? yearFrom.toString() : undefined}
                         onValueChange={(value) => {
                           handleYearChange(Number(value), "from");
                           setSelectedRange(null);
                         }}
-                        value={yearFrom ? yearFrom.toString() : undefined}
-                      >
-                        <SelectTrigger className="w-[122px] focus:ring-0 focus:ring-offset-0 font-medium hover:bg-accent hover:text-accent-foreground">
-                          <SelectValue placeholder="Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {years.map((year, idx) => (
-                            <SelectItem key={idx} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={years.map((year) => ({
+                          value: year.toString(),
+                          label: year.toString(),
+                        }))}
+                        placeholder="Year"
+                        triggerClassName="w-[122px] font-medium"
+                        searchPlaceholder="Search years..."
+                        emptyMessage="No year found."
+                      />
                     </div>
                     {numberOfMonths === 2 && (
                       <div className="flex gap-2">
-                        <Select
+                        <Combobox
+                          value={
+                            monthTo ? months[monthTo.getMonth()] : undefined
+                          }
                           onValueChange={(value) => {
                             handleMonthChange(months.indexOf(value), "to");
                             setSelectedRange(null);
                           }}
-                          value={
-                            monthTo ? months[monthTo.getMonth()] : undefined
-                          }
-                        >
-                          <SelectTrigger className="w-[122px] focus:ring-0 focus:ring-offset-0 font-medium hover:bg-accent hover:text-accent-foreground">
-                            <SelectValue placeholder="Month" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {months.map((month, idx) => (
-                              <SelectItem key={idx} value={month}>
-                                {month}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select
+                          options={months.map((month) => ({
+                            value: month,
+                            label: month,
+                          }))}
+                          placeholder="Month"
+                          triggerClassName="w-[122px] font-medium"
+                          searchPlaceholder="Search months..."
+                          emptyMessage="No month found."
+                        />
+                        <Combobox
+                          value={yearTo ? yearTo.toString() : undefined}
                           onValueChange={(value) => {
                             handleYearChange(Number(value), "to");
                             setSelectedRange(null);
                           }}
-                          value={yearTo ? yearTo.toString() : undefined}
-                        >
-                          <SelectTrigger className="w-[122px] focus:ring-0 focus:ring-offset-0 font-medium hover:bg-accent hover:text-accent-foreground">
-                            <SelectValue placeholder="Year" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {years.map((year, idx) => (
-                              <SelectItem key={idx} value={year.toString()}>
-                                {year}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={years.map((year) => ({
+                            value: year.toString(),
+                            label: year.toString(),
+                          }))}
+                          placeholder="Year"
+                          triggerClassName="w-[122px] font-medium"
+                          searchPlaceholder="Search years..."
+                          emptyMessage="No year found."
+                        />
                       </div>
                     )}
                   </div>

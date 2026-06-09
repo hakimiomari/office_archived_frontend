@@ -11,13 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 
 type UserRoleValue = "SUPER_ADMIN" | "COMPANY_ADMIN" | "COMPANY_USER";
 
@@ -210,22 +204,17 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
           </div>
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select
+            <Combobox
               value={form.role}
               onValueChange={(v) => setForm((p) => ({ ...p, role: v }))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {allRoles.map((role) => (
-                  <SelectItem key={role.id} value={String(role.id)}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={allRoles.map((role) => ({
+                value: String(role.id),
+                label: role.name,
+              }))}
+              placeholder="Select a role"
+              searchPlaceholder="Search roles..."
+              emptyMessage="No role found."
+            />
           </div>
         </div>
       )}
@@ -273,7 +262,7 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Tenancy role</Label>
-              <Select
+              <Combobox
                 value={form.userRole}
                 onValueChange={(v) =>
                   setForm((p) => ({
@@ -288,24 +277,17 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
                   }))
                 }
                 disabled={!isSuper}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Only offer "Super admin (no company)" when the caller
-                      is unscoped — when scoped into a tenant, creating a
-                      tenant-less super admin would contradict the
-                      "acting as <company>" sidebar banner. */}
-                  {isSuper && !isScopedSuper && (
-                    <SelectItem value="SUPER_ADMIN">
-                      Super admin (no company)
-                    </SelectItem>
-                  )}
-                  <SelectItem value="COMPANY_ADMIN">Company admin</SelectItem>
-                  <SelectItem value="COMPANY_USER">Company user</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  ...(isSuper && !isScopedSuper
+                    ? [{ value: "SUPER_ADMIN", label: "Super admin (no company)" }]
+                    : []),
+                  { value: "COMPANY_ADMIN", label: "Company admin" },
+                  { value: "COMPANY_USER", label: "Company user" },
+                ]}
+                placeholder="Select tenancy role"
+                searchPlaceholder="Search..."
+                emptyMessage="No role found."
+              />
               {!isSuper && (
                 <p className="text-xs text-muted-foreground">
                   Locked to "Company user" — only super admins can grant
@@ -347,32 +329,26 @@ export function UserForm({ editingUser, onSuccess, onCancel }: Props) {
                 </>
               ) : isSuper ? (
                 <>
-                  <Select
+                  <Combobox
                     value={form.companyId}
                     onValueChange={(v) =>
                       setForm((p) => ({ ...p, companyId: v }))
                     }
                     disabled={form.userRole === "SUPER_ADMIN"}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          form.userRole === "SUPER_ADMIN"
-                            ? "—"
-                            : companies.length === 0
-                              ? "No companies — create one first"
-                              : "Select a company"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={companies.map((c) => ({
+                      value: String(c.id),
+                      label: c.name,
+                    }))}
+                    placeholder={
+                      form.userRole === "SUPER_ADMIN"
+                        ? "—"
+                        : companies.length === 0
+                          ? "No companies — create one first"
+                          : "Select a company"
+                    }
+                    searchPlaceholder="Search companies..."
+                    emptyMessage="No company found."
+                  />
                   {form.userRole !== "SUPER_ADMIN" &&
                     companies.length === 0 && (
                       <p className="text-xs text-red-600">

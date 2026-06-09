@@ -50,13 +50,7 @@ import {
   type VisibilityState,
   type PaginationState,
 } from "@tanstack/react-table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { DataTableViewOptions } from "@/components/data-table/data-table-view-options";
@@ -387,23 +381,19 @@ export default function RolesPage() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>{tCommon("rowsPerPage")}:</span>
-                  <Select
+                  <Combobox
                     value={String(pagination.pageSize)}
                     onValueChange={(v) =>
                       setPagination({ pageIndex: 0, pageSize: Number(v) })
                     }
-                  >
-                    <SelectTrigger className="h-8 w-[80px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[10, 20, 50, 100].map((s) => (
-                        <SelectItem key={s} value={String(s)}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={[10, 20, 50, 100].map((s) => ({
+                      value: String(s),
+                      label: String(s),
+                    }))}
+                    triggerClassName="h-8 w-[80px]"
+                    searchPlaceholder="Search..."
+                    emptyMessage="No results found."
+                  />
                   <span>
                     {tCommon("showing")}{" "}
                     {roles.length > 0

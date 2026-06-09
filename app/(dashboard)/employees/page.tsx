@@ -26,13 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -343,44 +337,36 @@ export default function EmployeesPage() {
           <Button variant="outline" onClick={fetch}>
             {tCommon("search")}
           </Button>
-          <Select
+          <Combobox
             value={statusFilter}
             onValueChange={(v) => {
               setStatusFilter(v as any);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={tCommon("status")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {t(`status_${s}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
+            options={[
+              { value: "ALL", label: tCommon("all") },
+              ...STATUSES.map((s) => ({ value: s, label: t(`status_${s}`) })),
+            ]}
+            placeholder={tCommon("status")}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No results found."
+          />
+          <Combobox
             value={deptFilter}
             onValueChange={(v) => {
               setDeptFilter(v);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="h-9 w-[200px]">
-              <SelectValue placeholder={t("department")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
-              {departments.map((d) => (
-                <SelectItem key={d.id} value={String(d.id)}>
-                  {d.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "ALL", label: tCommon("all") },
+              ...departments.map((d) => ({ value: String(d.id), label: d.name })),
+            ]}
+            placeholder={t("department")}
+            triggerClassName="h-9 w-[200px]"
+            searchPlaceholder="Search departments..."
+            emptyMessage="No department found."
+          />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -475,24 +461,20 @@ export default function EmployeesPage() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{tCommon("rowsPerPage")}:</span>
-              <Select
+              <Combobox
                 value={String(limit)}
                 onValueChange={(v) => {
                   setLimit(Number(v));
                   setPage(1);
                 }}
-              >
-                <SelectTrigger className="h-8 w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50, 100].map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={[10, 20, 50, 100].map((s) => ({
+                  value: String(s),
+                  label: String(s),
+                }))}
+                triggerClassName="h-8 w-[80px]"
+                searchPlaceholder="Search..."
+                emptyMessage="No results found."
+              />
               <span>
                 {tCommon("showing")}{" "}
                 {employees.length > 0 ? (meta.page - 1) * meta.limit + 1 : 0}{" "}
@@ -584,24 +566,22 @@ export default function EmployeesPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("department")}</Label>
-                <Select
-                  value={form.departmentId}
+                <Combobox
+                  value={form.departmentId || "NONE"}
                   onValueChange={(v) =>
                     setForm({ ...form, departmentId: v === "NONE" ? "" : v })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectDepartment")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">—</SelectItem>
-                    {departments.map((d) => (
-                      <SelectItem key={d.id} value={String(d.id)}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={[
+                    { value: "NONE", label: "—" },
+                    ...departments.map((d) => ({
+                      value: String(d.id),
+                      label: d.name,
+                    })),
+                  ]}
+                  placeholder={t("selectDepartment")}
+                  searchPlaceholder="Search departments..."
+                  emptyMessage="No department found."
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="desig">{t("designation")}</Label>
@@ -628,23 +608,19 @@ export default function EmployeesPage() {
               </div>
               <div className="space-y-2">
                 <Label>{tCommon("status")}</Label>
-                <Select
+                <Combobox
                   value={form.status}
                   onValueChange={(v) =>
                     setForm({ ...form, status: v as EmployeeStatus })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {t(`status_${s}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={STATUSES.map((s) => ({
+                    value: s,
+                    label: t(`status_${s}`),
+                  }))}
+                  placeholder={tCommon("status")}
+                  searchPlaceholder="Search..."
+                  emptyMessage="No status found."
+                />
               </div>
             </div>
             <div className="space-y-2">

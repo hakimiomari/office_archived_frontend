@@ -19,13 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   IconAlertTriangle,
   IconCheck,
@@ -132,29 +126,35 @@ export default function AlertsPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={type} onValueChange={(v) => { setType(v as any); setPage(1); }}>
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={t("allTypes")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allTypes")}</SelectItem>
-              <SelectItem value="LOW_STOCK">{t("typeLowStock")}</SelectItem>
-              <SelectItem value="OVERSTOCK">{t("typeOverstock")}</SelectItem>
-              <SelectItem value="DEAD_STOCK">{t("typeDeadStock")}</SelectItem>
-              <SelectItem value="REORDER">{t("typeReorder")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={status} onValueChange={(v) => { setStatus(v as any); setPage(1); }}>
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={t("allStatuses")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allStatuses")}</SelectItem>
-              <SelectItem value="OPEN">{t("statusOpen")}</SelectItem>
-              <SelectItem value="ACKNOWLEDGED">{t("statusAcknowledged")}</SelectItem>
-              <SelectItem value="RESOLVED">{t("statusResolved")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            value={type}
+            onValueChange={(v) => { setType(v as any); setPage(1); }}
+            options={[
+              { value: "ALL", label: t("allTypes") },
+              { value: "LOW_STOCK", label: t("typeLowStock") },
+              { value: "OVERSTOCK", label: t("typeOverstock") },
+              { value: "DEAD_STOCK", label: t("typeDeadStock") },
+              { value: "REORDER", label: t("typeReorder") },
+            ]}
+            placeholder={t("allTypes")}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No type found."
+          />
+          <Combobox
+            value={status}
+            onValueChange={(v) => { setStatus(v as any); setPage(1); }}
+            options={[
+              { value: "ALL", label: t("allStatuses") },
+              { value: "OPEN", label: t("statusOpen") },
+              { value: "ACKNOWLEDGED", label: t("statusAcknowledged") },
+              { value: "RESOLVED", label: t("statusResolved") },
+            ]}
+            placeholder={t("allStatuses")}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No status found."
+          />
         </div>
 
         <div className="overflow-x-auto rounded-md border">

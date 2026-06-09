@@ -11,13 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -256,27 +250,23 @@ export default function CategoriesPage() {
             </div>
             <div className="space-y-2">
               <Label>{t("parent")}</Label>
-              <Select
+              <Combobox
                 value={form.parentId === "" ? "NONE" : form.parentId}
                 onValueChange={(v) =>
                   setForm({ ...form, parentId: v === "NONE" ? "" : v })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NONE">{tCommon("topLevelOption")}</SelectItem>
-                  {flat
+                options={[
+                  { value: "NONE", label: tCommon("topLevelOption") },
+                  ...flat
                     .filter((c) => !editing || c.id !== editing.id)
-                    .map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.parent ? `${c.parent.name} › ` : ""}
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                    .map((c) => ({
+                      value: String(c.id),
+                      label: `${c.parent ? `${c.parent.name} › ` : ""}${c.name}`,
+                    })),
+                ]}
+                searchPlaceholder="Search categories..."
+                emptyMessage="No category found."
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">{t("description")}</Label>

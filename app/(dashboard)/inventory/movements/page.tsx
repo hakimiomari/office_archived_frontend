@@ -22,13 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -222,18 +216,21 @@ export default function MovementsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as any); setPage(1); }}>
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue placeholder={t("allTypes")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allTypes")}</SelectItem>
-              <SelectItem value="IN">{t("stockIn")}</SelectItem>
-              <SelectItem value="OUT">{t("stockOut")}</SelectItem>
-              <SelectItem value="TRANSFER">{t("stockTransfer")}</SelectItem>
-              <SelectItem value="ADJUSTMENT">{t("stockAdjustment")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <Combobox
+            value={typeFilter}
+            onValueChange={(v) => { setTypeFilter(v as any); setPage(1); }}
+            options={[
+              { value: "ALL", label: t("allTypes") },
+              { value: "IN", label: t("stockIn") },
+              { value: "OUT", label: t("stockOut") },
+              { value: "TRANSFER", label: t("stockTransfer") },
+              { value: "ADJUSTMENT", label: t("stockAdjustment") },
+            ]}
+            placeholder={t("allTypes")}
+            triggerClassName="h-9 w-[180px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No type found."
+          />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -340,59 +337,50 @@ export default function MovementsPage() {
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="space-y-2">
               <Label>{t("item")}</Label>
-              <Select value={form.itemId} onValueChange={(v) => setForm({ ...form, itemId: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("selectItem")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {items.map((i) => (
-                    <SelectItem key={i.id} value={String(i.id)}>
-                      {i.name} {i.sku ? `(${i.sku})` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={form.itemId}
+                onValueChange={(v) => setForm({ ...form, itemId: v })}
+                options={items.map((i) => ({
+                  value: String(i.id),
+                  label: `${i.name}${i.sku ? ` (${i.sku})` : ""}`,
+                }))}
+                placeholder={t("selectItem")}
+                searchPlaceholder="Search items..."
+                emptyMessage="No item found."
+              />
             </div>
 
             {(dialogOp === "OUT" || dialogOp === "TRANSFER") && (
               <div className="space-y-2">
                 <Label>{t("sourceWarehouse")}</Label>
-                <Select
+                <Combobox
                   value={form.sourceWarehouseId}
                   onValueChange={(v) => setForm({ ...form, sourceWarehouseId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectWarehouse")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {warehouses.map((w) => (
-                      <SelectItem key={w.id} value={String(w.id)}>
-                        {w.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={warehouses.map((w) => ({
+                    value: String(w.id),
+                    label: w.name,
+                  }))}
+                  placeholder={t("selectWarehouse")}
+                  searchPlaceholder="Search warehouses..."
+                  emptyMessage="No warehouse found."
+                />
               </div>
             )}
 
             {(dialogOp === "IN" || dialogOp === "TRANSFER") && (
               <div className="space-y-2">
                 <Label>{t("targetWarehouse")}</Label>
-                <Select
+                <Combobox
                   value={form.targetWarehouseId}
                   onValueChange={(v) => setForm({ ...form, targetWarehouseId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("selectWarehouse")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {warehouses.map((w) => (
-                      <SelectItem key={w.id} value={String(w.id)}>
-                        {w.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={warehouses.map((w) => ({
+                    value: String(w.id),
+                    label: w.name,
+                  }))}
+                  placeholder={t("selectWarehouse")}
+                  searchPlaceholder="Search warehouses..."
+                  emptyMessage="No warehouse found."
+                />
               </div>
             )}
 

@@ -16,13 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -136,22 +130,21 @@ export default function OverdueInvoicesPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Select
+          <Combobox
             value={customerFilter}
             onValueChange={(v) => setCustomerFilter(v)}
-          >
-            <SelectTrigger className="h-9 w-[220px]">
-              <SelectValue placeholder={t("customer")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("allCustomers")}</SelectItem>
-              {customers.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "ALL", label: t("allCustomers") },
+              ...customers.map((c) => ({
+                value: String(c.id),
+                label: c.name,
+              })),
+            ]}
+            placeholder={t("customer")}
+            triggerClassName="h-9 w-[220px]"
+            searchPlaceholder="Search customers..."
+            emptyMessage="No customer found."
+          />
           <div className="flex items-center gap-1">
             <Label className="text-xs text-muted-foreground">
               {t("from")}
@@ -355,23 +348,16 @@ export default function OverdueInvoicesPage() {
               </div>
               <div className="space-y-2">
                 <Label>{t("paymentMethod")}</Label>
-                <Select
+                <Combobox
                   value={paymentMethod}
                   onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(
-                      ["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]
-                    ).map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {t(`paymentMethod_${m}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={(["CASH", "BANK", "MOBILE", "CREDIT", "OTHER"] as PaymentMethod[]).map((m) => ({
+                    value: m,
+                    label: t(`paymentMethod_${m}`),
+                  }))}
+                  searchPlaceholder="Search..."
+                  emptyMessage="No method found."
+                />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button

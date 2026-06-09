@@ -8,13 +8,7 @@ import {
   Company,
   COMPANIES_CHANGED_EVENT,
 } from "@/api/hooks/use-companies";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Badge } from "@/components/ui/badge";
 import { IconBuilding, IconUserShield } from "@tabler/icons-react";
 
@@ -131,7 +125,7 @@ export function CompanySwitcher() {
         )}
       </div>
 
-      <Select
+      <Combobox
         value={value}
         onValueChange={(v) => {
           if (v === "ALL") {
@@ -141,40 +135,22 @@ export function CompanySwitcher() {
             const picked = companies.find((c) => c.id === id);
             setFilterCompany(id, picked?.name ?? null);
           }
-          // Force the rest of the page to re-fetch with the new filter.
           if (typeof window !== "undefined") window.location.reload();
         }}
-      >
-        <SelectTrigger className="h-8 w-full text-xs">
-          {/*
-            Pin the displayed text explicitly. Resolution order:
-              1. Live-loaded company name (best — current data).
-              2. Cached name from localStorage (instant on cold reload).
-              3. `Company #N` placeholder (only briefly, while we fetch).
-          */}
-          <SelectValue placeholder="All companies">
-            {scoped
-              ? current?.name ??
-                filterCompanyName ??
-                `Company #${filterCompanyId}`
-              : "All companies"}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="ALL">All companies</SelectItem>
-          {loaded &&
-            companies.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>
-                {c.name}
-                {!c.isActive && (
-                  <Badge variant="destructive" className="ms-2 text-[10px]">
-                    inactive
-                  </Badge>
-                )}
-              </SelectItem>
-            ))}
-        </SelectContent>
-      </Select>
+        options={[
+          { value: "ALL", label: "All companies" },
+          ...(loaded
+            ? companies.map((c) => ({
+                value: String(c.id),
+                label: c.isActive ? c.name : `${c.name} (inactive)`,
+              }))
+            : []),
+        ]}
+        placeholder="All companies"
+        triggerClassName="h-8 w-full text-xs"
+        searchPlaceholder="Search companies..."
+        emptyMessage="No company found."
+      />
     </div>
   );
 }

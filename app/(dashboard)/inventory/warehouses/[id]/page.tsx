@@ -22,13 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   IconArrowLeft,
   IconAlertTriangle,
@@ -180,45 +174,35 @@ export default function WarehouseDetailPage() {
             className="max-w-md"
           />
           <div className="flex items-center gap-2 flex-wrap">
-            <Select
+            <Combobox
               value={categoryFilter}
               onValueChange={(v) => setCategoryFilter(v as any)}
-            >
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{t("allCategories")}</SelectItem>
-                <SelectItem value="OFFICE_SUPPLIES">
-                  {t("categoryOfficeSupplies")}
-                </SelectItem>
-                <SelectItem value="IT_EQUIPMENT">
-                  {t("categoryItEquipment")}
-                </SelectItem>
-                <SelectItem value="PROJECT_MATERIALS">
-                  {t("categoryProjectMaterials")}
-                </SelectItem>
-                <SelectItem value="CONSUMABLES">
-                  {t("categoryConsumables")}
-                </SelectItem>
-                <SelectItem value="ASSETS">{t("categoryAssets")}</SelectItem>
-                <SelectItem value="OTHER">{t("categoryOther")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
+              options={[
+                { value: "ALL", label: t("allCategories") },
+                { value: "OFFICE_SUPPLIES", label: t("categoryOfficeSupplies") },
+                { value: "IT_EQUIPMENT", label: t("categoryItEquipment") },
+                { value: "PROJECT_MATERIALS", label: t("categoryProjectMaterials") },
+                { value: "CONSUMABLES", label: t("categoryConsumables") },
+                { value: "ASSETS", label: t("categoryAssets") },
+                { value: "OTHER", label: t("categoryOther") },
+              ]}
+              triggerClassName="h-9 w-[180px]"
+              searchPlaceholder="Search..."
+              emptyMessage="No category found."
+            />
+            <Combobox
               value={stockFilter}
               onValueChange={(v) => setStockFilter(v as any)}
-            >
-              <SelectTrigger className="h-9 w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{t("allStockLevels")}</SelectItem>
-                <SelectItem value="OK">{t("inStock")}</SelectItem>
-                <SelectItem value="LOW">{t("lowStockAlert")}</SelectItem>
-                <SelectItem value="ZERO">{t("outOfStock")}</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "ALL", label: t("allStockLevels") },
+                { value: "OK", label: t("inStock") },
+                { value: "LOW", label: t("lowStockAlert") },
+                { value: "ZERO", label: t("outOfStock") },
+              ]}
+              triggerClassName="h-9 w-[160px]"
+              searchPlaceholder="Search..."
+              emptyMessage="No status found."
+            />
           </div>
         </div>
 

@@ -20,13 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -189,24 +183,24 @@ export default function StockCountsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Select
+          <Combobox
             value={filterStatus}
             onValueChange={(v) => {
               setFilterStatus(v as any);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="h-9 w-[200px]">
-              <SelectValue placeholder={tCommon("allStatuses")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{tCommon("all")}</SelectItem>
-              <SelectItem value="DRAFT">{t("statusDraft")}</SelectItem>
-              <SelectItem value="IN_PROGRESS">{t("statusInProgress")}</SelectItem>
-              <SelectItem value="COMPLETED">{t("statusCompleted")}</SelectItem>
-              <SelectItem value="CANCELLED">{t("statusCancelled")}</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: "ALL", label: tCommon("all") },
+              { value: "DRAFT", label: t("statusDraft") },
+              { value: "IN_PROGRESS", label: t("statusInProgress") },
+              { value: "COMPLETED", label: t("statusCompleted") },
+              { value: "CANCELLED", label: t("statusCancelled") },
+            ]}
+            placeholder={tCommon("allStatuses")}
+            triggerClassName="h-9 w-[200px]"
+            searchPlaceholder="Search..."
+            emptyMessage="No status found."
+          />
         </div>
 
         <div className="overflow-x-auto rounded-md border">
@@ -337,23 +331,19 @@ export default function StockCountsPage() {
           <form onSubmit={onCreate} className="grid gap-3">
             <div className="space-y-2">
               <Label>{t("columnWarehouse")}</Label>
-              <Select
+              <Combobox
                 value={createForm.warehouseId}
                 onValueChange={(v) =>
                   setCreateForm({ ...createForm, warehouseId: v })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("selectWarehouse")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {warehouses.map((w) => (
-                    <SelectItem key={w.id} value={String(w.id)}>
-                      {w.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={warehouses.map((w) => ({
+                  value: String(w.id),
+                  label: w.name,
+                }))}
+                placeholder={t("selectWarehouse")}
+                searchPlaceholder="Search warehouses..."
+                emptyMessage="No warehouse found."
+              />
             </div>
             <div className="space-y-2">
               <Label>{t("reference")}</Label>

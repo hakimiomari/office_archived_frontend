@@ -25,13 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   IconCash,
   IconReceipt,
@@ -140,36 +134,34 @@ export default function SalesReportsPage() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-2xl font-bold">{t("reports")}</h1>
           <div className="flex items-center gap-2 flex-wrap">
-            <Select
+            <Combobox
               value={warehouseId}
               onValueChange={(v) => setWarehouseId(v)}
-            >
-              <SelectTrigger className="h-9 w-[200px]">
-                <SelectValue placeholder={tCommon("allWarehouses")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{tCommon("allWarehouses")}</SelectItem>
-                {warehouses.map((w) => (
-                  <SelectItem key={w.id} value={String(w.id)}>
-                    {w.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
+              options={[
+                { value: "ALL", label: tCommon("allWarehouses") },
+                ...warehouses.map((w) => ({
+                  value: String(w.id),
+                  label: w.name,
+                })),
+              ]}
+              placeholder={tCommon("allWarehouses")}
+              triggerClassName="h-9 w-[200px]"
+              searchPlaceholder="Search warehouses..."
+              emptyMessage="No warehouse found."
+            />
+            <Combobox
               value={period}
               onValueChange={(v) => setPeriod(v as ReportPeriod)}
-            >
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">{t("periodDaily")}</SelectItem>
-                <SelectItem value="weekly">{t("periodWeekly")}</SelectItem>
-                <SelectItem value="monthly">{t("periodMonthly")}</SelectItem>
-                <SelectItem value="yearly">{t("periodYearly")}</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: "daily", label: t("periodDaily") },
+                { value: "weekly", label: t("periodWeekly") },
+                { value: "monthly", label: t("periodMonthly") },
+                { value: "yearly", label: t("periodYearly") },
+              ]}
+              triggerClassName="h-9 w-[180px]"
+              searchPlaceholder="Search..."
+              emptyMessage="No period found."
+            />
             <Button
               variant="default"
               disabled={loading || generating}

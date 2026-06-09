@@ -4,13 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Card,
   CardContent,
@@ -104,36 +98,32 @@ export function LicenseForm({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>{t("licenseType")}</Label>
-              <Select
+              <Combobox
                 value={form.licenseType}
                 onValueChange={(v) =>
                   handleChange("licenseType", v as "SMALL" | "LARGE")
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SMALL">{t("smallScale")}</SelectItem>
-                  <SelectItem value="LARGE">{t("largeScale")}</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "SMALL", label: t("smallScale") },
+                  { value: "LARGE", label: t("largeScale") },
+                ]}
+                searchPlaceholder="Search..."
+                emptyMessage="No results found."
+              />
             </div>
             <div className="space-y-2">
               <Label>{tCommon("status")}</Label>
-              <Select
+              <Combobox
                 value={form.status}
                 onValueChange={(v) => handleChange("status", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ACTIVE">{t("active")}</SelectItem>
-                  <SelectItem value="EXPIRED">{t("expired")}</SelectItem>
-                  <SelectItem value="SUSPENDED">{t("suspended")}</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: "ACTIVE", label: t("active") },
+                  { value: "EXPIRED", label: t("expired") },
+                  { value: "SUSPENDED", label: t("suspended") },
+                ]}
+                searchPlaceholder="Search..."
+                emptyMessage="No results found."
+              />
             </div>
           </div>
 
