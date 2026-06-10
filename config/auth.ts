@@ -32,7 +32,7 @@ export const useAuth = () => {
       .post("auth/logout")
       .then((response) => {
         if (response.status == 201) {
-          router.push("/");
+          router.push("/login");
         }
       })
       .catch((err) => {

@@ -129,8 +129,8 @@ function forceLogout() {
     )
     .catch(() => {});
 
-  if (window.location.pathname !== "/") {
-    window.location.href = "/";
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
   }
 }
 
