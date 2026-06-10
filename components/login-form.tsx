@@ -105,7 +105,7 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 {t("noAccount")}{" "}
-                <a href="#" className="underline underline-offset-4">
+                <a href="/signup" className="underline underline-offset-4">
                   {t("signUp")}
                 </a>
               </div>

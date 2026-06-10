@@ -69,7 +69,9 @@ export default function LandingPage() {
   }, []);
 
   const ctaPrimary = user ? "Go to dashboard" : "Get started";
-  const ctaHref = user ? "/dashboard" : "/login";
+  // Unauthenticated CTAs send people to self-signup; the form there
+  // links to /login for returning users.
+  const ctaHref = user ? "/dashboard" : "/signup";
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -137,7 +139,7 @@ function Header({
                 <a href="/login">Login</a>
               </Button>
               <Button asChild size="sm">
-                <a href="/login">Get started</a>
+                <a href="/signup">Get started</a>
               </Button>
             </>
           )}
