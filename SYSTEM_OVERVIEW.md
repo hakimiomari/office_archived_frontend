@@ -19,6 +19,7 @@
 ### Frontend (`office_archived_frontend/`)
 - **Framework**: Next.js 15 (App Router, RSC where possible, client components elsewhere)
 - **UI**: shadcn/ui (Radix primitives) + Tailwind CSS
+- **Searchable dropdowns**: every `<Select>` across the app is a `<Combobox>` ([`components/ui/combobox.tsx`](components/ui/combobox.tsx)) — Popover + cmdk under the hood, with a built-in search input, "no results" state, and selected-check marker. The underlying shadcn `<Select>` primitive is still present at [`components/ui/select.tsx`](components/ui/select.tsx) but no consumer imports it; prefer Combobox for new code.
 - **i18n**: `next-intl` (en, fa, ps — Pashto/Dari are RTL)
 - **Charts**: Recharts
 - **Tables**: `@tanstack/react-table`
@@ -80,6 +81,8 @@ components/
 ├── confirm-dialog.tsx
 ├── data-table*                # Tanstack Table helpers
 ├── ui/                        # shadcn primitives (button, input, dialog, …)
+│   ├── combobox.tsx           # ★ Searchable dropdown used in place of <Select> everywhere
+│   └── select.tsx             # Underlying shadcn Select (no consumers; kept for future need)
 └── reports/, tenders/         # Chart components
 
 api/                           # New API layer (Phase 4 §4.1 — companies migrated; others still in config/)
@@ -126,6 +129,32 @@ messages/{en,fa,ps}.json       # i18n strings for next-intl
 - Localization: every user-visible string goes through `useTranslations("namespace")(key)`. Don't hardcode UI text.
 - Search inputs should use `useDebounce` (300 ms default) so a keystroke doesn't fire N requests.
 - Cross-component refresh: a mutation can dispatch a `window.dispatchEvent(new CustomEvent('<feature>:changed'))` and other components listen — `useCompanies` does this with `companies:changed`, which `CompanySwitcher` consumes.
+- **Dropdowns**: use `<Combobox>` ([`components/ui/combobox.tsx`](components/ui/combobox.tsx)) for every picker — even a 3-option enum — so the UX is uniform with the rest of the app. The component is fully controlled (`value` + `onValueChange`) and takes a flat `options: { value, label }[]` array. There is no group/separator support; flatten with a label prefix if you need visual grouping (see `ThemeSelector` for an example).
+
+#### Combobox API (the only dropdown primitive in active use)
+
+```tsx
+import { Combobox } from "@/components/ui/combobox";
+
+<Combobox
+  value={form.warehouseId}
+  onValueChange={(v) => setForm({ ...form, warehouseId: v })}
+  options={warehouses.map((w) => ({ value: String(w.id), label: w.name }))}
+  placeholder={t("selectWarehouse")}              // empty-value display
+  searchPlaceholder="Search warehouses..."         // text inside the search input
+  emptyMessage="No warehouse found."               // shown when search filters everything out
+  triggerClassName="h-9 w-[200px]"                 // ports any className that used to be on <SelectTrigger>
+  disabled={form.userRole === "SUPER_ADMIN"}       // optional
+/>
+```
+
+Migration cheat sheet from the legacy `<Select>`:
+- `<Select value=... onValueChange=...>...</Select>` → `<Combobox value=... onValueChange=...>`.
+- `<SelectItem>` children → an entry in the `options` array.
+- Static-list Selects (enums) → inline a literal `options={[{ value: "...", label: "..." }]}`.
+- Mixed Selects (one literal `"ALL"` item + a `.map()`) → combine into a single options array: `options={[{ value: "ALL", label: "All" }, ...items.map(...)]}`.
+- `<SelectTrigger className="...">` → `triggerClassName="..."` on the Combobox.
+- Rich `<SelectItem>` children (icons, badges) → flatten to plain text. The `<Badge>inactive</Badge>` pattern in `company-switcher.tsx` became `" (inactive)"` as a suffix.
 
 ---
 
@@ -152,6 +181,7 @@ The full server-side lifecycle (AuthGuard → TenantInterceptor → PermissionGu
 | SUPER_ADMIN tenant scope (picker + persistence) | `contexts/TenantFilterContext.tsx`, `components/company-switcher.tsx` |
 | Sidebar (permission-gated nav)           | `components/shared/app-sidebar.tsx`              |
 | Reusable user form (tenancy controls)    | `components/user-form.tsx`                        |
+| Searchable dropdown primitive            | `components/ui/combobox.tsx`                      |
 | Debounced search                         | `hooks/use-debounce.ts`                          |
 | i18n strings                             | `messages/{en,fa,ps}.json`                       |
 | Backend half of this doc + API contract  | `../office_archived_backend/SYSTEM_OVERVIEW.md`  |
@@ -166,7 +196,7 @@ The full server-side lifecycle (AuthGuard → TenantInterceptor → PermissionGu
 1. **New API layer files** following the `api/` pattern:
    - `api/services/invoice-tracking.service.ts` — pure request functions for the new `/invoice-tracking/*` routes, types alongside, throws on error.
    - `api/hooks/use-invoice-tracking.ts` — wraps the service with toast handling; returns a familiar `useInvoiceTracking()` shape.
-2. **New page** `app/(dashboard)/invoice-tracking/page.tsx` — client component, uses `<RouteGuard permission="invoice.tracking.read">`, server-side pagination, `useDebounce` on the search input.
+2. **New page** `app/(dashboard)/invoice-tracking/page.tsx` — client component, uses `<RouteGuard permission="invoice.tracking.read">`, server-side pagination, `useDebounce` on the search input, and `<Combobox>` (not raw `<Select>`) for any picker — status filter, customer picker, page-size selector, etc.
 3. **Sidebar entry** in `components/shared/app-sidebar.tsx` behind `requiredPermissions: ['invoice.tracking.read']`.
 4. **i18n** — add the page's strings to `messages/{en,fa,ps}.json` and read them via `useTranslations`.
 5. **Permission-gate** action buttons (`<PermissionGate permission="invoice.tracking.update">`).

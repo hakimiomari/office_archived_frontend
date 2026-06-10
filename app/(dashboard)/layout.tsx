@@ -6,6 +6,7 @@ import { SidebarInset } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { LicenseProvider } from "@/contexts/LicenseContext";
 import { TenantFilterProvider } from "@/contexts/TenantFilterContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { useUser } from "@/contexts/UserContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useTranslations } from "next-intl";
@@ -43,27 +44,32 @@ export default function DashboardGroupLayout({ children }: Props) {
 
   return (
     <TenantFilterProvider>
-    <LicenseProvider>
-      <SidebarProvider
-        key={locale}
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 72)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar variant="inset" side={dir === "rtl" ? "right" : "left"} />
-        <SidebarInset>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4">{children}</div>
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </LicenseProvider>
+      <SubscriptionProvider>
+        <LicenseProvider>
+          <SidebarProvider
+            key={locale}
+            style={
+              {
+                "--sidebar-width": "calc(var(--spacing) * 72)",
+                "--header-height": "calc(var(--spacing) * 12)",
+              } as React.CSSProperties
+            }
+          >
+            <AppSidebar
+              variant="inset"
+              side={dir === "rtl" ? "right" : "left"}
+            />
+            <SidebarInset>
+              <SiteHeader />
+              <div className="flex flex-1 flex-col">
+                <div className="@container/main flex flex-1 flex-col gap-2">
+                  <div className="flex flex-col gap-4">{children}</div>
+                </div>
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </LicenseProvider>
+      </SubscriptionProvider>
     </TenantFilterProvider>
   );
 }

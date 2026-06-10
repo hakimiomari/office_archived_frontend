@@ -39,15 +39,32 @@ import {
 import { useUser } from "@/contexts/UserContext";
 import { usePermission } from "@/hooks/use-permission";
 import { useTenantFilter } from "@/contexts/TenantFilterContext";
+import { useSubscription } from "@/hooks/use-subscription";
+import type {
+  FeatureCode,
+  ModuleCode,
+} from "@/contexts/SubscriptionContext";
 import { useTranslations } from "next-intl";
 import { CompanySwitcher } from "@/components/company-switcher";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 
-// Each nav item can optionally require one or more permissions.
-// If `requiredPermissions` is not set, the item is always visible.
-// If set, user must have at least ONE of the listed permissions.
-const getAllNavItems = (t: (key: string) => string) => [
+// Each nav item can optionally require:
+//  - one or more permissions (user must have at least ONE),
+//  - a subscription module (active plan must include it),
+//  - a premium feature inside that module.
+// Items without any requirement are always visible.
+type NavItem = {
+  title: string;
+  url: string;
+  icon: any;
+  requiredPermissions?: string[];
+  requiredModule?: ModuleCode;
+  requiredFeature?: FeatureCode;
+  items?: NavItem[];
+};
+
+const getAllNavItems = (t: (key: string) => string): NavItem[] => [
   {
     title: t("dashboard"),
     url: "/dashboard",
@@ -58,6 +75,7 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/inventory",
     icon: IconPackage,
     requiredPermissions: ["inventory.read"],
+    requiredModule: "INVENTORY",
     items: [
       {
         title: t("inventoryDashboard"),
@@ -93,21 +111,25 @@ const getAllNavItems = (t: (key: string) => string) => [
         title: t("inventoryCategories"),
         url: "/inventory/categories",
         icon: IconCategory,
+        requiredModule: "CATEGORIES",
       },
       {
         title: t("inventoryStockCounts"),
         url: "/inventory/stock-counts",
         icon: IconClipboardList,
+        requiredModule: "STOCK_COUNTS",
       },
       {
         title: t("inventoryAlerts"),
         url: "/inventory/alerts",
         icon: IconAlertTriangle,
+        requiredModule: "ALERTS",
       },
       {
         title: t("inventoryAnalytics"),
         url: "/inventory/reports",
         icon: IconReportAnalytics,
+        requiredFeature: "INVENTORY_REPORTS",
       },
     ],
   },
@@ -116,6 +138,7 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/employees",
     icon: IconUsersGroup,
     requiredPermissions: ["employee.read"],
+    requiredModule: "EMPLOYEES",
     items: [
       {
         title: t("employeesList"),
@@ -134,6 +157,7 @@ const getAllNavItems = (t: (key: string) => string) => [
     url: "/sales",
     icon: IconReceipt,
     requiredPermissions: ["sale.read"],
+    requiredModule: "SALES",
     items: [
       {
         title: t("salesList"),
@@ -180,24 +204,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
   const { canAny } = usePermission();
   const { filterCompanyId } = useTenantFilter();
+  const { canAccessModule, canAccessFeature, ready: subReady } =
+    useSubscription();
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
 
   const allNavItems = getAllNavItems(tNav);
 
-  // "Companies" is a tenant-management surface — only shown when:
+  // "Companies", "Plans", "Subscriptions" are SUPER_ADMIN tenant-management
+  // surfaces — only shown when:
   //   1. The user is SUPER_ADMIN, AND
-  //   2. They are NOT currently scoped into a specific company via the
-  //      sidebar picker. While a super-admin is "acting as" a company,
-  //      they get the full tenant UX (no admin entries leaking through).
+  //   2. They are NOT currently scoped into a specific company. While a
+  //      super-admin is "acting as" a company, they get the full tenant
+  //      UX (no admin entries leak through).
   const isAdminUnscoped =
     user?.userRole === "SUPER_ADMIN" && filterCompanyId == null;
   if (isAdminUnscoped) {
-    allNavItems.push({
-      title: "Companies",
-      url: "/companies",
-      icon: IconBuilding,
-    } as any);
+    allNavItems.push(
+      {
+        title: "Companies",
+        url: "/companies",
+        icon: IconBuilding,
+      } as any,
+      {
+        title: "Plans",
+        url: "/admin/plans",
+        icon: IconReceipt,
+      } as any,
+      {
+        title: "Subscriptions",
+        url: "/admin/subscriptions",
+        icon: IconShieldLock,
+      } as any,
+    );
   }
 
   const navSecondary = [
@@ -206,11 +245,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: tNav("search"), url: "#", icon: IconSearch },
   ];
 
-  // Filter nav items based on user permissions
-  const visibleNavItems = allNavItems.filter((item) => {
-    if (!item.requiredPermissions) return true;
-    return canAny(...item.requiredPermissions);
-  });
+  // Compose three filters: permission → subscription module → subscription
+  // feature. Applied to both top-level items and their `items` children.
+  const isItemVisible = (item: NavItem): boolean => {
+    if (item.requiredPermissions && !canAny(...item.requiredPermissions)) {
+      return false;
+    }
+    if (item.requiredModule && !canAccessModule(item.requiredModule)) {
+      return false;
+    }
+    if (item.requiredFeature && !canAccessFeature(item.requiredFeature)) {
+      return false;
+    }
+    return true;
+  };
+
+  // While the subscription snapshot is loading, surface only items that
+  // don't depend on it (no requiredModule / requiredFeature). This keeps
+  // the sidebar from flashing every item then collapsing.
+  const visibleNavItems = allNavItems
+    .filter((item) =>
+      subReady
+        ? isItemVisible(item)
+        : !item.requiredModule && !item.requiredFeature
+          ? isItemVisible(item)
+          : false,
+    )
+    .map((item) => ({
+      ...item,
+      items: item.items?.filter((child) =>
+        subReady
+          ? isItemVisible(child)
+          : !child.requiredModule && !child.requiredFeature
+            ? isItemVisible(child)
+            : false,
+      ),
+    }));
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

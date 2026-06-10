@@ -1,5 +1,49 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 import { readTenantFilterFromStorage } from "@/contexts/TenantFilterContext";
+
+/**
+ * Map a 403 response body produced by the subscription guards / limit
+ * service into a friendly toast. The backend returns these codes:
+ *   - subscription.module.disabled
+ *   - subscription.feature.disabled
+ *   - subscription.limit.exceeded
+ *   - subscription.missing / inactive / expired
+ * Permission 403s don't carry a `code` and fall through silently.
+ */
+function maybeToastSubscription403(err: any) {
+  const body = err?.response?.data;
+  const code: string | undefined = body?.code;
+  if (!code || !code.startsWith("subscription.")) return;
+
+  if (code === "subscription.limit.exceeded") {
+    toast.error(
+      body.message ??
+        `Plan limit reached — upgrade to add more.`,
+    );
+    return;
+  }
+  if (code === "subscription.module.disabled") {
+    toast.error(
+      `This module isn't included in your current plan. Upgrade to enable it.`,
+    );
+    return;
+  }
+  if (code === "subscription.feature.disabled") {
+    toast.error(
+      `This feature isn't included in your current plan. Upgrade to unlock it.`,
+    );
+    return;
+  }
+  if (
+    code === "subscription.missing" ||
+    code === "subscription.inactive" ||
+    code === "subscription.expired"
+  ) {
+    toast.error(`Your subscription isn't active. Contact your administrator.`);
+    return;
+  }
+}
 
 const api = axios.create({
   baseURL: "http://localhost:8001/api/",
@@ -139,6 +183,14 @@ api.interceptors.response.use(
         isRefreshing = false;
       }
     }
+
+    // 403s carrying a `code` prefixed with `subscription.` are surfaced
+    // as a friendly toast. Pure permission 403s fall through silently
+    // — the caller's own UI usually shows nothing-to-see-here state.
+    if (status === 403) {
+      maybeToastSubscription403(error);
+    }
+
     return Promise.reject(error);
   }
 );
