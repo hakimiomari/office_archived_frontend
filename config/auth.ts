@@ -53,10 +53,14 @@ export const useAuth = () => {
     password: string;
   };
 
+  type RegisterResult =
+    | { ok: true }
+    | { ok: false; status: number | null; message: string };
+
   const register = async (
     event: React.FormEvent | null,
     payload: RegisterPayload,
-  ): Promise<boolean> => {
+  ): Promise<RegisterResult> => {
     event?.preventDefault();
     setIsRegistering(true);
     try {
@@ -64,26 +68,42 @@ export const useAuth = () => {
       if (response.status === 200 || response.status === 201) {
         await fetchProfile();
         router.push("/dashboard");
-        return true;
+        return { ok: true };
       }
-      return false;
+      return {
+        ok: false,
+        status: response.status,
+        message: `Unexpected status ${response.status} from /auth/register`,
+      };
     } catch (error: any) {
-      // NestJS validation pipe → `message` is an array of validator
-      // strings ("password must be at least 6 characters", …).
-      // Conflicts / forbidden errors → `message` is a string.
-      // Network error → no `response` at all.
+      // Pull every diagnostic we can out of the error and surface it
+      // both as a toast AND in the form (caller decides what to render).
+      const status: number | null = error?.response?.status ?? null;
       const data = error?.response?.data;
-      const msg = Array.isArray(data?.message)
-        ? data.message.join("\n")
-        : typeof data?.message === "string"
-          ? data.message
-          : data?.error ?? "Could not create your account. Please try again.";
-      toast.error(msg);
-      // Log the full server payload to the browser console so you can
-      // see the exact status + body when something unexpected fails.
+
+      let message: string;
+      if (!error?.response) {
+        // No HTTP response at all → network error / CORS / server down.
+        message =
+          "Couldn't reach the server. Is the backend running on " +
+          `${api.defaults.baseURL ?? "http://localhost:8001/api/"}?`;
+      } else if (Array.isArray(data?.message)) {
+        // class-validator failures come back as an array.
+        message = data.message.join(" · ");
+      } else if (typeof data?.message === "string") {
+        message = data.message;
+      } else if (typeof data?.error === "string") {
+        message = data.error;
+      } else {
+        message = `HTTP ${status}: ${
+          typeof data === "string" ? data : JSON.stringify(data ?? {})
+        }`;
+      }
+
+      toast.error(message);
       // eslint-disable-next-line no-console
-      console.error("Register failed:", error?.response?.status, data);
-      return false;
+      console.error("Register failed", { status, data, error });
+      return { ok: false, status, message };
     } finally {
       setIsRegistering(false);
     }

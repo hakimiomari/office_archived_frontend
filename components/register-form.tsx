@@ -38,6 +38,12 @@ export function RegisterForm({
     confirmPassword: "",
   });
 
+  // Persistent server-error display. Cleared on the next submit attempt.
+  const [serverError, setServerError] = useState<{
+    status: number | null;
+    message: string;
+  } | null>(null);
+
   // Live slug preview — admin can override, otherwise we derive it from
   // company name (lowercased, hyphenated, ascii-safe).
   const previewSlug = useMemo(() => {
@@ -47,19 +53,22 @@ export function RegisterForm({
 
   const passwordsMatch =
     form.password.length === 0 || form.password === form.confirmPassword;
-  const passwordTooShort =
-    form.password.length > 0 && form.password.length < 6;
+  const passwordTooShort = form.password.length > 0 && form.password.length < 6;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!passwordsMatch || passwordTooShort) return;
-    await register(null, {
+    setServerError(null);
+    const result = await register(null, {
       companyName: form.companyName,
       companySlug: form.companySlug.trim() || undefined,
       name: form.name,
       email: form.email,
       password: form.password,
     });
+    if (!result.ok) {
+      setServerError({ status: result.status, message: result.message });
+    }
   };
 
   return (
@@ -90,7 +99,9 @@ export function RegisterForm({
             <div className="grid gap-3">
               <Label htmlFor="companySlug">
                 URL slug{" "}
-                <span className="text-muted-foreground text-xs">(optional)</span>
+                <span className="text-muted-foreground text-xs">
+                  (optional)
+                </span>
               </Label>
               <Input
                 id="companySlug"
@@ -142,9 +153,7 @@ export function RegisterForm({
                 id="password"
                 type="password"
                 value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Min 6 characters"
                 minLength={6}
                 required

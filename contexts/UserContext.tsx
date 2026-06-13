@@ -67,8 +67,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Routes that don't require an authenticated session. On these pages
+  // we skip the `/user/profile` fetch entirely — otherwise an
+  // unauthenticated visitor hits 401, the axios interceptor's refresh
+  // fails, and `forceLogout()` kicks them to /login (which makes
+  // /signup unreachable for new users).
+  const PUBLIC_ROUTES = new Set(["/", "/login", "/signup"]);
+
   useEffect(() => {
-    if (pathname !== "/") {
+    if (!PUBLIC_ROUTES.has(pathname)) {
       fetchProfile();
     } else {
       setLoading(false);

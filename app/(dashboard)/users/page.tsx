@@ -193,6 +193,30 @@ export default function UsersPage() {
       },
     },
     {
+      id: "company",
+      header: t("company") || "Company",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const user = row.original;
+        if (user.company?.name) {
+          return (
+            <span className="font-medium">{user.company.name}</span>
+          );
+        }
+        // SUPER_ADMIN has no company — keep that distinction visible.
+        if (user.userRole === "SUPER_ADMIN") {
+          return (
+            <Badge variant="outline" className="text-xs">
+              Super admin
+            </Badge>
+          );
+        }
+        return (
+          <span className="text-sm text-muted-foreground">—</span>
+        );
+      },
+    },
+    {
       id: "authMethod",
       header: t("authMethod"),
       enableSorting: false,

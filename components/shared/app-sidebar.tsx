@@ -22,6 +22,9 @@ import {
   IconAlertTriangle,
   IconCategory,
   IconClipboardList,
+  IconCreditCard,
+  IconHistory,
+  IconFileInvoice,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -198,6 +201,23 @@ const getAllNavItems = (t: (key: string) => string): NavItem[] => [
     icon: IconShieldLock,
     requiredPermissions: ["role.read", "role.create"],
   },
+  {
+    title: t("billing"),
+    url: "/billing/upgrade",
+    icon: IconCreditCard,
+    items: [
+      {
+        title: t("billingUpgrade"),
+        url: "/billing/upgrade",
+        icon: IconCreditCard,
+      },
+      {
+        title: t("billingRequests"),
+        url: "/billing/requests",
+        icon: IconHistory,
+      },
+    ],
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -239,6 +259,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     );
   }
 
+  // "Plan Requests" review queue is visible when:
+  //   - SUPER_ADMIN (regardless of scope), OR
+  //   - any user granted the `plan_request.review` permission.
+  const canReviewPlanRequests =
+    user?.userRole === "SUPER_ADMIN" || canAny("plan_request.review");
+  if (canReviewPlanRequests) {
+    allNavItems.push({
+      title: "Plan Requests",
+      url: "/admin/plan-requests",
+      icon: IconFileInvoice,
+    } as any);
+  }
+
+  // The Billing menu (request an upgrade / view request history) is for
+  // tenant users — hide for unscoped SUPER_ADMIN since they manage
+  // subscriptions directly via /admin/subscriptions.
+  const hideBillingForAdmin =
+    user?.userRole === "SUPER_ADMIN" && filterCompanyId == null;
+
   const navSecondary = [
     { title: tNav("settings"), url: "#", icon: IconSettings },
     { title: tNav("getHelp"), url: "#", icon: IconHelp },
@@ -248,6 +287,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Compose three filters: permission → subscription module → subscription
   // feature. Applied to both top-level items and their `items` children.
   const isItemVisible = (item: NavItem): boolean => {
+    if (hideBillingForAdmin && item.url.startsWith("/billing")) {
+      return false;
+    }
     if (item.requiredPermissions && !canAny(...item.requiredPermissions)) {
       return false;
     }
