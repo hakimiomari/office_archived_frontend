@@ -272,6 +272,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     } as any);
   }
 
+  // "Plans" (edit prices / descriptions) is also exposed to non-super-admin
+  // users granted `plan.update` — they get the same page but with create
+  // and delete buttons hidden client-side and gated server-side.
+  const canEditPlans =
+    user?.userRole !== "SUPER_ADMIN" && canAny("plan.update");
+  if (canEditPlans) {
+    allNavItems.push({
+      title: "Plans",
+      url: "/admin/plans",
+      icon: IconReceipt,
+    } as any);
+  }
+
   // The Billing menu (request an upgrade / view request history) is for
   // tenant users — hide for unscoped SUPER_ADMIN since they manage
   // subscriptions directly via /admin/subscriptions.

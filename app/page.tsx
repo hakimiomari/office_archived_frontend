@@ -563,7 +563,7 @@ function Pricing({
         )}
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          Prices shown in USD. Plans can be billed Monthly or Yearly when an
+          Prices shown in AFN. Plans can be billed Monthly or Yearly when an
           admin assigns the subscription. Basic is free and open-ended.
         </p>
       </div>
@@ -614,12 +614,12 @@ function PlanCard({
           ) : (
             <>
               <span className="text-4xl font-bold">
-                ${plan.monthlyPrice.toLocaleString()}
+                {plan.monthlyPrice.toLocaleString()}
               </span>
-              <span className="text-muted-foreground">/ month</span>
+              <span className="text-muted-foreground">AFN / month</span>
               {plan.yearlyPrice > 0 && (
                 <span className="ms-2 text-xs text-muted-foreground">
-                  or ${plan.yearlyPrice.toLocaleString()} / year
+                  or {plan.yearlyPrice.toLocaleString()} AFN / year
                 </span>
               )}
             </>

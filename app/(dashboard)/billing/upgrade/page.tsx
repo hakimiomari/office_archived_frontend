@@ -63,7 +63,9 @@ const CYCLES: { value: BillingCycle; label: string }[] = [
 
 const fmtLimit = (n: number | null) => (n == null ? "Unlimited" : n.toString());
 const fmtPrice = (n: number) =>
-  n === 0 ? "Free" : `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  n === 0
+    ? "Free"
+    : `${n.toLocaleString(undefined, { maximumFractionDigits: 0 })} AFN`;
 
 export default function BillingUpgradePage() {
   const router = useRouter();
@@ -126,6 +128,15 @@ export default function BillingUpgradePage() {
     [sortedPlans, currentPlanId],
   );
   const currentSortOrder = currentPlan?.sortOrder ?? -Infinity;
+
+  // A subscription is "expired" when its endDate has passed. While
+  // active, the company can only request HIGHER-tier plans (never the
+  // same plan again). Once expired, the same plan becomes available
+  // again for renewal. Perpetual plans (endDate === null) never expire.
+  const subscriptionExpired = useMemo(() => {
+    const end = subscription?.endDate ? new Date(subscription.endDate) : null;
+    return end != null && end.getTime() <= Date.now();
+  }, [subscription?.endDate]);
 
   const openDialog = (plan: PublicPlan) => {
     setTarget(plan);
@@ -192,7 +203,11 @@ export default function BillingUpgradePage() {
               <div className="text-sm text-muted-foreground">
                 Billing: {subscription.billingCycle.toLowerCase()}
                 {subscription.endDate && (
-                  <> · Renews {fmtDate(subscription.endDate)}</>
+                  <>
+                    {" "}
+                    · {subscriptionExpired ? "Expired on" : "Renews"}{" "}
+                    {fmtDate(subscription.endDate)}
+                  </>
                 )}
                 {!subscription.endDate && subscription.billingCycle === "PERPETUAL" && (
                   <> · No expiration</>
@@ -200,12 +215,17 @@ export default function BillingUpgradePage() {
               </div>
             )}
           </div>
-          <Badge variant="default" className="self-start sm:self-auto">
-            {currentPlan
-              ? currentSortOrder === sortedPlans[sortedPlans.length - 1]?.sortOrder
-                ? "Top tier"
-                : "Active"
-              : "—"}
+          <Badge
+            variant={subscriptionExpired ? "destructive" : "default"}
+            className="self-start sm:self-auto"
+          >
+            {!currentPlan
+              ? "—"
+              : subscriptionExpired
+                ? "Expired"
+                : currentSortOrder === sortedPlans[sortedPlans.length - 1]?.sortOrder
+                  ? "Top tier"
+                  : "Active"}
           </Badge>
         </CardContent>
       </Card>
@@ -232,21 +252,27 @@ export default function BillingUpgradePage() {
         {sortedPlans.map((p) => {
           const isCurrent = p.id === currentPlanId;
           // Tier rule: only allow moving to a HIGHER-tier plan than
-          // the company's current one. Same plan (different cycle)
-          // is allowed too — that's a renewal, not a downgrade.
-          // If there's no current subscription, every plan is upgradeable.
+          // the company's current one. Lower-tier is never allowed.
+          // Same-plan (renewal) is allowed only after the current
+          // subscription has expired. With no current subscription,
+          // every plan is open.
           const isLowerTier =
             currentPlan != null &&
             !isCurrent &&
             p.sortOrder <= currentSortOrder;
-          const blocked = isCurrent || isLowerTier || Boolean(pending);
+          const isSameButNotExpired = isCurrent && !subscriptionExpired;
+          const isRenewable = isCurrent && subscriptionExpired;
+          const blocked =
+            isSameButNotExpired || isLowerTier || Boolean(pending);
 
           return (
             <Card
               key={p.id}
               className={
                 isCurrent
-                  ? "border-primary ring-2 ring-primary/30"
+                  ? isRenewable
+                    ? "border-amber-500/50 ring-2 ring-amber-500/30"
+                    : "border-primary ring-2 ring-primary/30"
                   : isLowerTier
                     ? "opacity-60"
                     : undefined
@@ -255,7 +281,9 @@ export default function BillingUpgradePage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between gap-2">
                   <span>{p.name}</span>
-                  {isCurrent ? (
+                  {isRenewable ? (
+                    <Badge variant="destructive">Expired</Badge>
+                  ) : isCurrent ? (
                     <Badge variant="default">Current</Badge>
                   ) : isLowerTier ? (
                     <Badge variant="outline">Lower tier</Badge>
@@ -297,15 +325,21 @@ export default function BillingUpgradePage() {
                   className="mt-auto"
                   disabled={blocked}
                   onClick={() => openDialog(p)}
-                  variant={isCurrent ? "secondary" : "default"}
+                  variant={
+                    isSameButNotExpired ? "secondary" : "default"
+                  }
                 >
-                  {isCurrent
+                  {isSameButNotExpired
                     ? "Active plan"
-                    : isLowerTier
-                      ? "Downgrade not allowed"
-                      : pending
+                    : isRenewable
+                      ? pending
                         ? "Request pending"
-                        : "Request this plan"}
+                        : "Renew this plan"
+                      : isLowerTier
+                        ? "Downgrade not allowed"
+                        : pending
+                          ? "Request pending"
+                          : "Request this plan"}
                 </Button>
               </CardContent>
             </Card>

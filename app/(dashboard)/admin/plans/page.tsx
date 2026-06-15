@@ -7,6 +7,7 @@ import {
   useSubscriptionsAdmin,
 } from "@/api/hooks/use-subscriptions-admin";
 import { useUser } from "@/contexts/UserContext";
+import { usePermission } from "@/hooks/use-permission";
 import {
   FeatureCode,
   ModuleCode,
@@ -57,6 +58,7 @@ const ALL_FEATURES: FeatureCode[] = [
 
 export default function AdminPlansPage() {
   const { user } = useUser();
+  const { can } = usePermission();
   const { changeRoute } = nextRoute();
   const admin = useSubscriptionsAdmin();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -64,12 +66,18 @@ export default function AdminPlansPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Plan | null>(null);
 
-  // Hard SUPER_ADMIN gate. Tenant users get redirected to dashboard.
+  // Two-tier access:
+  //  - SUPER_ADMIN: everything (create + delete + edit + modules + features + limits)
+  //  - plan.update permission: read + edit details/prices only
+  // Anyone else gets booted to the dashboard.
+  const isSuperAdmin = user?.userRole === "SUPER_ADMIN";
+  const canEdit = isSuperAdmin || can("plan.update");
+
   useEffect(() => {
-    if (user && user.userRole !== "SUPER_ADMIN") {
+    if (user && !canEdit) {
       changeRoute("/dashboard");
     }
-  }, [user]);
+  }, [user, canEdit]);
 
   const refresh = async () => {
     setLoading(true);
@@ -79,10 +87,10 @@ export default function AdminPlansPage() {
   };
 
   useEffect(() => {
-    refresh();
-  }, []);
+    if (canEdit) refresh();
+  }, [canEdit]);
 
-  if (user && user.userRole !== "SUPER_ADMIN") return null;
+  if (user && !canEdit) return null;
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
@@ -93,8 +101,17 @@ export default function AdminPlansPage() {
             Define modules, premium features and resource limits per plan.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>+ New plan</Button>
+        {isSuperAdmin && (
+          <Button onClick={() => setCreateOpen(true)}>+ New plan</Button>
+        )}
       </div>
+      {!isSuperAdmin && (
+        <p className="text-xs text-muted-foreground">
+          You can edit plan descriptions and prices. Creating or deleting
+          plans, and changing modules / features / limits, requires
+          SUPER_ADMIN access.
+        </p>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
@@ -109,6 +126,7 @@ export default function AdminPlansPage() {
               onEdit={() => setEditing(p)}
               onDeleted={refresh}
               admin={admin}
+              canDelete={isSuperAdmin}
             />
           ))}
         </div>
@@ -136,11 +154,13 @@ function PlanCard({
   onEdit,
   onDeleted,
   admin,
+  canDelete,
 }: {
   plan: Plan;
   onEdit: () => void;
   onDeleted: () => void;
   admin: ReturnType<typeof useSubscriptionsAdmin>;
+  canDelete: boolean;
 }) {
   const moduleCount = plan.modules?.length ?? 0;
   const featureCount = plan.features?.length ?? 0;
@@ -179,21 +199,23 @@ function PlanCard({
           <Button size="sm" variant="outline" onClick={onEdit}>
             Edit
           </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={async () => {
-              if (!confirm(`Delete plan "${plan.name}"?`)) return;
-              try {
-                await admin.deletePlan(plan.id);
-                onDeleted();
-              } catch {
-                /* toast already shown */
-              }
-            }}
-          >
-            Delete
-          </Button>
+          {canDelete && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={async () => {
+                if (!confirm(`Delete plan "${plan.name}"?`)) return;
+                try {
+                  await admin.deletePlan(plan.id);
+                  onDeleted();
+                } catch {
+                  /* toast already shown */
+                }
+              }}
+            >
+              Delete
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
