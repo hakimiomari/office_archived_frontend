@@ -36,6 +36,7 @@ type PublicPlan = {
   description: string | null;
   monthlyPrice: number;
   yearlyPrice: number;
+  sortOrder: number;
   isActive: boolean;
   limit: {
     maxUsers: number | null;
@@ -44,6 +45,15 @@ type PublicPlan = {
     maxEmployees: number | null;
   } | null;
 };
+
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 const CYCLES: { value: BillingCycle; label: string }[] = [
   { value: "MONTHLY", label: "Monthly" },
@@ -102,15 +112,20 @@ export default function BillingUpgradePage() {
 
   const currentPlanId = subscription?.plan?.id ?? null;
 
+  // Cards sorted by tier (sortOrder) — Basic → Premium → Pro left-to-right.
   const sortedPlans = useMemo(
-    () =>
-      [...plans].sort(
-        (a, b) =>
-          (a.monthlyPrice || 0) - (b.monthlyPrice || 0) ||
-          a.name.localeCompare(b.name),
-      ),
+    () => [...plans].sort((a, b) => a.sortOrder - b.sortOrder),
     [plans],
   );
+
+  // Find the company's current plan in the loaded plans list so we
+  // know its sortOrder — the SubscriptionContext snapshot only carries
+  // basic plan fields, not the rank.
+  const currentPlan = useMemo(
+    () => sortedPlans.find((p) => p.id === currentPlanId) ?? null,
+    [sortedPlans, currentPlanId],
+  );
+  const currentSortOrder = currentPlan?.sortOrder ?? -Infinity;
 
   const openDialog = (plan: PublicPlan) => {
     setTarget(plan);
@@ -163,6 +178,38 @@ export default function BillingUpgradePage() {
         </p>
       </div>
 
+      {/* Current-plan header — shows what the company is on today. */}
+      <Card className="border-primary/40 bg-primary/5">
+        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-0.5">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Current plan
+            </div>
+            <div className="text-xl font-semibold">
+              {currentPlan?.name ?? subscription?.plan?.name ?? "No active subscription"}
+            </div>
+            {subscription && (
+              <div className="text-sm text-muted-foreground">
+                Billing: {subscription.billingCycle.toLowerCase()}
+                {subscription.endDate && (
+                  <> · Renews {fmtDate(subscription.endDate)}</>
+                )}
+                {!subscription.endDate && subscription.billingCycle === "PERPETUAL" && (
+                  <> · No expiration</>
+                )}
+              </div>
+            )}
+          </div>
+          <Badge variant="default" className="self-start sm:self-auto">
+            {currentPlan
+              ? currentSortOrder === sortedPlans[sortedPlans.length - 1]?.sortOrder
+                ? "Top tier"
+                : "Active"
+              : "—"}
+          </Badge>
+        </CardContent>
+      </Card>
+
       {pending && (
         <Card className="border-amber-500/40 bg-amber-50/40 dark:bg-amber-950/20">
           <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -184,19 +231,35 @@ export default function BillingUpgradePage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {sortedPlans.map((p) => {
           const isCurrent = p.id === currentPlanId;
+          // Tier rule: only allow moving to a HIGHER-tier plan than
+          // the company's current one. Same plan (different cycle)
+          // is allowed too — that's a renewal, not a downgrade.
+          // If there's no current subscription, every plan is upgradeable.
+          const isLowerTier =
+            currentPlan != null &&
+            !isCurrent &&
+            p.sortOrder <= currentSortOrder;
+          const blocked = isCurrent || isLowerTier || Boolean(pending);
+
           return (
             <Card
               key={p.id}
               className={
                 isCurrent
                   ? "border-primary ring-2 ring-primary/30"
-                  : undefined
+                  : isLowerTier
+                    ? "opacity-60"
+                    : undefined
               }
             >
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between gap-2">
                   <span>{p.name}</span>
-                  {isCurrent && <Badge variant="default">Current</Badge>}
+                  {isCurrent ? (
+                    <Badge variant="default">Current</Badge>
+                  ) : isLowerTier ? (
+                    <Badge variant="outline">Lower tier</Badge>
+                  ) : null}
                 </CardTitle>
                 {p.description && (
                   <p className="text-sm text-muted-foreground">
@@ -232,15 +295,17 @@ export default function BillingUpgradePage() {
                 </ul>
                 <Button
                   className="mt-auto"
-                  disabled={isCurrent || Boolean(pending)}
+                  disabled={blocked}
                   onClick={() => openDialog(p)}
                   variant={isCurrent ? "secondary" : "default"}
                 >
                   {isCurrent
                     ? "Active plan"
-                    : pending
-                      ? "Request pending"
-                      : "Request this plan"}
+                    : isLowerTier
+                      ? "Downgrade not allowed"
+                      : pending
+                        ? "Request pending"
+                        : "Request this plan"}
                 </Button>
               </CardContent>
             </Card>
